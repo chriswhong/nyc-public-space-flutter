@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'package:flutter/services.dart'; // For rootBundle
 import 'package:flutter/material.dart';
 import 'package:sliding_up_panel/sliding_up_panel.dart';
 import 'package:mapbox_maps_flutter/mapbox_maps_flutter.dart';
@@ -20,14 +21,15 @@ class MyAppState extends State<MyApp> {
   late MapboxMap mapboxMap;
   PointAnnotationManager? pointAnnotationManager;
 
-  PanelController _pc = new PanelController();
+  final PanelController _pc = PanelController();
 
   String _panelContent = '';
   double _fabHeight = 0;
 
-    final double _closedFabPosition = 120.0; // Distance from the bottom when the panel is collapsed
-  final double _openFabPosition = 300.0; // Distance from the bottom when the panel is fully opened
-
+  final double _closedFabPosition =
+      120.0; // Distance from the bottom when the panel is collapsed
+  final double _openFabPosition =
+      300.0; // Distance from the bottom when the panel is fully opened
 
   // update the panel content
   void updatePanelContent(String newContent) {
@@ -74,8 +76,67 @@ class MyAppState extends State<MyApp> {
     }
   }
 
+  _getFeatures() async {
+    // Get the map size (viewport dimensions)
+
+    var screenSize = MediaQuery.of(context).size;
+    double screenWidth = screenSize.width;
+    double screenHeight = screenSize.height;
+
+    print(screenWidth);
+    print(screenHeight);
+
+    // Create the screen box (viewport) using the corner coordinates
+    var screenBox = ScreenBox(
+        min: ScreenCoordinate(x: 0, y: 0),
+        max: ScreenCoordinate(x: screenWidth, y: screenHeight));
+
+    // Query rendered features for a specific layer within the current viewport
+    var features = await mapboxMap.queryRenderedFeatures(
+      RenderedQueryGeometry(
+          value: json.encode(screenBox.encode()), type: Type.SCREEN_BOX),
+      RenderedQueryOptions(
+        layerIds: ['parks-properties-centroids'],
+      ),
+    );
+
+    final pointAnnotationManager =
+        await mapboxMap.annotations.createPointAnnotationManager();
+
+    // Load the image as Uint8List
+    Uint8List imageData = await rootBundle
+        .load('assets/map-marker.png')
+        .then((byteData) => byteData.buffer.asUint8List());
+
+    for (var feature in features) {
+      // Extract the geometry point from the feature
+      var geojsonGeometry =
+          jsonEncode(feature?.queriedFeature.feature['geometry']);
+
+      Point point = Point.fromJson(jsonDecode(geojsonGeometry));
+
+      // Create PointAnnotationOptions with the extracted coordinates
+      PointAnnotationOptions annotationOptions = PointAnnotationOptions(
+        geometry: point, // Use the geometry directly
+        iconSize: 0.4, // Optional: Adjust size
+        image: imageData, // Optional: Provide your icon image name
+      );
+
+      // // Add the point annotation to the map
+      pointAnnotationManager.create(annotationOptions);
+    }
+  }
+
+  _onMapLoaded(MapLoadedEventData) async {
+    _getFeatures();
+  }
+
   _onMapCreated(MapboxMap mapboxMap) async {
     this.mapboxMap = mapboxMap;
+
+    //  Size mapSize = await mapboxMap.getSize();
+
+    print(mapboxMap);
 
     // limit bounds
     mapboxMap.setBounds(CameraBoundsOptions(minZoom: 10));
@@ -88,13 +149,15 @@ class MyAppState extends State<MyApp> {
     var status = await Permission.locationWhenInUse.request();
     print("Location granted : $status");
 
-    mapboxMap?.location.updateSettings(
+    mapboxMap.location.updateSettings(
         LocationComponentSettings(enabled: true, pulsingEnabled: true));
 
-    print(mapboxMap?.location.getSettings().then((value) {
+    print(mapboxMap.location.getSettings().then((value) {
       print(value);
       print('location shown');
     }));
+
+    
   }
 
   @override
@@ -109,7 +172,7 @@ class MyAppState extends State<MyApp> {
     // Define options for your camera
     CameraOptions camera = CameraOptions(
       center: Point(coordinates: Position(-73.96, 40.75183)),
-      zoom: 11,
+      zoom: 13,
     );
 
     return MaterialApp(
@@ -121,7 +184,7 @@ class MyAppState extends State<MyApp> {
               panel: Center(
                 child: Text(
                   _panelContent,
-                  style: TextStyle(fontSize: 24),
+                  style: const TextStyle(fontSize: 24),
                 ),
               ),
               onPanelSlide: (position) {
@@ -131,24 +194,6 @@ class MyAppState extends State<MyApp> {
                       (_openFabPosition - _closedFabPosition) * position;
                 });
               },
-              // panel: Stack(children: <Widget>[
-              //   Positioned(
-              //     right: 20.0,
-              //     bottom:
-              //         -50, // Adjust this value to position the button above the sliding panel
-              //     child: FloatingActionButton(
-              //       onPressed: () {
-              //         // Your action here
-              //       },
-              //       backgroundColor: Colors.white, // White background
-              //       child: FaIcon(
-              //         FontAwesomeIcons.thumbsUp, // Example FontAwesome icon
-              //         color: Colors.black, // Icon color
-              //       ),
-              //     ),
-              //   ),
-
-              // ]),
               body: MapWidget(
                 styleUri:
                     'mapbox://styles/chriswhongmapbox/clzu4xoh900oz01qsgnxq8sf1',
@@ -156,6 +201,7 @@ class MyAppState extends State<MyApp> {
                 onMapCreated: _onMapCreated,
                 onTapListener: _onMapTapListener,
                 onScrollListener: _onMapScrollListener,
+                onMapLoadedListener: _onMapLoaded,
               ),
               borderRadius:
                   const BorderRadius.vertical(top: Radius.circular(18.0)),
@@ -171,7 +217,7 @@ class MyAppState extends State<MyApp> {
                   // You can also control the panel from here if needed
                 },
                 backgroundColor: Colors.white,
-                child: FaIcon(
+                child: const FaIcon(
                   FontAwesomeIcons.locationArrow,
                   color: Colors.blue,
                 ),

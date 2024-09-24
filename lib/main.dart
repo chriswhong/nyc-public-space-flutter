@@ -4,6 +4,7 @@ import 'package:mapbox_maps_flutter/mapbox_maps_flutter.dart';
 
 import 'package:flutter_futz/map_handler.dart';
 import 'package:flutter_futz/panel_handler.dart';
+import 'package:flutter_futz/search_handler.dart';
 
 void main() {
   // Ensure Flutter bindings are initialized
@@ -68,6 +69,12 @@ class MyAppState extends State<MyApp> {
                   const BorderRadius.vertical(top: Radius.circular(18.0)),
               minHeight: 100, // The height of the collapsed panel
               maxHeight: 300, // The height of the expanded panel
+            ),
+            Positioned(
+              top: 100, // Positioning 100 pixels from the top of the screen
+              left: 16, // Optional: adds some horizontal margin
+              right: 16, // Optional: adds some horizontal margin
+              child: SearchInput(),
             ),
             _panelHandler.buildFloatingButton(),
           ]),

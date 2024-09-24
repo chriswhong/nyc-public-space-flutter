@@ -1,15 +1,27 @@
 import 'package:flutter/material.dart';
 import 'package:sliding_up_panel/sliding_up_panel.dart';
+import 'package:mapbox_maps_flutter/mapbox_maps_flutter.dart';
 
 import 'package:flutter_futz/map_handler.dart';
 import 'package:flutter_futz/panel_handler.dart';
 
 void main() {
-  runApp(const MyApp());
+  // Ensure Flutter bindings are initialized
+  WidgetsFlutterBinding.ensureInitialized();
+
+  // Pass your access token to MapboxOptions so you can load a map
+  String accessToken = const String.fromEnvironment("ACCESS_TOKEN");
+  print('foo');
+  print(accessToken);
+  MapboxOptions.setAccessToken(accessToken);
+
+  runApp(MyApp(accessToken: accessToken));
 }
 
 class MyApp extends StatefulWidget {
-  const MyApp({super.key});
+  final String accessToken;
+
+  const MyApp({required this.accessToken, Key? key}) : super(key: key);
   @override
   State createState() => MyAppState();
 }
@@ -38,7 +50,7 @@ class MyAppState extends State<MyApp> {
   void _updatePanel() {
     setState(() {});
   }
-  
+
   @override
   Widget build(BuildContext context) {
     WidgetsFlutterBinding.ensureInitialized();

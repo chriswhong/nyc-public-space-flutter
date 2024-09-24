@@ -11,7 +11,7 @@ class MapHandler {
   late MapboxMap mapboxMap;
   PointAnnotationManager? pointAnnotationManager;
   PanelController? _pc;
-  final BuildContext _context;
+  BuildContext _context;
 
   MapHandler(this._context);
 
@@ -26,62 +26,63 @@ class MapHandler {
   _onMapLoaded(MapLoadedEventData) async {
     pointAnnotationManager =
         await mapboxMap.annotations.createPointAnnotationManager();
-    // _getFeatures(); // Pass the context to the function
+    _getFeatures(); // Pass the context to the function
   }
 
   _getFeatures() async {
     // Get the map size (viewport dimensions)
-    var screenSize = MediaQuery.of(_context).size;
-    double screenWidth = screenSize.width;
-    double screenHeight = screenSize.height;
+    if (_context != null) {
+      var screenSize = MediaQuery.of(_context).size;
+      double screenWidth = screenSize.width;
+      double screenHeight = screenSize.height;
 
-    print(screenWidth);
-    print(screenHeight);
+      print(screenWidth);
+      print(screenHeight);
 
-    // Create the screen box (viewport) using the corner coordinates
-    var screenBox = ScreenBox(
-        min: ScreenCoordinate(x: 0, y: 0),
-        max: ScreenCoordinate(x: screenWidth, y: screenHeight));
+      // Create the screen box (viewport) using the corner coordinates
+      var screenBox = ScreenBox(
+          min: ScreenCoordinate(x: 0, y: 0),
+          max: ScreenCoordinate(x: screenWidth, y: screenHeight));
 
-    // Query rendered features for a specific layer within the current viewport
-    var features = await mapboxMap.queryRenderedFeatures(
-      RenderedQueryGeometry(
-          value: json.encode(screenBox.encode()), type: Type.SCREEN_BOX),
-      RenderedQueryOptions(
-        layerIds: ['parks-properties-centroids'],
-      ),
-    );
-
-    // Load the image as Uint8List
-    Uint8List imageData = await rootBundle
-        .load('assets/map-marker.png')
-        .then((byteData) => byteData.buffer.asUint8List());
-
-    for (var feature in features) {
-      // Extract the geometry point from the feature
-      var geojsonGeometry =
-          jsonEncode(feature?.queriedFeature.feature['geometry']);
-
-      Point point = Point.fromJson(jsonDecode(geojsonGeometry));
-
-      // Create PointAnnotationOptions with the extracted coordinates
-      PointAnnotationOptions annotationOptions = PointAnnotationOptions(
-        geometry: point, // Use the geometry directly
-        iconSize: 0.4, // Optional: Adjust size
-        image: imageData, // Optional: Provide your icon image name
-        textField: 'HELLO',
+      // Query rendered features for a specific layer within the current viewport
+      var features = await mapboxMap.queryRenderedFeatures(
+        RenderedQueryGeometry(
+            value: json.encode(screenBox.encode()), type: Type.SCREEN_BOX),
+        RenderedQueryOptions(
+          layerIds: ['parks-properties-centroids'],
+        ),
       );
 
-      // // Add the point annotation to the map
-      pointAnnotationManager?.create(annotationOptions);
+      // Load the image as Uint8List
+      Uint8List imageData = await rootBundle
+          .load('assets/map-marker.png')
+          .then((byteData) => byteData.buffer.asUint8List());
+
+      for (var feature in features) {
+        // Extract the geometry point from the feature
+        var geojsonGeometry =
+            jsonEncode(feature?.queriedFeature.feature['geometry']);
+
+        Point point = Point.fromJson(jsonDecode(geojsonGeometry));
+
+        // Create PointAnnotationOptions with the extracted coordinates
+        PointAnnotationOptions annotationOptions = PointAnnotationOptions(
+          geometry: point, // Use the geometry directly
+          iconSize: 0.4, // Optional: Adjust size
+          image: imageData, // Optional: Provide your icon image name
+        );
+
+        // // Add the point annotation to the map
+        pointAnnotationManager?.create(annotationOptions);
+      }
     }
-    }
+  }
 
   _onMapCreated(MapboxMap mapboxMap) async {
-    this.mapboxMap = mapboxMap;
+    this.mapboxMap = mapboxMap;  
 
     // limit bounds
-    mapboxMap.setBounds(CameraBoundsOptions(minZoom: 12));
+    mapboxMap.setBounds(CameraBoundsOptions(minZoom: 10));
 
     // disable compass, scalebar, and rotation
     mapboxMap.compass.updateSettings(CompassSettings(enabled: false));
@@ -96,8 +97,6 @@ class MapHandler {
   }
 
   _onMapTapListener(MapContentGestureContext context) async {
-    pointAnnotationManager?.deleteAll();
-
     mapboxMap
         .queryRenderedFeatures(
             RenderedQueryGeometry(
@@ -106,56 +105,20 @@ class MapHandler {
                     .encode()),
                 type: Type.SCREEN_COORDINATE),
             RenderedQueryOptions(layerIds: [
-              'park-centroids',
-              'wpaa-centroids',
-              'pops-centroids',
-              'plaza-centroids'
+              'parks-properties-centroids',
+              'waterfront-public-access-areas',
+              'pops',
+              'pedestrian-plazas-centroids'
             ], filter: null))
-        .then((features) async {
+        .then((features) {
       if (features.isNotEmpty) {
-        var geojsonFeatureString =
-            jsonEncode(features[0]!.queriedFeature.feature);
-
-        Feature geojsonFeature =
-            Feature.fromJson(jsonDecode(geojsonFeatureString));
-
-        print(geojsonFeature);
-
-        Point point =
-            Point.fromJson(jsonDecode(jsonEncode(geojsonFeature.geometry)));
-
-        // flyTo the clicked feature
-
-        mapboxMap.flyTo(
-            CameraOptions(
-              center: point,
-            ),
-            null);
-
-        // add a marker
-
-        // Load the marker image as Uint8List
-        Uint8List imageData = await rootBundle
-            .load('assets/map-marker.png')
-            .then((byteData) => byteData.buffer.asUint8List());
-
-        // Create PointAnnotationOptions with the extracted coordinates
-        PointAnnotationOptions annotationOptions = PointAnnotationOptions(
-          geometry: point, // Use the geometry directly
-          iconSize: 0.4, // Optional: Adjust size
-          image: imageData, // Optional: Provide your icon image name,
-          iconAnchor: IconAnchor.BOTTOM,
-        );
-
-        // // Add the point annotation to the map
-        pointAnnotationManager?.create(annotationOptions);
-
         var layer = features[0]!.layers[0];
         var properties = features[0]!.queriedFeature.feature['properties'];
-        print(properties);
-        if (properties != null && properties is Map<Object?, Object?>) {
-          var signname = (properties['name'] as String?) ?? 'Unnamed Space';
-          updatePanelContent!(signname);
+        if (layer == 'parks-properties-centroids') {
+          if (properties != null && properties is Map<Object?, Object?>) {
+            var signname = properties['signname'] as String;
+            updatePanelContent!(signname);
+          }
         }
 
         _pc!.open();
@@ -164,8 +127,6 @@ class MapHandler {
   }
 
   _onMapScrollListener(MapContentGestureContext context) {
-    pointAnnotationManager?.deleteAll();
-
     // when the user moves the map, close the panel
     if (_pc != null && _pc!.isPanelOpen) {
       _pc!.close();

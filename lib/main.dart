@@ -71,7 +71,7 @@ class MyAppState extends State<MyApp> {
               maxHeight: 300, // The height of the expanded panel
             ),
             Positioned(
-              top: 100, // Positioning 100 pixels from the top of the screen
+              top: 56, // Positioning 100 pixels from the top of the screen
               left: 16, // Optional: adds some horizontal margin
               right: 16, // Optional: adds some horizontal margin
               child: SearchInput(),

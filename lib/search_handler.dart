@@ -8,7 +8,6 @@ import 'package:uuid/uuid.dart';
 import 'package:mapbox_maps_flutter/mapbox_maps_flutter.dart';
 
 class SearchInput extends StatefulWidget {
-
   const SearchInput({Key? key}) : super(key: key);
 
   @override
@@ -48,7 +47,7 @@ class _SearchInputState extends State<SearchInput> {
   // Called whenever the text in the search input changes
   void _onSearchChanged() {
     if (activeSelection) return;
-    
+
     if (_controller.text.isNotEmpty) {
       _searchLocations(_controller.text);
     } else {
@@ -93,10 +92,13 @@ class _SearchInputState extends State<SearchInput> {
         Point point = Point.fromJson(
             jsonDecode(jsonEncode(data['features'][0]['geometry'])));
 
-        activeSelection = true;
+        setState(() {
+          activeSelection = true;
 
-        _controller.text = data['features'][0]['properties']['full_address'];
+          _controller.text = data['features'][0]['properties']['full_address'];
 
+          _searchResults.clear(); // Clear the search results to hide the list
+        });
         // widget.mapboxMap?.flyTo(
         //     CameraOptions(
         //       center: point,
@@ -114,9 +116,70 @@ class _SearchInputState extends State<SearchInput> {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      mainAxisSize: MainAxisSize.min, // Allow the column to take minimal space
+    return Stack(
+      // mainAxisSize: MainAxisSize.min, // Allow the column to take minimal space
       children: [
+        // Display search results in a flexible list
+        if (_searchResults.isNotEmpty)
+          Flexible(
+            child: Transform.translate(
+              offset: Offset(0, -10), // Move the container upwards by 10 pixels
+              child: Container(
+                margin: EdgeInsets.only(
+                    top: 50,
+                    right: 1,
+                    left: 1), // Add some space between input and results
+                padding: EdgeInsets.only(
+                  top: 6, // Add top padding of 10 pixels
+                ),
+                decoration: BoxDecoration(
+                  color: Colors.white, // White background
+                  borderRadius: BorderRadius.only(
+                    bottomLeft:
+                        Radius.circular(8.0), // Rounded bottom left corner
+                    bottomRight:
+                        Radius.circular(8.0), // Rounded bottom right corner
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black26,
+                      blurRadius: 4.0,
+                      offset: Offset(0, 2), // Shadow positioning
+                    ),
+                  ],
+                ),
+                child: ListView.builder(
+                  padding: EdgeInsets.only(top: 8, bottom: 8),
+                  shrinkWrap: true,
+                  itemCount: _searchResults.length,
+                  itemBuilder: (context, index) {
+                    final result = _searchResults[index];
+                    return ListTile(
+                      title: Text(
+                        result['name'] ?? 'Unknown Location',
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold, // Make the title bold
+                          fontSize: 16, // Adjust the font size as needed
+                        ),
+                      ),
+                      subtitle: Text(
+                        result['full_address'] ?? '',
+                        style: TextStyle(
+                          fontSize: 12, // Make the subtitle smaller
+                          color: Colors
+                              .grey, // Optional: set a subtle color for the subtitle
+                        ),
+                      ),
+                      onTap: () {
+                        String mapboxId = result['mapbox_id'];
+                        _retrieveLocation(mapboxId);
+                      },
+                    );
+                  },
+                ),
+              ),
+            ),
+          ),
         // Search input with icons
         Container(
           padding: EdgeInsets.symmetric(horizontal: 10),
@@ -159,54 +222,6 @@ class _SearchInputState extends State<SearchInput> {
             ],
           ),
         ),
-        // Display search results in a flexible list
-        if (_searchResults.isNotEmpty)
-          Flexible(
-            child: Container(
-              margin: EdgeInsets.only(
-                  top: 0), // Add some space between input and results
-              decoration: BoxDecoration(
-                color: Colors.white, // White background
-                borderRadius: BorderRadius.circular(8.0), // Rounded corners
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black26,
-                    blurRadius: 4.0,
-                    offset: Offset(0, 2), // Shadow positioning
-                  ),
-                ],
-              ),
-              child: ListView.builder(
-                padding: EdgeInsets.only(top: 8, bottom: 8),
-                shrinkWrap: true,
-                itemCount: _searchResults.length,
-                itemBuilder: (context, index) {
-                  final result = _searchResults[index];
-                  return ListTile(
-                    title: Text(
-                      result['name'] ?? 'Unknown Location',
-                      style: TextStyle(
-                        fontWeight: FontWeight.bold, // Make the title bold
-                        fontSize: 16, // Adjust the font size as needed
-                      ),
-                    ),
-                    subtitle: Text(
-                      result['full_address'] ?? '',
-                      style: TextStyle(
-                        fontSize: 12, // Make the subtitle smaller
-                        color: Colors
-                            .grey, // Optional: set a subtle color for the subtitle
-                      ),
-                    ),
-                    onTap: () {
-                      String mapboxId = result['mapbox_id'];
-                      _retrieveLocation(mapboxId);
-                    },
-                  );
-                },
-              ),
-            ),
-          ),
       ],
     );
   }

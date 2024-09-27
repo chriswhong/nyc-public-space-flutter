@@ -48,6 +48,14 @@ class MapScreenState extends State<MapScreen> {
   Widget build(BuildContext context) {
     WidgetsFlutterBinding.ensureInitialized();
 
+    // Get the screen height using MediaQuery
+    double screenHeight = MediaQuery.of(context).size.height;
+
+    // Set minHeight and maxHeight as percentages of the screen height
+    double minHeight = screenHeight * 0.2;
+    double maxHeight = screenHeight * 0.7; 
+
+
     return MaterialApp(
         title: 'Flutter Demo',
         home: Scaffold(
@@ -90,8 +98,8 @@ class MapScreenState extends State<MapScreen> {
               body: _mapHandler.buildMap(),
               borderRadius:
                   const BorderRadius.vertical(top: Radius.circular(18.0)),
-              minHeight: 100, // The height of the collapsed panel
-              maxHeight: 300, // The height of the expanded panel
+              minHeight: minHeight, // The height of the collapsed panel
+              maxHeight: maxHeight, // The height of the expanded panel
             ),
             if (mapboxMap != null) ...[
               Positioned(

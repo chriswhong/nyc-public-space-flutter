@@ -38,6 +38,8 @@ class MapHandler {
     mapboxMap.compass.updateSettings(CompassSettings(enabled: false));
     mapboxMap.scaleBar.updateSettings(ScaleBarSettings(enabled: false));
     mapboxMap.gestures.updateSettings(GesturesSettings(rotateEnabled: false));
+    mapboxMap.logo.updateSettings(LogoSettings(marginBottom: 240, marginLeft: 15));
+    mapboxMap.attribution.updateSettings((AttributionSettings(marginBottom: 240, marginRight: 15)));
 
     var status = await Permission.locationWhenInUse.request();
     print("Location granted : $status");
@@ -105,7 +107,7 @@ class MapHandler {
           var signname = (properties['name'] as String?) ?? 'Unnamed Space';
           updatePanelContent!(signname);
         }
-        _pc!.open();
+        // _pc!.open();
       }
     });
   }

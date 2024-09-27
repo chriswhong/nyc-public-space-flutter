@@ -16,9 +16,11 @@ class MapScreenState extends State<MapScreen> {
   late final MapHandler _mapHandler;
   final PanelController _pc = PanelController();
   late final PanelHandler _panelHandler;
+
+  // map instance
   MapboxMap? mapboxMap;
 
-  // Callback function to receive the MapboxMapController from MapWidget
+  // passed into MapHandler, sets map instance after the map is created
   void _onMapCreated(MapboxMap mapInstance) {
     setState(() {
       mapboxMap = mapInstance;
@@ -31,40 +33,37 @@ class MapScreenState extends State<MapScreen> {
 
     // initialize panel handler, specify a function to run when the content is updated
     _panelHandler = PanelHandler(
-      onPanelContentUpdated:
-          _updatePanel, // Pass callback to handle state updates
+      onPanelContentUpdated: _updatePanel,
     );
 
     _mapHandler = MapHandler(_onMapCreated);
-    // Initialize map handler with panel handler functions if needed
+
+    // initialize map handler with panel handler function
+    // not sure why we have to do this on its own instead of passing them in to MapHandler() above
     _mapHandler.init(_pc, _panelHandler.updatePanelContent);
 
     ImageLoader.instance.loadImages();
   }
 
-  // Callback to trigger a rebuild when content changes
+  // callback to trigger a rebuild when content changes
   void _updatePanel() {
     setState(() {});
   }
 
   @override
   Widget build(BuildContext context) {
-    WidgetsFlutterBinding.ensureInitialized();
-
     return MaterialApp(
         title: 'Flutter Demo',
         home: Scaffold(
           body: FutureBuilder<void>(
-            future: ImageLoader.instance.images, // Wait for images to load
+            future: ImageLoader.instance.images,
             builder: (context, snapshot) {
               if (snapshot.connectionState == ConnectionState.waiting) {
-                // Show loading indicator while images are loading
+                // show loading indicator while images are loading
                 return Center(child: CircularProgressIndicator());
               } else if (snapshot.hasError) {
-                // Handle errors gracefully
                 return Center(child: Text('Error loading images'));
               } else {
-                // Images are loaded, pass them to MapHandler
                 return buildMapContent(context);
               }
             },
@@ -75,13 +74,13 @@ class MapScreenState extends State<MapScreen> {
   }
 
   Widget buildMapContent(BuildContext context) {
-    // Get the screen height using MediaQuery
+    // calculate min and max height for panel
     double screenHeight = MediaQuery.of(context).size.height;
-
-    // Set minHeight and maxHeight as percentages of the screen height
     double minHeight = screenHeight * 0.2;
     double maxHeight = screenHeight * 0.7;
+
     return Stack(children: <Widget>[
+      // map and panel
       SlidingUpPanel(
         controller: _pc,
         panel: Container(
@@ -116,25 +115,26 @@ class MapScreenState extends State<MapScreen> {
               ),
               _panelHandler.buildPanel(),
             ])),
-        onPanelSlide: _panelHandler.onPanelSlide,
         body: _mapHandler.buildMap(
-            parkImage: ImageLoader.instance.parkImage,
-            wpaaImage: ImageLoader.instance.wpaaImage,
-            popsImage: ImageLoader.instance.popsImage,
-            plazaImage: ImageLoader.instance.plazaImage,
+          parkImage: ImageLoader.instance.parkImage,
+          wpaaImage: ImageLoader.instance.wpaaImage,
+          popsImage: ImageLoader.instance.popsImage,
+          plazaImage: ImageLoader.instance.plazaImage,
         ),
         borderRadius: const BorderRadius.vertical(top: Radius.circular(18.0)),
-        minHeight: minHeight, // The height of the collapsed panel
-        maxHeight: maxHeight, // The height of the expanded panel
+        minHeight: minHeight,
+        maxHeight: maxHeight,
       ),
+      // search widget
       if (mapboxMap != null) ...[
         Positioned(
-          top: 56, // Positioning 100 pixels from the top of the screen
-          left: 16, // Optional: adds some horizontal margin
-          right: 16, // Optional: adds some horizontal margin
+          top: 56,
+          left: 16,
+          right: 16,
           child: SearchInput(mapboxMap: mapboxMap),
         ),
       ],
+      // locator button
       _panelHandler.buildFloatingLocatorButton(),
     ]);
   }

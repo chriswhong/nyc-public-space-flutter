@@ -1,5 +1,3 @@
-import 'dart:ffi';
-
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:http/http.dart' as http;
@@ -8,8 +6,10 @@ import 'package:uuid/uuid.dart';
 import 'package:mapbox_maps_flutter/mapbox_maps_flutter.dart';
 
 class SearchInput extends StatefulWidget {
+  // map instance
   final MapboxMap? mapboxMap;
 
+  // constructor
   const SearchInput({required this.mapboxMap});
 
   @override
@@ -17,22 +17,26 @@ class SearchInput extends StatefulWidget {
 }
 
 class _SearchInputState extends State<SearchInput> {
+  // controller for text input
   TextEditingController _controller = TextEditingController();
 
+  // list of search results
   List<dynamic> _searchResults = [];
 
-  String _accessToken = const String.fromEnvironment("ACCESS_TOKEN");
+  late String _accessToken;
 
+  // active selection (user has chosen a result)
   bool activeSelection = false;
 
-  late String _sessionToken; // Session token for tracking search sessions
-  final Uuid _uuid = Uuid(); // UUID generator instance
+  late String _sessionToken;
+  final Uuid _uuid = const Uuid();
 
   @override
   void initState() {
     super.initState();
     _resetSessionToken();
     _controller.addListener(_onSearchChanged);
+    _getAccessToken();
   }
 
   @override
@@ -41,17 +45,23 @@ class _SearchInputState extends State<SearchInput> {
     super.dispose();
   }
 
-  // Generate a new session token
+  // generate a new session token
   void _resetSessionToken() {
     _sessionToken = _uuid.v4(); // Generate a new UUID for the session
   }
 
-  // Called whenever the text in the search input changes
+  // get the Mapbox access token
+  void _getAccessToken() async {
+    _accessToken = await MapboxOptions.getAccessToken();
+  }
+
+  // called whenever the text in the search input changes
   void _onSearchChanged() {
     if (activeSelection) return;
 
+    // if there is text, trigger a search, otherwise clear the search results list
     if (_controller.text.isNotEmpty) {
-      _searchLocations(_controller.text);
+      _searchBoxSuggest(_controller.text);
     } else {
       setState(() {
         _searchResults.clear();
@@ -59,8 +69,8 @@ class _SearchInputState extends State<SearchInput> {
     }
   }
 
-  // Function to call the Mapbox Search Box API
-  Future<void> _searchLocations(String query) async {
+  // function to call the Mapbox Search Box API
+  Future<void> _searchBoxSuggest(String query) async {
     final url = Uri.parse(
         'https://api.mapbox.com/search/searchbox/v1/suggest?access_token=$_accessToken&q=$query&session_token=${_sessionToken}&proximity=-73.98282248131227,40.76154559516749');
 
@@ -81,7 +91,7 @@ class _SearchInputState extends State<SearchInput> {
   }
 
   // Function to call the retrieve API when a result is selected
-  Future<void> _retrieveLocation(String mapboxId) async {
+  Future<void> _searchBoxRetrieve(String mapboxId) async {
     final url = Uri.parse(
         'https://api.mapbox.com/search/searchbox/v1/retrieve/$mapboxId?session_token=$_sessionToken&access_token=$_accessToken');
 
@@ -108,10 +118,9 @@ class _SearchInputState extends State<SearchInput> {
             ),
             null);
 
-        // Close the keyboard
+        // close the keyboard
         FocusScope.of(context).unfocus();
 
-        // You can add further processing of the retrieved data here
       } else {
         print('Error retrieving location: ${response.body}');
       }
@@ -123,34 +132,32 @@ class _SearchInputState extends State<SearchInput> {
   @override
   Widget build(BuildContext context) {
     return Stack(
-      // mainAxisSize: MainAxisSize.min, // Allow the column to take minimal space
       children: [
-        // Display search results in a flexible list
         if (_searchResults.isNotEmpty)
           Flexible(
             child: Transform.translate(
-              offset: Offset(0, -10), // Move the container upwards by 10 pixels
+              offset: Offset(0, -10),
               child: Container(
                 margin: EdgeInsets.only(
                     top: 50,
                     right: 1,
-                    left: 1), // Add some space between input and results
+                    left: 1),
                 padding: EdgeInsets.only(
-                  top: 6, // Add top padding of 10 pixels
+                  top: 6, 
                 ),
                 decoration: BoxDecoration(
-                  color: Colors.white, // White background
+                  color: Colors.white, 
                   borderRadius: BorderRadius.only(
                     bottomLeft:
-                        Radius.circular(8.0), // Rounded bottom left corner
+                        Radius.circular(8.0), 
                     bottomRight:
-                        Radius.circular(8.0), // Rounded bottom right corner
+                        Radius.circular(8.0), 
                   ),
                   boxShadow: [
                     BoxShadow(
                       color: Colors.black26,
                       blurRadius: 4.0,
-                      offset: Offset(0, 2), // Shadow positioning
+                      offset: Offset(0, 2), 
                     ),
                   ],
                 ),
@@ -171,14 +178,14 @@ class _SearchInputState extends State<SearchInput> {
                       subtitle: Text(
                         result['full_address'] ?? '',
                         style: TextStyle(
-                          fontSize: 12, // Make the subtitle smaller
+                          fontSize: 12, 
                           color: Colors
-                              .grey, // Optional: set a subtle color for the subtitle
+                              .grey, 
                         ),
                       ),
                       onTap: () {
                         String mapboxId = result['mapbox_id'];
-                        _retrieveLocation(mapboxId);
+                        _searchBoxRetrieve(mapboxId);
                       },
                     );
                   },
@@ -186,7 +193,7 @@ class _SearchInputState extends State<SearchInput> {
               ),
             ),
           ),
-        // Search input with icons
+        // search input with icons
         Container(
           padding: EdgeInsets.symmetric(horizontal: 10),
           decoration: BoxDecoration(
@@ -196,12 +203,14 @@ class _SearchInputState extends State<SearchInput> {
           ),
           child: Row(
             children: [
+              // search icon
               FaIcon(
                 FontAwesomeIcons.magnifyingGlass,
                 color: Colors.grey,
                 size: 18,
               ),
               SizedBox(width: 10),
+              // text input
               Expanded(
                 child: TextField(
                   controller: _controller,
@@ -211,6 +220,7 @@ class _SearchInputState extends State<SearchInput> {
                   ),
                 ),
               ),
+              // close button
               if (_controller.text.isNotEmpty)
                 IconButton(
                   icon: FaIcon(

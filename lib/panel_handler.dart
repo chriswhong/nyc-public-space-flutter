@@ -3,37 +3,27 @@ import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:flutter_futz/public_space_properties.dart';
 
 class PanelHandler {
+  // initialize a variable to hold the name and type of the tapped feature
   PublicSpaceProperties _panelContent =
       PublicSpaceProperties(name: '', type: '');
-  double _fabHeight = 0;
 
-  final double _closedFabPosition = 120.0;
-  final double _openFabPosition = 300.0;
-
-  // Function to update state from parent widget
+  // function passed in from parent to listen for updates
   final VoidCallback? onPanelContentUpdated;
 
+  // constructor
   PanelHandler({this.onPanelContentUpdated});
 
-  void triggerStateUpdate() {
+  // update the panel content
+  void updatePanelContent(PublicSpaceProperties newContent) {
+    _panelContent = newContent;
+
+    // let parent component know state has been updated
     if (onPanelContentUpdated != null) {
-      onPanelContentUpdated!(); // Notify parent to update the state
+      onPanelContentUpdated!();
     }
   }
 
-  // Update the panel content
-  void updatePanelContent(PublicSpaceProperties newContent) {
-    _panelContent = newContent;
-    triggerStateUpdate();
-  }
-
-  // Panel Slide Listener
-  void onPanelSlide(double position) {
-    _fabHeight =
-        _closedFabPosition + (_openFabPosition - _closedFabPosition) * position;
-    triggerStateUpdate();
-  }
-
+// pill to display the type of public space
   Widget _buildPill(String type) {
     String typeLabel;
     Color typeColor;
@@ -41,56 +31,56 @@ class PanelHandler {
     switch (type) {
       case 'pops':
         typeLabel = 'Privately Owned Public Space';
-        typeColor = Color(0xAA6b82d6);
+        typeColor = const Color(0xAA6b82d6);
         break;
       case 'park':
         typeLabel = 'Park';
-        typeColor = Color(0xAA77bb3f);
+        typeColor = const Color(0xAA77bb3f);
         break;
       case 'wpaa':
         typeLabel = 'Waterfront Public Access Area';
-        typeColor = Color(0xAA0ad6f5);
+        typeColor = const Color(0xAA0ad6f5);
         break;
       case 'plaza':
         typeLabel = 'Street Plaza';
-        typeColor = Color(0xAAffbf47);
+        typeColor = const Color(0xAAffbf47);
         break;
-      // Add more cases as needed
       default:
         typeLabel = 'Unknown Type';
-        typeColor = Color(0xAACCCCCC);
+        typeColor = const Color(0xAACCCCCC);
     }
 
     return Chip(
-      backgroundColor: Colors.grey.shade200, // Light gray background
-      padding: EdgeInsets.symmetric(horizontal: 6, vertical: 2), // Less padding
-      shape: StadiumBorder(), // Ensures no border
-      visualDensity: VisualDensity.compact, // Ensures minimal spacing
+      backgroundColor: Colors.grey.shade200,
+      padding: const EdgeInsets.symmetric(
+          horizontal: 6, vertical: 2),
+      shape: const StadiumBorder(),
+      visualDensity: VisualDensity.compact,
       side: BorderSide.none,
       label: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          // Circle on the left
+          // circle
           Container(
             width: 11,
             height: 11,
             decoration: BoxDecoration(
-              color: typeColor, // Fill color for the circle
+              color: typeColor,
               shape: BoxShape.circle,
             ),
           ),
-          SizedBox(width: 4), // Space between the circle and text
-          // Text label
+          const SizedBox(width: 4),
+          // label
           Text(
             typeLabel,
-            style: TextStyle(fontSize: 12), // Smaller text
+            style: const TextStyle(fontSize: 12),
           ),
         ],
       ),
     );
   }
 
-  // Build Sliding Panel
+  // panel content
   Widget buildPanel() {
     return Stack(
       children: [
@@ -99,24 +89,23 @@ class PanelHandler {
           left: 10,
           right: 10,
           child: Container(
-            padding: EdgeInsets.all(8.0),
+            padding: const EdgeInsets.all(8.0),
             color:
-                Colors.white.withOpacity(0.8), // Optional: Add background color
+                Colors.white.withOpacity(0.8),
             child: Column(
-              // crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Row of pills above the title
+                // row of pills
                 Row(
                   children: [_buildPill(_panelContent.type)],
                 ),
-                SizedBox(height: 8),
-                // Title in bold
+                const SizedBox(height: 8),
+                // name
                 Row(
                   children: [
                     Flexible(
                       child: Text(
                         _panelContent.name,
-                        style: TextStyle(
+                        style: const TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.bold,
                         ),
@@ -139,20 +128,18 @@ class PanelHandler {
     return Positioned(
       top: 120.0,
       right: 15,
-      // bottom: _fabHeight,
       child: FloatingActionButton(
           onPressed: () {},
           backgroundColor: Colors.white,
-          
           shape: const CircleBorder(),
           mini: true,
           child: Transform.translate(
-            offset:
-                const Offset(-1, 1), // Adjust the icon's position: move left and down
+            offset: const Offset(
+                -1, 1),
             child: const FaIcon(
               FontAwesomeIcons.locationArrow,
               color: Colors.blue,
-              size: 20.0, // Adjust icon size to make it slightly smaller
+              size: 20.0,
             ),
           )),
     );

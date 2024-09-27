@@ -4,9 +4,10 @@ import 'package:mapbox_maps_flutter/mapbox_maps_flutter.dart';
 import 'package:flutter_futz/map_screen.dart';
 
 void main() {
-  // Ensure Flutter bindings are initialized
+  // ensure Flutter bindings are initialized
   WidgetsFlutterBinding.ensureInitialized();
 
+  // read the mapbox access token from environment variable
   String ACCESS_TOKEN = const String.fromEnvironment("ACCESS_TOKEN");
   MapboxOptions.setAccessToken(ACCESS_TOKEN);
 
@@ -35,10 +36,7 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   int _selectedIndex = 0;
 
-
-
-
-  // List of pages for the navigation
+  // list of pages for the navigation
   static List<Widget> _pages = <Widget>[
     MapScreen(),
     AboutScreen(),
@@ -53,6 +51,7 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      // show content for the selected index
       body: _pages[_selectedIndex],
       bottomNavigationBar: BottomNavigationBar(
         items: const <BottomNavigationBarItem>[

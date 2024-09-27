@@ -6,6 +6,7 @@ import 'package:permission_handler/permission_handler.dart';
 import 'package:sliding_up_panel/sliding_up_panel.dart';
 import 'dart:typed_data';
 import 'package:flutter/services.dart';
+import 'package:flutter_futz/public_space_properties.dart';
 
 class MapHandler {
   late MapboxMap mapboxMap;
@@ -15,9 +16,9 @@ class MapHandler {
 
   MapHandler( this.onMapCreated);
 
-  Function(String)? updatePanelContent;
+  Function(PublicSpaceProperties)? updatePanelContent;
 
-  void init(PanelController pc, Function(String) updateContent) {
+  void init(PanelController pc, Function(PublicSpaceProperties) updateContent) {
     _pc = pc;
     updatePanelContent = updateContent;
   }
@@ -104,8 +105,10 @@ class MapHandler {
         pointAnnotationManager?.create(annotationOptions);
         var properties = features[0]!.queriedFeature.feature['properties'];
         if (properties != null && properties is Map<Object?, Object?>) {
-          var signname = (properties['name'] as String?) ?? 'Unnamed Space';
-          updatePanelContent!(signname);
+          updatePanelContent!(PublicSpaceProperties(
+            name: (properties['name'] as String?) ?? 'Unnamed Space',
+            type: (properties['type'] as String)
+            ));
         }
         // _pc!.open();
       }

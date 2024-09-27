@@ -14,9 +14,14 @@ class MapHandler {
   PanelController? _pc;
   final Function onMapCreated;
 
-  MapHandler( this.onMapCreated);
+  MapHandler(this.onMapCreated);
 
   Function(PublicSpaceProperties)? updatePanelContent;
+
+  late Uint8List parkImage;
+  late Uint8List wpaaImage;
+  late Uint8List popsImage;
+  late Uint8List plazaImage;
 
   void init(PanelController pc, Function(PublicSpaceProperties) updateContent) {
     _pc = pc;
@@ -39,8 +44,10 @@ class MapHandler {
     mapboxMap.compass.updateSettings(CompassSettings(enabled: false));
     mapboxMap.scaleBar.updateSettings(ScaleBarSettings(enabled: false));
     mapboxMap.gestures.updateSettings(GesturesSettings(rotateEnabled: false));
-    mapboxMap.logo.updateSettings(LogoSettings(marginBottom: 240, marginLeft: 15));
-    mapboxMap.attribution.updateSettings((AttributionSettings(marginBottom: 240, marginRight: 15)));
+    mapboxMap.logo
+        .updateSettings(LogoSettings(marginBottom: 240, marginLeft: 15));
+    mapboxMap.attribution.updateSettings(
+        (AttributionSettings(marginBottom: 240, marginRight: 15)));
 
     var status = await Permission.locationWhenInUse.request();
     print("Location granted : $status");
@@ -71,33 +78,35 @@ class MapHandler {
       if (features.isNotEmpty) {
         var geojsonFeatureString =
             jsonEncode(features[0]!.queriedFeature.feature);
-
+          
         Feature geojsonFeature =
             Feature.fromJson(jsonDecode(geojsonFeatureString));
 
         Point point =
             Point.fromJson(jsonDecode(jsonEncode(geojsonFeature.geometry)));
 
-        // flyTo the clicked feature
+        String type = geojsonFeature.properties?['type'];
 
-        // mapboxMap.flyTo(
-        //     CameraOptions(
-        //       center: point,
-        //     ),
-        //     null);
+        Uint8List selectedImage;
 
-        // add a marker
+        if (type == 'park') {
+          selectedImage = parkImage;
+        } else if (type == 'wpaa') {
+          selectedImage = wpaaImage;
+        } else if (type == 'pops') {
+          selectedImage = popsImage;
+        } else if (type == 'plaza') {
+          selectedImage = plazaImage;
+        } else {
+          selectedImage = Uint8List(0); // Default or error case
+        }
 
-        // Load the marker image as Uint8List
-        Uint8List imageData = await rootBundle
-            .load('assets/map-marker.png')
-            .then((byteData) => byteData.buffer.asUint8List());
 
         // Create PointAnnotationOptions with the extracted coordinates
         PointAnnotationOptions annotationOptions = PointAnnotationOptions(
           geometry: point, // Use the geometry directly
-          iconSize: 0.4, // Optional: Adjust size
-          image: imageData, // Optional: Provide your icon image name,
+          iconSize: 1.5, // Optional: Adjust size
+          image: selectedImage, // Optional: Provide your icon image name,
           iconAnchor: IconAnchor.BOTTOM,
         );
 
@@ -106,10 +115,11 @@ class MapHandler {
         var properties = features[0]!.queriedFeature.feature['properties'];
         if (properties != null && properties is Map<Object?, Object?>) {
           updatePanelContent!(PublicSpaceProperties(
-            name: (properties['name'] as String?) ?? 'Unnamed Space',
-            type: (properties['type'] as String)
-            ));
+              name: (properties['name'] as String?) ?? 'Unnamed Space',
+              type: (properties['type'] as String)));
         }
+
+
         // _pc!.open();
       }
     });
@@ -123,7 +133,15 @@ class MapHandler {
     // pointAnnotationManager?.deleteAll;
   }
 
-  Widget buildMap() {
+  Widget buildMap(
+      {required Uint8List parkImage,
+      required Uint8List wpaaImage,
+      required Uint8List popsImage,
+      required Uint8List plazaImage}) {
+    this.parkImage = parkImage;
+    this.wpaaImage = wpaaImage;
+    this.popsImage = popsImage;
+    this.plazaImage = plazaImage;
     return MapWidget(
       styleUri: 'mapbox://styles/chriswhongmapbox/clzu4xoh900oz01qsgnxq8sf1',
       cameraOptions: CameraOptions(

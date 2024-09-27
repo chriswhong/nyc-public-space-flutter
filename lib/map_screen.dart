@@ -15,6 +15,14 @@ class MapScreenState extends State<MapScreen> {
   late final MapHandler _mapHandler;
   final PanelController _pc = PanelController();
   late final PanelHandler _panelHandler;
+  MapboxMap? mapboxMap;
+
+  // Callback function to receive the MapboxMapController from MapWidget
+  void _onMapCreated(MapboxMap mapInstance) {
+    setState(() {
+      mapboxMap = mapInstance;
+    });
+  }
 
   @override
   void initState() {
@@ -26,7 +34,7 @@ class MapScreenState extends State<MapScreen> {
           _updatePanel, // Pass callback to handle state updates
     );
 
-    _mapHandler = MapHandler(context);
+    _mapHandler = MapHandler(_onMapCreated);
     // Initialize map handler with panel handler functions if needed
     _mapHandler.init(_pc, _panelHandler.updatePanelContent);
   }
@@ -85,12 +93,14 @@ class MapScreenState extends State<MapScreen> {
               minHeight: 100, // The height of the collapsed panel
               maxHeight: 300, // The height of the expanded panel
             ),
-            Positioned(
-              top: 56, // Positioning 100 pixels from the top of the screen
-              left: 16, // Optional: adds some horizontal margin
-              right: 16, // Optional: adds some horizontal margin
-              child: SearchInput(),
-            ),
+            if (mapboxMap != null) ...[
+              Positioned(
+                top: 56, // Positioning 100 pixels from the top of the screen
+                left: 16, // Optional: adds some horizontal margin
+                right: 16, // Optional: adds some horizontal margin
+                child: SearchInput(mapboxMap: mapboxMap),
+              ),
+            ],
             _panelHandler.buildFloatingButton(),
           ]),
           // body:

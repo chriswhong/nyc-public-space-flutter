@@ -8,7 +8,9 @@ import 'package:uuid/uuid.dart';
 import 'package:mapbox_maps_flutter/mapbox_maps_flutter.dart';
 
 class SearchInput extends StatefulWidget {
-  const SearchInput({Key? key}) : super(key: key);
+  final MapboxMap? mapboxMap;
+
+  const SearchInput({required this.mapboxMap});
 
   @override
   _SearchInputState createState() => _SearchInputState();
@@ -99,11 +101,15 @@ class _SearchInputState extends State<SearchInput> {
 
           _searchResults.clear(); // Clear the search results to hide the list
         });
-        // widget.mapboxMap?.flyTo(
-        //     CameraOptions(
-        //       center: point,
-        //     ),
-        //     null);
+
+        widget.mapboxMap?.flyTo(
+            CameraOptions(
+              center: point,
+            ),
+            null);
+
+        // Close the keyboard
+        FocusScope.of(context).unfocus();
 
         // You can add further processing of the retrieved data here
       } else {
@@ -214,7 +220,9 @@ class _SearchInputState extends State<SearchInput> {
                   ),
                   onPressed: () {
                     _controller.clear();
+
                     setState(() {
+                      activeSelection = false;
                       _searchResults.clear();
                     });
                   },

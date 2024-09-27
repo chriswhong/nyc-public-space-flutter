@@ -135,7 +135,7 @@ class MapScreenState extends State<MapScreen> {
           child: SearchInput(mapboxMap: mapboxMap),
         ),
       ],
-      _panelHandler.buildFloatingButton(),
+      _panelHandler.buildFloatingLocatorButton(),
     ]);
   }
 }

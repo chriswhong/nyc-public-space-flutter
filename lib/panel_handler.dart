@@ -134,19 +134,27 @@ class PanelHandler {
     );
   }
 
-  // Build Floating Action Button
-  Widget buildFloatingButton() {
+  // Floating Locator Button
+  Widget buildFloatingLocatorButton() {
     return Positioned(
-      right: 20.0,
-      bottom: _fabHeight,
+      top: 120.0,
+      right: 15,
+      // bottom: _fabHeight,
       child: FloatingActionButton(
-        onPressed: () {},
-        backgroundColor: Colors.white,
-        child: const FaIcon(
-          FontAwesomeIcons.locationArrow,
-          color: Colors.blue,
-        ),
-      ),
+          onPressed: () {},
+          backgroundColor: Colors.white,
+          
+          shape: const CircleBorder(),
+          mini: true,
+          child: Transform.translate(
+            offset:
+                const Offset(-1, 1), // Adjust the icon's position: move left and down
+            child: const FaIcon(
+              FontAwesomeIcons.locationArrow,
+              color: Colors.blue,
+              size: 20.0, // Adjust icon size to make it slightly smaller
+            ),
+          )),
     );
   }
 }

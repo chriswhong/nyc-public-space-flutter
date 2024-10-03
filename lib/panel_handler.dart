@@ -1,29 +1,45 @@
 import 'package:flutter/material.dart';
-import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:flutter_futz/public_space_properties.dart';
 
-class PanelHandler {
-  // initialize a variable to hold the name and type of the tapped feature
-  PublicSpaceProperties _panelContent =
-      PublicSpaceProperties(name: '', type: '');
+class PanelHandler extends StatefulWidget {
+  final PublicSpaceFeature? selectedFeature; // Feature passed from parent
+  final VoidCallback? onClosePanel; // Callback to close the panel
+  final VoidCallback? onPanelContentUpdated; // Callback to close the panel
 
-  // function passed in from parent to listen for updates
-  final VoidCallback? onPanelContentUpdated;
+  const PanelHandler({
+    Key? key,
+    required this.selectedFeature,
+    this.onPanelContentUpdated,
+    this.onClosePanel,
+  }) : super(key: key);
 
-  // constructor
-  PanelHandler({this.onPanelContentUpdated});
+  @override
+  _PanelHandlerState createState() => _PanelHandlerState();
+}
 
-  // update the panel content
-  void updatePanelContent(PublicSpaceProperties newContent) {
-    _panelContent = newContent;
+class _PanelHandlerState extends State<PanelHandler> {
+  late PublicSpaceProperties? _panelContent;
 
-    // let parent component know state has been updated
-    if (onPanelContentUpdated != null) {
-      onPanelContentUpdated!();
+  @override
+  void initState() {
+    super.initState();
+    // Initialize with an empty feature or the passed selectedFeature
+    _panelContent = widget.selectedFeature?.properties;
+  }
+
+  // Update the panel when the selectedFeature changes
+  @override
+  void didUpdateWidget(PanelHandler oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.selectedFeature != oldWidget.selectedFeature &&
+        widget.selectedFeature != null) {
+      setState(() {
+        _panelContent = widget.selectedFeature!.properties;
+      });
     }
   }
 
-// pill to display the type of public space
+  // Method to build a pill showing the type of public space
   Widget _buildPill(String type) {
     String typeLabel;
     Color typeColor;
@@ -52,15 +68,13 @@ class PanelHandler {
 
     return Chip(
       backgroundColor: Colors.grey.shade200,
-      padding: const EdgeInsets.symmetric(
-          horizontal: 6, vertical: 2),
+      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
       shape: const StadiumBorder(),
       visualDensity: VisualDensity.compact,
       side: BorderSide.none,
       label: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          // circle
           Container(
             width: 11,
             height: 11,
@@ -70,7 +84,6 @@ class PanelHandler {
             ),
           ),
           const SizedBox(width: 4),
-          // label
           Text(
             typeLabel,
             style: const TextStyle(fontSize: 12),
@@ -80,8 +93,13 @@ class PanelHandler {
     );
   }
 
-  // panel content
-  Widget buildPanel() {
+  // Panel content widget
+  @override
+  Widget build(BuildContext context) {
+    // If _panelContent is null, don't render the panel content
+    if (_panelContent == null) {
+      return const SizedBox.shrink(); // Return an empty widget
+    }
     return Stack(
       children: [
         Positioned(
@@ -90,21 +108,20 @@ class PanelHandler {
           right: 10,
           child: Container(
             padding: const EdgeInsets.all(8.0),
-            color:
-                Colors.white.withOpacity(0.8),
+            color: Colors.white.withOpacity(0.8),
             child: Column(
               children: [
-                // row of pills
+                // Row of pills
                 Row(
-                  children: [_buildPill(_panelContent.type)],
+                  children: [_buildPill(_panelContent!.type)],
                 ),
                 const SizedBox(height: 8),
-                // name
+                // Name of the selected feature
                 Row(
                   children: [
                     Flexible(
                       child: Text(
-                        _panelContent.name,
+                        _panelContent!.name,
                         style: const TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.bold,
@@ -114,34 +131,22 @@ class PanelHandler {
                       ),
                     ),
                   ],
-                )
+                ),
               ],
             ),
           ),
         ),
+        // Add close button in the top-right corner
+        Positioned(
+          right: 10,
+          top: 10,
+          child: IconButton(
+            icon: const Icon(Icons.close, color: Colors.black),
+            onPressed:
+                widget.onClosePanel, // Call the close function when tapped
+          ),
+        ),
       ],
-    );
-  }
-
-  // Floating Locator Button
-  Widget buildFloatingLocatorButton() {
-    return Positioned(
-      top: 120.0,
-      right: 15,
-      child: FloatingActionButton(
-          onPressed: () {},
-          backgroundColor: Colors.white,
-          shape: const CircleBorder(),
-          mini: true,
-          child: Transform.translate(
-            offset: const Offset(
-                -1, 1),
-            child: const FaIcon(
-              FontAwesomeIcons.locationArrow,
-              color: Colors.blue,
-              size: 20.0,
-            ),
-          )),
     );
   }
 }

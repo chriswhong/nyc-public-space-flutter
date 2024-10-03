@@ -34,6 +34,7 @@ dependencies:
   mapbox_maps_flutter: ^2.2.1
   permission_handler: ^10.0.0
   font_awesome_flutter: ^10.1.0
+  geolocator: ^9.0.0
 
 
   # The following adds the Cupertino Icons font to your application.

@@ -134,7 +134,9 @@ class _SearchInputState extends State<SearchInput> {
     return Stack(
       children: [
         if (_searchResults.isNotEmpty)
-          Flexible(
+        SizedBox(
+          height: 400,
+          child: Flexible(
             child: Transform.translate(
               offset: Offset(0, -10),
               child: Container(
@@ -192,7 +194,7 @@ class _SearchInputState extends State<SearchInput> {
                 ),
               ),
             ),
-          ),
+          )),
         // search input with icons
         Container(
           padding: EdgeInsets.symmetric(horizontal: 10),

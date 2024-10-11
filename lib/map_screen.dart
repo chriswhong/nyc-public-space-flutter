@@ -81,14 +81,14 @@ class MapScreenState extends State<MapScreen> {
   Widget buildMapContent(BuildContext context) {
     // calculate min and max height for panel
     double screenHeight = MediaQuery.of(context).size.height;
-    double minHeight = screenHeight * 0.2;
+    // double minHeight = screenHeight * 0.3;
     double maxHeight = screenHeight * 0.7;
 
     return Stack(children: <Widget>[
       // map and panel
       SlidingUpPanel(
         controller: _pc,
-        snapPoint: 0.3,
+        snapPoint: 0.35,
         panel: Container(
             decoration: BoxDecoration(
               color: Colors.white,

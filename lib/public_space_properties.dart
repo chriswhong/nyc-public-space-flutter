@@ -1,11 +1,13 @@
 import 'package:mapbox_maps_flutter/mapbox_maps_flutter.dart';
 
 class PublicSpaceProperties {
-  final String name;
   final String type;
+  final String? name;
+  final String? location;
+  final Uri? url;
 
   // constructor to initialize the properties
-  PublicSpaceProperties({required this.name, required this.type});
+  PublicSpaceProperties({required this.name, required this.type, required this.location, required this.url});
 
   // optional: Add a toString method for easier debugging
   @override
@@ -35,6 +37,8 @@ class PublicSpaceFeature {
       'properties': {
         'name': properties.name,
         'type': properties.type,
+        'location': properties.location,
+        'url': properties.url,
       },
     };
   }
@@ -45,8 +49,10 @@ class PublicSpaceFeature {
       type: json['type'],
       geometry: Point.fromJson(json['geometry']),
       properties: PublicSpaceProperties(
-        name: json['properties']['name'] ?? 'No Name Provided',
+        name: json['properties']['name'],
         type: json['properties']['type'],
+        location: json['properties']['location'],
+        url: json['properties']['url'] != null ? Uri.parse(json['properties']['url']) : null,  // Parse the URL
       ),
     );
   }

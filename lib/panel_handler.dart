@@ -1,5 +1,8 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_futz/public_space_properties.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:url_launcher/url_launcher.dart'; // Import the url_launcher package
 
 class PanelHandler extends StatefulWidget {
   final PublicSpaceFeature? selectedFeature; // Feature passed from parent
@@ -18,13 +21,13 @@ class PanelHandler extends StatefulWidget {
 }
 
 class _PanelHandlerState extends State<PanelHandler> {
-  late PublicSpaceProperties? _panelContent;
+  late PublicSpaceFeature? _panelContent;
 
   @override
   void initState() {
     super.initState();
     // Initialize with an empty feature or the passed selectedFeature
-    _panelContent = widget.selectedFeature?.properties;
+    _panelContent = widget.selectedFeature;
   }
 
   // Update the panel when the selectedFeature changes
@@ -34,9 +37,35 @@ class _PanelHandlerState extends State<PanelHandler> {
     if (widget.selectedFeature != oldWidget.selectedFeature &&
         widget.selectedFeature != null) {
       setState(() {
-        _panelContent = widget.selectedFeature!.properties;
+        _panelContent = widget.selectedFeature;
       });
     }
+  }
+
+  // Function to launch URL
+  Future<void> _launchURL(url) async {
+    if (await canLaunchUrl(url)) {
+      await launchUrl(url);
+    } else {
+      throw 'Could not launch $url';
+    }
+  }
+
+  // Function to open Apple Maps with navigation to the provided latitude and longitude
+  Future<void> _openAppleMaps(double latitude, double longitude) async {
+    Uri getMapLaunchUri(double latitude, double longitude) {
+    if (Platform.isAndroid) {
+      return Uri.parse('geo:$latitude,$longitude');
+    } else if (Platform.isIOS) {
+      return Uri.parse('https://maps.apple.com/?daddr=$latitude,$longitude');
+    } else {
+      throw Exception('Platform not supported');
+    }
+  }
+
+  final uri = getMapLaunchUri(latitude, longitude);
+      await launchUrl(uri, mode: LaunchMode.externalApplication);
+
   }
 
   // Method to build a pill showing the type of public space
@@ -113,7 +142,7 @@ class _PanelHandlerState extends State<PanelHandler> {
               children: [
                 // Row of pills
                 Row(
-                  children: [_buildPill(_panelContent!.type)],
+                  children: [_buildPill(_panelContent!.properties.type)],
                 ),
                 const SizedBox(height: 8),
                 // Name of the selected feature
@@ -121,7 +150,7 @@ class _PanelHandlerState extends State<PanelHandler> {
                   children: [
                     Flexible(
                       child: Text(
-                        _panelContent!.name,
+                        _panelContent!.properties.name ?? '',
                         style: const TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.bold,
@@ -132,6 +161,95 @@ class _PanelHandlerState extends State<PanelHandler> {
                     ),
                   ],
                 ),
+                Row(
+                  children: [
+                    Flexible(
+                      child: Text(
+                        _panelContent!.properties.location ?? '',
+                        style: const TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.normal,
+                        ),
+                        softWrap: true, // Allows the text to wrap
+                        overflow: TextOverflow.visible, // Ensures no clipping
+                      ),
+                    ),
+                  ],
+                ),
+                Padding(
+                  padding:
+                      const EdgeInsets.all(8.0), // Add padding around the row
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment
+                        .spaceEvenly, // Evenly space the buttons
+                    children: [
+                      // First button for "Get Directions"
+                      Column(
+                        children: [
+                          Container(
+                            decoration: BoxDecoration(
+                              color: Colors.grey[300], // Light gray background
+                              shape: BoxShape.circle, // Circular shape
+                            ),
+                            child: IconButton(
+                              icon: FaIcon(
+                                FontAwesomeIcons
+                                    .locationArrow, // Navigation icon
+                                size: 20, // Icon size
+                                color: Colors.grey[800], // Dark gray icon
+                              ),
+                              onPressed: () {
+                                _openAppleMaps(
+                                    (_panelContent!.geometry.coordinates.lat)
+                                        .toDouble(),
+                                    (_panelContent!.geometry.coordinates.lng)
+                                        .toDouble());
+                              },
+                              tooltip: 'Get Directions',
+                            ),
+                          ),
+                          SizedBox(height: 4), // Space between icon and text
+                          Text(
+                            'Get Directions',
+                            style: TextStyle(fontSize: 12), // Small text label
+                          ),
+                        ],
+                      ),
+
+                      // Second button for "More Info"
+                      if (_panelContent != null &&
+                          _panelContent!.properties.url != null)
+                        Column(
+                          children: [
+                            Container(
+                              decoration: BoxDecoration(
+                                color:
+                                    Colors.grey[300], // Light gray background
+                                shape: BoxShape.circle, // Circular shape
+                              ),
+                              child: IconButton(
+                                icon: FaIcon(
+                                  FontAwesomeIcons.infoCircle, // Web info icon
+                                  size: 20, // Icon size
+                                  color: Colors.grey[800], // Dark gray icon
+                                ),
+                                onPressed: () {
+                                  _launchURL(_panelContent!.properties.url);
+                                },
+                                tooltip: 'More Info',
+                              ),
+                            ),
+                            SizedBox(height: 4), // Space between icon and text
+                            Text(
+                              'More Info',
+                              style:
+                                  TextStyle(fontSize: 12), // Small text label
+                            ),
+                          ],
+                        ),
+                    ],
+                  ),
+                )
               ],
             ),
           ),

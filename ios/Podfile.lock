@@ -16,12 +16,15 @@ PODS:
   - permission_handler_apple (9.1.1):
     - Flutter
   - Turf (2.8.0)
+  - url_launcher_ios (0.0.1):
+    - Flutter
 
 DEPENDENCIES:
   - Flutter (from `Flutter`)
   - geolocator_apple (from `.symlinks/plugins/geolocator_apple/ios`)
   - mapbox_maps_flutter (from `.symlinks/plugins/mapbox_maps_flutter/ios`)
   - permission_handler_apple (from `.symlinks/plugins/permission_handler_apple/ios`)
+  - url_launcher_ios (from `.symlinks/plugins/url_launcher_ios/ios`)
 
 SPEC REPOS:
   trunk:
@@ -39,6 +42,8 @@ EXTERNAL SOURCES:
     :path: ".symlinks/plugins/mapbox_maps_flutter/ios"
   permission_handler_apple:
     :path: ".symlinks/plugins/permission_handler_apple/ios"
+  url_launcher_ios:
+    :path: ".symlinks/plugins/url_launcher_ios/ios"
 
 SPEC CHECKSUMS:
   Flutter: e0871f40cf51350855a761d2e70bf5af5b9b5de7
@@ -49,6 +54,7 @@ SPEC CHECKSUMS:
   MapboxMaps: fc1b2ab98563d0157ba01f6e4a2fd8a8af556d92
   permission_handler_apple: e76247795d700c14ea09e3a2d8855d41ee80a2e6
   Turf: aa2ede4298009639d10db36aba1a7ebaad072a5e
+  url_launcher_ios: 5334b05cef931de560670eeae103fd3e431ac3fe
 
 PODFILE CHECKSUM: 819463e6a0290f5a72f145ba7cde16e8b6ef0796
 

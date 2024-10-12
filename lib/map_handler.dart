@@ -5,7 +5,7 @@ import 'package:mapbox_maps_flutter/mapbox_maps_flutter.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'dart:typed_data';
 import 'package:flutter/services.dart';
-import 'package:flutter_futz/public_space_properties.dart';
+import 'package:nyc_public_space_map/public_space_properties.dart';
 
 class MapHandler extends StatefulWidget {
   final PublicSpaceFeature? selectedFeature; // Pass selectedFeature from parent

@@ -1,5 +1,5 @@
-name: flutter_futz
-description: "A new Flutter project."
+name: nyc_public_space_map
+description: "A consolidated map of public spaces in New York City."
 # The following line prevents the package from being accidentally published to
 # pub.dev using `flutter pub publish`. This is preferred for private packages.
 publish_to: 'none' # Remove this line if you wish to publish to pub.dev
@@ -36,6 +36,7 @@ dependencies:
   font_awesome_flutter: ^10.1.0
   geolocator: ^9.0.0
   url_launcher: ^6.0.20
+  flutter_launcher_icons: ^0.10.0
 
 
   # The following adds the Cupertino Icons font to your application.
@@ -43,6 +44,11 @@ dependencies:
   cupertino_icons: ^1.0.8
   http: ^1.2.2
   uuid: ^4.5.0
+
+flutter_icons:
+  android: true
+  ios: true
+  image_path: "assets/icon/app_icon.png" 
 
 dev_dependencies:
   flutter_test:

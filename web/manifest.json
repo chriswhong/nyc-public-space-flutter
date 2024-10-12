@@ -1,6 +1,6 @@
 {
-    "name": "flutter_futz",
-    "short_name": "flutter_futz",
+    "name": "nyc_public_space_map",
+    "short_name": "nyc_public_space_map",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#0175C2",

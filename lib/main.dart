@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:mapbox_maps_flutter/mapbox_maps_flutter.dart';
-import 'package:flutter_futz/map_screen.dart';
+import 'package:nyc_public_space_map/map_screen.dart';
 
 void main() {
   // ensure Flutter bindings are initialized

@@ -1,6 +1,6 @@
-# flutter_futz
+# NYC Public Space Map
 
-A new Flutter project.
+A consolidated map of public spaces in New York City.
 
 ## Getting Started
 

@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_futz/public_space_properties.dart';
+import 'package:nyc_public_space_map/public_space_properties.dart';
 import 'package:sliding_up_panel/sliding_up_panel.dart';
 import 'package:mapbox_maps_flutter/mapbox_maps_flutter.dart';
 
-import 'package:flutter_futz/map_handler.dart';
-import 'package:flutter_futz/panel_handler.dart';
-import 'package:flutter_futz/search_handler.dart';
-import 'package:flutter_futz/image_loader.dart';
-import 'package:flutter_futz/floating_locator_button.dart';
+import 'package:nyc_public_space_map/map_handler.dart';
+import 'package:nyc_public_space_map/panel_handler.dart';
+import 'package:nyc_public_space_map/search_handler.dart';
+import 'package:nyc_public_space_map/image_loader.dart';
+import 'package:nyc_public_space_map/floating_locator_button.dart';
 
 class MapScreen extends StatefulWidget {
   @override

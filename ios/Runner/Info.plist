@@ -47,14 +47,18 @@
 	<true/>
 	<!-- Permission options for the `location` group -->
     <key>NSLocationWhenInUseUsageDescription</key>
-    <string>Need location when in use</string>
+    <string>This app will show your current location on the map</string>
     <key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
-    <string>Always and when in use!</string>
+    <string>This app will show your current location on the map</string>
     <key>NSLocationUsageDescription</key>
-    <string>Older devices need location.</string>
+    <string>This app will show your current location on the map</string>
     <key>NSLocationAlwaysUsageDescription</key>
-    <string>Can I haz location always?</string>
+    <string>This app will show your current location on the map</string>
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
+	<key>LSApplicationQueriesSchemes</key>
+	<array>
+		<string>comgooglemaps</string>
+	</array>
 </dict>
 </plist>

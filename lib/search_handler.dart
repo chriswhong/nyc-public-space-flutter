@@ -10,7 +10,7 @@ class SearchInput extends StatefulWidget {
   final MapboxMap? mapboxMap;
 
   // constructor
-  const SearchInput({required this.mapboxMap});
+  const SearchInput({super.key, required this.mapboxMap});
 
   @override
   _SearchInputState createState() => _SearchInputState();
@@ -18,7 +18,7 @@ class SearchInput extends StatefulWidget {
 
 class _SearchInputState extends State<SearchInput> {
   // controller for text input
-  TextEditingController _controller = TextEditingController();
+  final TextEditingController _controller = TextEditingController();
 
   // list of search results
   List<dynamic> _searchResults = [];
@@ -72,7 +72,7 @@ class _SearchInputState extends State<SearchInput> {
   // function to call the Mapbox Search Box API
   Future<void> _searchBoxSuggest(String query) async {
     final url = Uri.parse(
-        'https://api.mapbox.com/search/searchbox/v1/suggest?access_token=$_accessToken&q=$query&session_token=${_sessionToken}&proximity=-73.98282248131227,40.76154559516749');
+        'https://api.mapbox.com/search/searchbox/v1/suggest?access_token=$_accessToken&q=$query&session_token=$_sessionToken&proximity=-73.98282248131227,40.76154559516749');
 
     try {
       final response = await http.get(url);
@@ -138,16 +138,16 @@ class _SearchInputState extends State<SearchInput> {
           height: 400,
           child: Flexible(
             child: Transform.translate(
-              offset: Offset(0, -10),
+              offset: const Offset(0, -10),
               child: Container(
-                margin: EdgeInsets.only(
+                margin: const EdgeInsets.only(
                     top: 50,
                     right: 1,
                     left: 1),
-                padding: EdgeInsets.only(
+                padding: const EdgeInsets.only(
                   top: 6, 
                 ),
-                decoration: BoxDecoration(
+                decoration: const BoxDecoration(
                   color: Colors.white, 
                   borderRadius: BorderRadius.only(
                     bottomLeft:
@@ -164,7 +164,7 @@ class _SearchInputState extends State<SearchInput> {
                   ],
                 ),
                 child: ListView.builder(
-                  padding: EdgeInsets.only(top: 8, bottom: 8),
+                  padding: const EdgeInsets.only(top: 8, bottom: 8),
                   shrinkWrap: true,
                   itemCount: _searchResults.length,
                   itemBuilder: (context, index) {
@@ -172,14 +172,14 @@ class _SearchInputState extends State<SearchInput> {
                     return ListTile(
                       title: Text(
                         result['name'] ?? 'Unknown Location',
-                        style: TextStyle(
+                        style: const TextStyle(
                           fontWeight: FontWeight.bold, // Make the title bold
                           fontSize: 16, // Adjust the font size as needed
                         ),
                       ),
                       subtitle: Text(
                         result['full_address'] ?? '',
-                        style: TextStyle(
+                        style: const TextStyle(
                           fontSize: 12, 
                           color: Colors
                               .grey, 
@@ -197,7 +197,7 @@ class _SearchInputState extends State<SearchInput> {
           )),
         // search input with icons
         Container(
-          padding: EdgeInsets.symmetric(horizontal: 10),
+          padding: const EdgeInsets.symmetric(horizontal: 10),
           decoration: BoxDecoration(
             color: Colors.white,
             borderRadius: BorderRadius.circular(8.0),
@@ -206,17 +206,17 @@ class _SearchInputState extends State<SearchInput> {
           child: Row(
             children: [
               // search icon
-              FaIcon(
+              const FaIcon(
                 FontAwesomeIcons.magnifyingGlass,
                 color: Colors.grey,
                 size: 18,
               ),
-              SizedBox(width: 10),
+              const SizedBox(width: 10),
               // text input
               Expanded(
                 child: TextField(
                   controller: _controller,
-                  decoration: InputDecoration(
+                  decoration: const InputDecoration(
                     border: InputBorder.none,
                     hintText: 'Search...',
                   ),
@@ -225,7 +225,7 @@ class _SearchInputState extends State<SearchInput> {
               // close button
               if (_controller.text.isNotEmpty)
                 IconButton(
-                  icon: FaIcon(
+                  icon: const FaIcon(
                     FontAwesomeIcons.xmark,
                     color: Colors.grey,
                     size: 18,

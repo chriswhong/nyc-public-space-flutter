@@ -10,11 +10,11 @@ class PanelHandler extends StatefulWidget {
   final VoidCallback? onPanelContentUpdated; // Callback to close the panel
 
   const PanelHandler({
-    Key? key,
+    super.key,
     required this.selectedFeature,
     this.onPanelContentUpdated,
     this.onClosePanel,
-  }) : super(key: key);
+  });
 
   @override
   _PanelHandlerState createState() => _PanelHandlerState();
@@ -51,21 +51,78 @@ class _PanelHandlerState extends State<PanelHandler> {
     }
   }
 
-  // Function to open Apple Maps with navigation to the provided latitude and longitude
-  Future<void> _openAppleMaps(double latitude, double longitude) async {
-    Uri getMapLaunchUri(double latitude, double longitude) {
-    if (Platform.isAndroid) {
-      return Uri.parse('geo:$latitude,$longitude');
-    } else if (Platform.isIOS) {
-      return Uri.parse('https://maps.apple.com/?daddr=$latitude,$longitude');
-    } else {
-      throw Exception('Platform not supported');
+  Future<void> _openMaps(
+      double latitude, double longitude, BuildContext context) async {
+    // Function to get the URI for Apple Maps or Google Maps
+    Uri getMapLaunchUri(double latitude, double longitude,
+        {bool isGoogleMaps = false}) {
+      if (Platform.isAndroid) {
+        // Use Google Maps URI for Android
+        return Uri.parse('google.navigation:q=$latitude,$longitude&mode=d');
+      } else if (Platform.isIOS) {
+        // Provide both Apple Maps and Google Maps options on iOS
+        if (isGoogleMaps) {
+          return Uri.parse(
+              'comgooglemaps://?daddr=$latitude,$longitude&directionsmode=driving');
+        } else {
+          return Uri.parse(
+              'https://maps.apple.com/?daddr=$latitude,$longitude');
+        }
+      } else {
+        throw Exception('Platform not supported');
+      }
     }
-  }
 
-  final uri = getMapLaunchUri(latitude, longitude);
-      await launchUrl(uri, mode: LaunchMode.externalApplication);
-
+    if (Platform.isIOS) {
+      // Show a dialog to choose between Apple Maps and Google Maps
+      await showDialog(
+        context: context, // Ensure this is within a valid BuildContext
+        builder: (BuildContext context) {
+          return AlertDialog(
+            title: Text('Choose Navigation App'),
+            content: Text('Which app would you like to use?'),
+            actions: <Widget>[
+              TextButton(
+                child: Text('Apple Maps'),
+                onPressed: () async {
+                  final uri = getMapLaunchUri(latitude, longitude);
+                  if (await canLaunchUrl(uri)) {
+                    await launchUrl(uri, mode: LaunchMode.externalApplication);
+                  } else {
+                    throw 'Could not launch Apple Maps';
+                  }
+                  Navigator.of(context).pop(); // Close the dialog
+                },
+              ),
+              TextButton(
+                child: Text('Google Maps'),
+                onPressed: () async {
+                  final uri =
+                      getMapLaunchUri(latitude, longitude, isGoogleMaps: true);
+                      print(uri);
+                  if (await canLaunchUrl(uri)) {
+                    await launchUrl(uri, mode: LaunchMode.externalApplication);
+                  } else {
+                    throw 'Could not launch Google Maps';
+                  }
+                  Navigator.of(context).pop(); // Close the dialog
+                },
+              ),
+            ],
+          );
+        },
+      );
+    } else if (Platform.isAndroid) {
+      // Directly launch Google Maps on Android
+      final uri = getMapLaunchUri(latitude, longitude);
+      print(uri);
+      if (await canLaunchUrl(uri)) {
+        await launchUrl(uri, mode: LaunchMode.externalApplication);
+      } else {
+        // Fallback if Google Maps is not available
+        throw 'Could not launch Google Maps';
+      }
+    }
   }
 
   // Method to build a pill showing the type of public space
@@ -90,14 +147,18 @@ class _PanelHandlerState extends State<PanelHandler> {
         typeLabel = 'Street Plaza';
         typeColor = const Color(0xAAffbf47);
         break;
+      case 'stp':
+        typeLabel = 'Schoolyards to Playgrounds';
+        typeColor = const Color(0xAAF55353);
+        break;
       default:
-        typeLabel = 'Unknown Type';
+        typeLabel = 'Miscellaneous';
         typeColor = const Color(0xAACCCCCC);
     }
 
     return Chip(
       backgroundColor: Colors.grey.shade200,
-      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+      // padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 0),
       shape: const StadiumBorder(),
       visualDensity: VisualDensity.compact,
       side: BorderSide.none,
@@ -144,7 +205,7 @@ class _PanelHandlerState extends State<PanelHandler> {
                 Row(
                   children: [_buildPill(_panelContent!.properties.type)],
                 ),
-                const SizedBox(height: 8),
+                const SizedBox(height: 0),
                 // Name of the selected feature
                 Row(
                   children: [
@@ -176,6 +237,7 @@ class _PanelHandlerState extends State<PanelHandler> {
                     ),
                   ],
                 ),
+                const SizedBox(height: 8),
                 Padding(
                   padding:
                       const EdgeInsets.all(8.0), // Add padding around the row
@@ -194,23 +256,25 @@ class _PanelHandlerState extends State<PanelHandler> {
                             child: IconButton(
                               icon: FaIcon(
                                 FontAwesomeIcons
-                                    .locationArrow, // Navigation icon
+                                    .diamondTurnRight, // Navigation icon
                                 size: 20, // Icon size
                                 color: Colors.grey[800], // Dark gray icon
                               ),
                               onPressed: () {
-                                _openAppleMaps(
+                                _openMaps(
                                     (_panelContent!.geometry.coordinates.lat)
                                         .toDouble(),
                                     (_panelContent!.geometry.coordinates.lng)
-                                        .toDouble());
+                                        .toDouble(),
+                                    context);
                               },
-                              tooltip: 'Get Directions',
+                              tooltip: 'Open in Maps',
                             ),
                           ),
-                          SizedBox(height: 4), // Space between icon and text
-                          Text(
-                            'Get Directions',
+                          const SizedBox(
+                              height: 4), // Space between icon and text
+                          const Text(
+                            'Open in Maps',
                             style: TextStyle(fontSize: 12), // Small text label
                           ),
                         ],
@@ -236,12 +300,13 @@ class _PanelHandlerState extends State<PanelHandler> {
                                 onPressed: () {
                                   _launchURL(_panelContent!.properties.url);
                                 },
-                                tooltip: 'More Info',
+                                tooltip: 'Website',
                               ),
                             ),
-                            SizedBox(height: 4), // Space between icon and text
-                            Text(
-                              'More Info',
+                            const SizedBox(
+                                height: 4), // Space between icon and text
+                            const Text(
+                              'Website',
                               style:
                                   TextStyle(fontSize: 12), // Small text label
                             ),
@@ -249,7 +314,7 @@ class _PanelHandlerState extends State<PanelHandler> {
                         ),
                     ],
                   ),
-                )
+                ),
               ],
             ),
           ),

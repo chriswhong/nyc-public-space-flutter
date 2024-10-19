@@ -1,4 +1,3 @@
-import 'dart:typed_data';
 import 'package:flutter/services.dart';
 
 // Singleton class to handle image loading and caching
@@ -17,6 +16,8 @@ class ImageLoader {
   late Uint8List wpaaImage;
   late Uint8List popsImage;
   late Uint8List plazaImage;
+  late Uint8List stpImage;
+  late Uint8List miscImage;
 
   // Method to load images
   Future<void> loadImages() async {
@@ -25,6 +26,9 @@ class ImageLoader {
       _loadImage('assets/wpaa.png').then((image) => wpaaImage = image),
       _loadImage('assets/pops.png').then((image) => popsImage = image),
       _loadImage('assets/plaza.png').then((image) => plazaImage = image),
+      _loadImage('assets/stp.png').then((image) => stpImage = image),
+      _loadImage('assets/misc.png').then((image) => miscImage = image),
+
     ]);
   }
 

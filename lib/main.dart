@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:flutter/services.dart';
 import 'package:mapbox_maps_flutter/mapbox_maps_flutter.dart';
 import 'package:nyc_public_space_map/map_screen.dart';
 
@@ -8,13 +8,20 @@ void main() {
   WidgetsFlutterBinding.ensureInitialized();
 
   // read the mapbox access token from environment variable
-  String ACCESS_TOKEN = const String.fromEnvironment("ACCESS_TOKEN");
-  MapboxOptions.setAccessToken(ACCESS_TOKEN);
+  String accessToken = const String.fromEnvironment("ACCESS_TOKEN");
+  MapboxOptions.setAccessToken(accessToken);
 
-  runApp(MyApp());
+    SystemChrome.setPreferredOrientations([
+    DeviceOrientation.portraitUp,
+    DeviceOrientation.portraitDown, // Optional: allow upside-down portrait
+  ]).then((_) {
+    runApp(MyApp());
+  });
 }
 
 class MyApp extends StatelessWidget {
+  const MyApp({super.key});
+
 
   @override
   Widget build(BuildContext context) {
@@ -29,6 +36,8 @@ class MyApp extends StatelessWidget {
 }
 
 class HomeScreen extends StatefulWidget {
+  const HomeScreen({super.key});
+
   @override
   _HomeScreenState createState() => _HomeScreenState();
 }
@@ -37,7 +46,7 @@ class _HomeScreenState extends State<HomeScreen> {
   int _selectedIndex = 0;
 
   // list of pages for the navigation
-  static List<Widget> _pages = <Widget>[
+  static final List<Widget> _pages = <Widget>[
     MapScreen(),
     AboutScreen(),
   ];
@@ -52,30 +61,32 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       // show content for the selected index
-      body: _pages[_selectedIndex],
-      bottomNavigationBar: BottomNavigationBar(
-        items: const <BottomNavigationBarItem>[
-          BottomNavigationBarItem(
-            icon: Icon(FontAwesomeIcons.map),
-            label: 'Map',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(FontAwesomeIcons.infoCircle),
-            label: 'About',
-          ),
-        ],
-        currentIndex: _selectedIndex,
-        selectedItemColor: Colors.blue,
-        onTap: _onItemTapped,
-      ),
+      body: MapScreen(),
+      // bottomNavigationBar: BottomNavigationBar(
+      //   items: const <BottomNavigationBarItem>[
+      //     BottomNavigationBarItem(
+      //       icon: Icon(FontAwesomeIcons.map),
+      //       label: 'Map',
+      //     ),
+      //     BottomNavigationBarItem(
+      //       icon: Icon(FontAwesomeIcons.infoCircle),
+      //       label: 'About',
+      //     ),
+      //   ],
+      //   currentIndex: _selectedIndex,
+      //   selectedItemColor: Colors.blue,
+      //   onTap: _onItemTapped,
+      // ),
     );
   }
 }
 
 class AboutScreen extends StatelessWidget {
+  const AboutScreen({super.key});
+
   @override
   Widget build(BuildContext context) {
-    return Center(
+    return const Center(
       child: Text(
         'About Screen',
         style: TextStyle(fontSize: 24),

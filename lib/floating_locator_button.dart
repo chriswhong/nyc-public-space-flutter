@@ -6,7 +6,7 @@ import 'package:geolocator/geolocator.dart' as geo;
 class FloatingLocatorButton extends StatelessWidget {
   final MapboxMap? mapboxMap;
 
-  FloatingLocatorButton({Key? key, this.mapboxMap}) : super(key: key);
+  const FloatingLocatorButton({super.key, this.mapboxMap});
 
   _handlePress() async {
     // Get the current position

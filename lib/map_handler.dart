@@ -11,13 +11,15 @@ class MapHandler extends StatefulWidget {
   final PublicSpaceFeature? selectedFeature; // Pass selectedFeature from parent
   final Function(PublicSpaceFeature)
       onFeatureSelected; // Callback to select feature
-  final Function(MapboxMap) onMapCreated; 
+  final Function(MapboxMap) onMapCreated;
   final Uint8List parkImage;
   final Uint8List wpaaImage;
   final Uint8List popsImage;
   final Uint8List plazaImage;
+  final Uint8List stpImage;
+  final Uint8List miscImage;
 
-  MapHandler({
+  const MapHandler({super.key, 
     required this.selectedFeature,
     required this.onMapCreated,
     required this.onFeatureSelected,
@@ -25,6 +27,8 @@ class MapHandler extends StatefulWidget {
     required this.wpaaImage,
     required this.popsImage,
     required this.plazaImage,
+    required this.stpImage,
+    required this.miscImage
   });
 
   @override
@@ -69,9 +73,13 @@ class _MapHandlerState extends State<MapHandler> {
         selectedImage = widget.popsImage;
       } else if (feature.properties.type == 'plaza') {
         selectedImage = widget.plazaImage;
+      } else if (feature.properties.type == 'stp') {
+        selectedImage = widget.stpImage;
       } else {
-        selectedImage = Uint8List(0); // Fallback to an empty image
+        selectedImage = widget.miscImage; // Fallback to an empty image
       }
+
+      print(selectedImage);
 
       // Create annotation options
       PointAnnotationOptions annotationOptions = PointAnnotationOptions(
@@ -101,9 +109,9 @@ class _MapHandlerState extends State<MapHandler> {
 
     // position logo and attribution
     mapboxMap.logo
-        .updateSettings(LogoSettings(marginBottom: 240, marginLeft: 15));
+        .updateSettings(LogoSettings(marginBottom: 75, marginLeft: 15));
     mapboxMap.attribution.updateSettings(
-        (AttributionSettings(marginBottom: 240, marginRight: 15)));
+        (AttributionSettings(marginBottom: 75, marginRight: 15)));
 
     // get location permission from the device
     var status = await Permission.locationWhenInUse.request();
@@ -133,7 +141,10 @@ class _MapHandlerState extends State<MapHandler> {
               'park-centroids',
               'wpaa-centroids',
               'pops-centroids',
-              'plaza-centroids'
+              'plaza-centroids',
+              'stp-centroids',
+              'nps-centroids',
+              'misc-centroids'
             ], filter: null))
         .then((features) async {
       if (features.isNotEmpty) {

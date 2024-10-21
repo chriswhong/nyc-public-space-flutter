@@ -4,6 +4,20 @@ import 'package:nyc_public_space_map/public_space_properties.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:url_launcher/url_launcher.dart'; // Import the url_launcher package
 
+String extractDomainFromUri(Uri? uri) {
+  // Define a regular expression to match the domain part of the URL
+  RegExp domainRegex = RegExp(r'^(?:https?:\/\/)?(?:www\.)?([^\/]+)');
+
+  // Use the RegExp to extract the domain
+  String? domain;
+  if (domainRegex.hasMatch(uri.toString())) {
+    domain = domainRegex.firstMatch(uri.toString())?.group(1);
+  }
+
+  return domain ??
+      'Invalid URI'; // Return the domain or 'Invalid URI' if it doesn't match
+}
+
 class PanelHandler extends StatefulWidget {
   final PublicSpaceFeature? selectedFeature; // Feature passed from parent
   final VoidCallback? onClosePanel; // Callback to close the panel
@@ -79,7 +93,7 @@ class _PanelHandlerState extends State<PanelHandler> {
         context: context, // Ensure this is within a valid BuildContext
         builder: (BuildContext context) {
           return AlertDialog(
-            title: Text('Choose Navigation App'),
+            title: Text('Open in Maps'),
             content: Text('Which app would you like to use?'),
             actions: <Widget>[
               TextButton(
@@ -99,7 +113,7 @@ class _PanelHandlerState extends State<PanelHandler> {
                 onPressed: () async {
                   final uri =
                       getMapLaunchUri(latitude, longitude, isGoogleMaps: true);
-                      print(uri);
+                  print(uri);
                   if (await canLaunchUrl(uri)) {
                     await launchUrl(uri, mode: LaunchMode.externalApplication);
                   } else {
@@ -123,6 +137,13 @@ class _PanelHandlerState extends State<PanelHandler> {
         throw 'Could not launch Google Maps';
       }
     }
+  }
+
+  Widget _lightDivider() {
+    return Divider(
+      color: const Color.fromARGB(255, 204, 204, 204), // Color of the line
+      thickness: 0.5, // Thickness of the line
+    );
   }
 
   // Method to build a pill showing the type of public space
@@ -156,36 +177,30 @@ class _PanelHandlerState extends State<PanelHandler> {
         typeColor = const Color(0xAACCCCCC);
     }
 
-    return Chip(
-      backgroundColor: Colors.grey.shade200,
-      // padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 0),
-      shape: const StadiumBorder(),
-      visualDensity: VisualDensity.compact,
-      side: BorderSide.none,
-      label: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Container(
-            width: 11,
-            height: 11,
-            decoration: BoxDecoration(
-              color: typeColor,
-              shape: BoxShape.circle,
-            ),
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Container(
+          width: 11,
+          height: 11,
+          decoration: BoxDecoration(
+            color: typeColor,
+            shape: BoxShape.circle,
           ),
-          const SizedBox(width: 4),
-          Text(
-            typeLabel,
-            style: const TextStyle(fontSize: 12),
-          ),
-        ],
-      ),
+        ),
+        const SizedBox(width: 8),
+        Text(
+          typeLabel,
+          style: const TextStyle(fontSize: 12),
+        ),
+      ],
     );
   }
 
-  // Panel content widget
   @override
   Widget build(BuildContext context) {
+    double screenWidth = MediaQuery.of(context).size.width;
+
     // If _panelContent is null, don't render the panel content
     if (_panelContent == null) {
       return const SizedBox.shrink(); // Return an empty widget
@@ -200,50 +215,58 @@ class _PanelHandlerState extends State<PanelHandler> {
             padding: const EdgeInsets.all(8.0),
             color: Colors.white.withOpacity(0.8),
             child: Column(
+              mainAxisSize: MainAxisSize
+                  .min, // This ensures the Column takes only necessary space
               children: [
-                // Row of pills
-                Row(
-                  children: [_buildPill(_panelContent!.properties.type)],
-                ),
-                const SizedBox(height: 0),
                 // Name of the selected feature
                 Row(
                   children: [
                     Flexible(
-                      child: Text(
-                        _panelContent!.properties.name ?? '',
-                        style: const TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
+                      child: Container(
+                        constraints: BoxConstraints(
+                            maxWidth:
+                                screenWidth - 75), // Set your desired max width
+                        child: Text(
+                          _panelContent!.properties.name ?? '',
+                          style: const TextStyle(
+                            fontSize: 20,
+                            fontWeight: FontWeight.bold,
+                          ),
+                          softWrap: true, // Allows the text to wrap
+                          overflow: TextOverflow.visible, // Ensures no clipping
                         ),
-                        softWrap: true, // Allows the text to wrap
-                        overflow: TextOverflow.visible, // Ensures no clipping
-                      ),
-                    ),
-                  ],
-                ),
-                Row(
-                  children: [
-                    Flexible(
-                      child: Text(
-                        _panelContent!.properties.location ?? '',
-                        style: const TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.normal,
-                        ),
-                        softWrap: true, // Allows the text to wrap
-                        overflow: TextOverflow.visible, // Ensures no clipping
                       ),
                     ),
                   ],
                 ),
                 const SizedBox(height: 8),
+                // Row of pills
+                Row(
+                  children: [_buildPill(_panelContent!.properties.type)],
+                ),
+                const SizedBox(height: 8),
+                // Location text
+                // Row(
+                //   children: [
+                //     Flexible(
+                //       child: Text(
+                //         _panelContent!.properties.location ?? '',
+                //         style: const TextStyle(
+                //           fontSize: 14,
+                //           fontWeight: FontWeight.normal,
+                //         ),
+                //         softWrap: true, // Allows the text to wrap
+                //         overflow: TextOverflow.visible, // Ensures no clipping
+                //       ),
+                //     ),
+                //   ],
+                // ),
+                const SizedBox(height: 8),
                 Padding(
                   padding:
                       const EdgeInsets.all(8.0), // Add padding around the row
                   child: Row(
-                    mainAxisAlignment: MainAxisAlignment
-                        .spaceEvenly, // Evenly space the buttons
+                    mainAxisAlignment: MainAxisAlignment.spaceEvenly, // Evenly space the buttons
                     children: [
                       // First button for "Get Directions"
                       Column(
@@ -262,11 +285,12 @@ class _PanelHandlerState extends State<PanelHandler> {
                               ),
                               onPressed: () {
                                 _openMaps(
-                                    (_panelContent!.geometry.coordinates.lat)
-                                        .toDouble(),
-                                    (_panelContent!.geometry.coordinates.lng)
-                                        .toDouble(),
-                                    context);
+                                  (_panelContent!.geometry.coordinates.lat)
+                                      .toDouble(),
+                                  (_panelContent!.geometry.coordinates.lng)
+                                      .toDouble(),
+                                  context,
+                                );
                               },
                               tooltip: 'Open in Maps',
                             ),
@@ -279,42 +303,111 @@ class _PanelHandlerState extends State<PanelHandler> {
                           ),
                         ],
                       ),
-
+                      SizedBox(width: 10),
+                      Column(
+                        children: [
+                          Container(
+                            decoration: BoxDecoration(
+                              color: Colors.grey[300], // Light gray background
+                              shape: BoxShape.circle, // Circular shape
+                            ),
+                            child: IconButton(
+                              icon: FaIcon(
+                                FontAwesomeIcons
+                                    .triangleExclamation, // Navigation icon
+                                size: 20, // Icon size
+                                color: Colors.grey[800], // Dark gray icon
+                              ),
+                              onPressed: () {
+                                _openMaps(
+                                  (_panelContent!.geometry.coordinates.lat)
+                                      .toDouble(),
+                                  (_panelContent!.geometry.coordinates.lng)
+                                      .toDouble(),
+                                  context,
+                                );
+                              },
+                              tooltip: 'Open in Maps',
+                            ),
+                          ),
+                          const SizedBox(
+                              height: 4), // Space between icon and text
+                          const Text(
+                            'Report an Issue',
+                            style: TextStyle(fontSize: 12), // Small text label
+                          ),
+                        ],
+                      ),
                       // Second button for "More Info"
-                      if (_panelContent != null &&
-                          _panelContent!.properties.url != null)
-                        Column(
-                          children: [
-                            Container(
-                              decoration: BoxDecoration(
-                                color:
-                                    Colors.grey[300], // Light gray background
-                                shape: BoxShape.circle, // Circular shape
-                              ),
-                              child: IconButton(
-                                icon: FaIcon(
-                                  FontAwesomeIcons.infoCircle, // Web info icon
-                                  size: 20, // Icon size
-                                  color: Colors.grey[800], // Dark gray icon
-                                ),
-                                onPressed: () {
-                                  _launchURL(_panelContent!.properties.url);
-                                },
-                                tooltip: 'Website',
-                              ),
-                            ),
-                            const SizedBox(
-                                height: 4), // Space between icon and text
-                            const Text(
-                              'Website',
-                              style:
-                                  TextStyle(fontSize: 12), // Small text label
-                            ),
-                          ],
-                        ),
+                      // if (_panelContent != null && _panelContent!.properties.url != null)
+                      //   Column(
+                      //     children: [
+                      //       Container(
+                      //         decoration: BoxDecoration(
+                      //           color: Colors.grey[300], // Light gray background
+                      //           shape: BoxShape.circle, // Circular shape
+                      //         ),
+                      //         child: IconButton(
+                      //           icon: FaIcon(
+                      //             FontAwesomeIcons.infoCircle, // Web info icon
+                      //             size: 20, // Icon size
+                      //             color: Colors.grey[800], // Dark gray icon
+                      //           ),
+                      //           onPressed: () {
+                      //             _launchURL(_panelContent!.properties.url);
+                      //           },
+                      //           tooltip: 'Website',
+                      //         ),
+                      //       ),
+                      //       const SizedBox(height: 4), // Space between icon and text
+                      //       const Text(
+                      //         'Website',
+                      //         style: TextStyle(fontSize: 12), // Small text label
+                      //       ),
+                      //     ],
+                      //   ),
                     ],
                   ),
                 ),
+                _lightDivider(),
+                SizedBox(height: 4),
+
+                Text(
+                    'This natural waterfront space in Staten Island offers serene walking paths with scenic views of the Arthur Kill, providing a tranquil escape for visitors looking to enjoy the beauty of nature'),
+
+                SizedBox(height: 4),
+                _lightDivider(),
+                // Wrapping ListView in a Container with fixed height
+
+                Column(children: [
+                  ListTile(
+                    leading: FaIcon(FontAwesomeIcons.mapMarkerAlt, size: 18),
+
+                    title: Text(
+                        _panelContent!.properties.location ??
+                            'Address not available',
+                        style: TextStyle(fontSize: 14)),
+                    visualDensity:
+                        VisualDensity(vertical: -4), // Reduce vertical space
+                  ),
+                                  _lightDivider(),
+
+                  if (_panelContent != null &&
+                      _panelContent!.properties.url != null)
+                    ListTile(
+                      leading: FaIcon(FontAwesomeIcons.link, size: 18),
+
+                      title: Text(
+                          extractDomainFromUri(_panelContent!.properties.url),
+                          style: TextStyle(fontSize: 14)),
+                      visualDensity:
+                          VisualDensity(vertical: -4), // Reduce vertical space
+
+                      onTap: () {
+                        _launchURL(_panelContent!.properties.url);
+                      },
+                    ),
+                ])
               ],
             ),
           ),

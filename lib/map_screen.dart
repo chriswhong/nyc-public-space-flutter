@@ -11,7 +11,6 @@ import 'package:nyc_public_space_map/floating_locator_button.dart';
 import 'package:nyc_public_space_map/public_space_properties.dart';
 import 'package:nyc_public_space_map/side_drawer.dart';
 
-
 class MapScreen extends StatefulWidget {
   const MapScreen({super.key});
 
@@ -50,7 +49,9 @@ class MapScreenState extends State<MapScreen> {
 
   // callback to trigger a rebuild when content changes
   void _updatePanel() {
-    _pc.animatePanelToSnapPoint();
+    if (_pc.isPanelClosed) {
+      _pc.animatePanelToSnapPoint();
+    }
     // setState(() {});
   }
 
@@ -88,21 +89,20 @@ class MapScreenState extends State<MapScreen> {
     // calculate min and max height for panel
     double screenHeight = MediaQuery.of(context).size.height;
     // double minHeight = screenHeight * 0.3;
-    double maxHeight = screenHeight * 0.75;
+    double maxHeight = 600;
 
     return Stack(children: <Widget>[
       // map and panel
       MapHandler(
-        selectedFeature: selectedFeature,
-        onFeatureSelected: _onFeatureSelected,
-        onMapCreated: _onMapCreated,
-        parkImage: ImageLoader.instance.parkImage,
-        wpaaImage: ImageLoader.instance.wpaaImage,
-        popsImage: ImageLoader.instance.popsImage,
-        plazaImage: ImageLoader.instance.plazaImage,
-        stpImage: ImageLoader.instance.stpImage,
-        miscImage: ImageLoader.instance.miscImage
-      ),
+          selectedFeature: selectedFeature,
+          onFeatureSelected: _onFeatureSelected,
+          onMapCreated: _onMapCreated,
+          parkImage: ImageLoader.instance.parkImage,
+          wpaaImage: ImageLoader.instance.wpaaImage,
+          popsImage: ImageLoader.instance.popsImage,
+          plazaImage: ImageLoader.instance.plazaImage,
+          stpImage: ImageLoader.instance.stpImage,
+          miscImage: ImageLoader.instance.miscImage),
 
       Align(
         alignment: Alignment.bottomCenter,
@@ -176,7 +176,8 @@ class MapScreenState extends State<MapScreen> {
       ),
       SlidingUpPanel(
         controller: _pc,
-        snapPoint: 0.25,
+        snapPoint: 0.50,
+        panelSnapping: false,
         panel: Container(
             decoration: const BoxDecoration(
               color: Colors.white,

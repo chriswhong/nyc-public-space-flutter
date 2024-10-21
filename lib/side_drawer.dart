@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:http/http.dart' as http;
 
 class TypeDescription extends StatelessWidget {
   final String iconPath; // Path to the icon (image from assets)
@@ -35,13 +36,158 @@ class TypeDescription extends StatelessWidget {
   }
 }
 
-class SideDrawer extends StatelessWidget {
-  const SideDrawer({super.key});
+class SideDrawer extends StatefulWidget {
+  final String drawerType;
+
+  SideDrawer({required this.drawerType});
+
+  @override
+  _SideDrawerState createState() => _SideDrawerState();
+}
+
+class _SideDrawerState extends State<SideDrawer> {
+  final TextEditingController _controller = TextEditingController();
+  bool _isSubmitting = false;
+  bool _isSubmitted = false;
+
+  // Replace with your Google Form action URL and field names
+  final String googleFormUrl =
+      'https://docs.google.com/forms/u/0/d/e/1FAIpQLSdeRW4c1k16zHkkN3XO25PuRjoGxgOszSNAGV5zcKy6a4Afxw/formResponse';
+  final String idField = 'entry.495981289';
+  final String issueField =
+      'entry.823964625'; // Replace YOUR_FIELD_ID with your Google Form field ID
+
+  Future<void> _submitForm(String inputText) async {
+    setState(() {
+      _isSubmitting = true;
+    });
+
+    final response = await http.post(
+      Uri.parse(googleFormUrl),
+      body: {
+        idField: 'foo',
+        issueField: inputText,
+      },
+    );
+
+    print(response.statusCode);
+
+    if (response.statusCode == 200 || response.statusCode == 302) {
+      // Success - Update the state to show success message
+      setState(() {
+        _isSubmitted = true;
+      });
+    } else {
+      // Handle failure (Optional: You can display an error message)
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Failed to submit. Please try again.')),
+      );
+    }
+
+    setState(() {
+      _isSubmitting = false;
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
     double screenWidth = MediaQuery.of(context).size.width;
 
+    print('drawerType');
+    print(widget.drawerType);
+
+    if (widget.drawerType == 'report') {
+      return Drawer(
+        width: screenWidth,
+        child: SafeArea(
+          child: Column(
+            children: [
+              Expanded(
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.all(16.0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: <Widget>[
+                      // Header with FontAwesome X icon to close the drawer
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          const Text(
+                            "Report an Issue",
+                            style: TextStyle(
+                              fontSize: 24,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          IconButton(
+                            icon: const FaIcon(
+                                FontAwesomeIcons.times), // FontAwesome X icon
+                            onPressed: () {
+                              Navigator.of(context).pop(); // Close the drawer
+                            },
+                          ),
+                        ],
+                      ),
+                      Padding(
+                        padding: const EdgeInsets.all(16.0),
+                        child: _isSubmitted
+                            ? Center(
+                                child: Text(
+                                  'Thank you for your submission!',
+                                  style: TextStyle(
+                                      fontSize: 18,
+                                      fontWeight: FontWeight.bold),
+                                ),
+                              )
+                            : Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    'Report an Issue',
+                                    style: TextStyle(
+                                        fontSize: 20,
+                                        fontWeight: FontWeight.bold),
+                                  ),
+                                  const SizedBox(height: 16),
+                                  Text(
+                                    'Please describe the issue:',
+                                    style: TextStyle(fontSize: 16),
+                                  ),
+                                  const SizedBox(height: 8),
+                                  TextField(
+                                    controller: _controller,
+                                    maxLines: 4,
+                                    decoration: InputDecoration(
+                                      border: OutlineInputBorder(),
+                                      hintText: 'Enter your message',
+                                    ),
+                                  ),
+                                  const SizedBox(height: 16),
+                                  _isSubmitting
+                                      ? Center(
+                                          child: CircularProgressIndicator())
+                                      : ElevatedButton(
+                                          onPressed: () {
+                                            if (_controller.text.isNotEmpty) {
+                                              _submitForm(_controller.text);
+                                            }
+                                          },
+                                          child: Text('Submit'),
+                                        ),
+                                ],
+                              ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
+// default drawer content
     return Drawer(
       width: screenWidth,
       child: SafeArea(
@@ -108,7 +254,7 @@ class SideDrawer extends StatelessWidget {
                           'Overseen by the New York City Department of City Planning (DCP), WPAAs are regulated as part of waterfront zoning rules, requiring developers to provide publicly accessible spaces along the city’s waterfront. These areas include walkways, seating, and recreational amenities, ensuring public enjoyment of the city’s waterfront as part of sustainable urban development.',
                     ),
                     const SizedBox(height: 30),
-                     const TypeDescription(
+                    const TypeDescription(
                       iconPath: 'assets/stp.png',
                       description:
                           'The NYC Schoolyards to Playgrounds Program transforms underutilized schoolyards into vibrant community playgrounds. Managed by the NYC Department of Parks and Recreation in collaboration with the Department of Education, this initiative opens schoolyards to the public after school hours, on weekends, and during school vacations. The program aims to provide safe, accessible recreational spaces in neighborhoods that lack traditional parks, promoting outdoor play and community engagement for children and families across the city.',
@@ -168,29 +314,3 @@ class SideDrawer extends StatelessWidget {
     );
   }
 }
-
-class SideDrawerExample extends StatelessWidget {
-  const SideDrawerExample({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text("NYC Public Spaces"),
-        leading: IconButton(
-          icon: const Icon(Icons.menu),
-          onPressed: () {
-            Scaffold.of(context)
-                .openDrawer(); // Open the drawer when the menu icon is pressed
-          },
-        ),
-      ),
-      drawer: SideDrawer(), // Attach the custom drawer to the scaffold
-      body: const Center(
-        child: Text("Main Content Area"),
-      ),
-    );
-  }
-}
-
-void main() => runApp(MaterialApp(home: SideDrawerExample()));

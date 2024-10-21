@@ -20,6 +20,7 @@ class MapScreen extends StatefulWidget {
 
 class MapScreenState extends State<MapScreen> {
   final PanelController _pc = PanelController();
+  String drawerType = 'default'; // Add a drawerType state variable
 
   // map instance
   MapboxMap? mapboxMap;
@@ -63,10 +64,18 @@ class MapScreenState extends State<MapScreen> {
     });
   }
 
+  void _handleReportAnIssuePressed(context) {
+    print('setDrawerTpe');
+    setState(() {
+      drawerType = 'report';
+    });
+    Scaffold.of(context).openDrawer();
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      drawer: SideDrawer(),
+      drawer: SideDrawer(drawerType: drawerType),
       body: FutureBuilder<void>(
         future: ImageLoader.instance.images,
         builder: (context, snapshot) {
@@ -166,6 +175,10 @@ class MapScreenState extends State<MapScreen> {
                         color: Colors.grey[800], // Dark gray icon
                       ),
                       onPressed: () {
+                        setState(() {
+                          drawerType =
+                              'default'; // Update the drawerType dynamically
+                        });
                         Scaffold.of(context).openDrawer();
                       },
                     ),
@@ -211,7 +224,10 @@ class MapScreenState extends State<MapScreen> {
               PanelHandler(
                   selectedFeature: selectedFeature,
                   onPanelContentUpdated: _updatePanel,
-                  onClosePanel: _closePanel)
+                  onClosePanel: _closePanel,
+                  onReportAnIssuePressed: () {
+                    _handleReportAnIssuePressed(context);
+                  })
             ])),
         body: Container(),
         borderRadius: const BorderRadius.vertical(top: Radius.circular(18.0)),

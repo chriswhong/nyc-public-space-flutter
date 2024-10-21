@@ -1,3 +1,4 @@
+import 'dart:ffi';
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:nyc_public_space_map/public_space_properties.dart';
@@ -22,13 +23,14 @@ class PanelHandler extends StatefulWidget {
   final PublicSpaceFeature? selectedFeature; // Feature passed from parent
   final VoidCallback? onClosePanel; // Callback to close the panel
   final VoidCallback? onPanelContentUpdated; // Callback to close the panel
+  final VoidCallback? onReportAnIssuePressed;
 
-  const PanelHandler({
-    super.key,
-    required this.selectedFeature,
-    this.onPanelContentUpdated,
-    this.onClosePanel,
-  });
+  const PanelHandler(
+      {super.key,
+      required this.selectedFeature,
+      this.onClosePanel,
+      this.onPanelContentUpdated,
+      this.onReportAnIssuePressed});
 
   @override
   _PanelHandlerState createState() => _PanelHandlerState();
@@ -266,7 +268,8 @@ class _PanelHandlerState extends State<PanelHandler> {
                   padding:
                       const EdgeInsets.all(8.0), // Add padding around the row
                   child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceEvenly, // Evenly space the buttons
+                    mainAxisAlignment: MainAxisAlignment
+                        .spaceEvenly, // Evenly space the buttons
                     children: [
                       // First button for "Get Directions"
                       Column(
@@ -319,15 +322,10 @@ class _PanelHandlerState extends State<PanelHandler> {
                                 color: Colors.grey[800], // Dark gray icon
                               ),
                               onPressed: () {
-                                _openMaps(
-                                  (_panelContent!.geometry.coordinates.lat)
-                                      .toDouble(),
-                                  (_panelContent!.geometry.coordinates.lng)
-                                      .toDouble(),
-                                  context,
-                                );
+                                print('press1');
+                                widget.onReportAnIssuePressed!();
                               },
-                              tooltip: 'Open in Maps',
+                              tooltip: 'Report an Issue',
                             ),
                           ),
                           const SizedBox(
@@ -390,8 +388,7 @@ class _PanelHandlerState extends State<PanelHandler> {
                     visualDensity:
                         VisualDensity(vertical: -4), // Reduce vertical space
                   ),
-                                  _lightDivider(),
-
+                  _lightDivider(),
                   if (_panelContent != null &&
                       _panelContent!.properties.url != null)
                     ListTile(

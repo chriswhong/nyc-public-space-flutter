@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:http/http.dart' as http;
+import 'package:nyc_public_space_map/public_space_properties.dart';
 
 class ReportIssueDrawer extends StatefulWidget {
-  const ReportIssueDrawer({super.key});
+  final PublicSpaceFeature? selectedFeature;
+  const ReportIssueDrawer({this.selectedFeature, super.key});
 
   @override
   _ReportIssueDrawerState createState() => _ReportIssueDrawerState();
@@ -19,7 +21,7 @@ class _ReportIssueDrawerState extends State<ReportIssueDrawer> {
   final String idField = 'entry.495981289';
   final String issueField = 'entry.823964625';
 
-  Future<void> _submitForm(String inputText) async {
+  Future<void> _submitForm(String spaceId, String inputText) async {
     setState(() {
       _isSubmitting = true;
     });
@@ -27,7 +29,7 @@ class _ReportIssueDrawerState extends State<ReportIssueDrawer> {
     final response = await http.post(
       Uri.parse(googleFormUrl),
       body: {
-        idField: 'foo',
+        idField: spaceId,
         issueField: inputText,
       },
     );
@@ -51,6 +53,11 @@ class _ReportIssueDrawerState extends State<ReportIssueDrawer> {
   Widget build(BuildContext context) {
     final double screenWidth = MediaQuery.of(context).size.width;
 
+    final String spaceName =
+        widget.selectedFeature?.properties?.name ?? "this space";
+
+    final String spaceId = widget.selectedFeature?.properties?.space_id ?? 'no_space_id';
+
     return Drawer(
       width: screenWidth, // Set full-width for the drawer
       child: SafeArea(
@@ -68,17 +75,29 @@ class _ReportIssueDrawerState extends State<ReportIssueDrawer> {
                       child: _isSubmitted
                           ? const Center(
                               child: Text(
-                                'Thank you for your submission!',
+                                'Thanks for reporting! We will look into it and update the record as soon as possible. 😎',
                                 style: TextStyle(
-                                    fontSize: 18, fontWeight: FontWeight.bold),
+                                    fontSize: 18),
                               ),
                             )
                           : Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                const Text(
-                                  'Please describe the issue:',
-                                  style: TextStyle(fontSize: 16),
+                                Text.rich(
+                                  TextSpan(
+                                    text: 'Describe the issue you\'re seeing with our information about ', // Regular text
+                                    children: [
+                                      TextSpan(
+                                        text: spaceName, // The space name
+                                        style: const TextStyle(
+                                            fontWeight: FontWeight.bold), // Bold style for spaceName
+                                      ),
+                                      const TextSpan(
+                                        text: ':', // Regular colon
+                                      ),
+                                    ],
+                                  ),
+                                  style: const TextStyle(fontSize: 16),
                                 ),
                                 const SizedBox(height: 8),
                                 TextField(
@@ -86,7 +105,7 @@ class _ReportIssueDrawerState extends State<ReportIssueDrawer> {
                                   maxLines: 4,
                                   decoration: const InputDecoration(
                                     border: OutlineInputBorder(),
-                                    hintText: 'Enter your message',
+                                    // hintText: 'Enter your message',
                                   ),
                                 ),
                                 const SizedBox(height: 16),
@@ -96,7 +115,10 @@ class _ReportIssueDrawerState extends State<ReportIssueDrawer> {
                                     : ElevatedButton(
                                         onPressed: () {
                                           if (_controller.text.isNotEmpty) {
-                                            _submitForm(_controller.text);
+                                            _submitForm(
+                                              spaceId,
+                                              _controller.text
+                                              );
                                           }
                                         },
                                         child: const Text('Submit'),

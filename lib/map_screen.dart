@@ -75,7 +75,7 @@ class MapScreenState extends State<MapScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      drawer: SideDrawer(drawerType: drawerType),
+      drawer: SideDrawer(drawerType: drawerType, selectedFeature: selectedFeature),
       body: FutureBuilder<void>(
         future: ImageLoader.instance.images,
         builder: (context, snapshot) {

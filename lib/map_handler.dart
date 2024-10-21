@@ -151,6 +151,7 @@ class _MapHandlerState extends State<MapHandler> {
         // Parse the feature and call the parent callback
         var geojsonFeatureString =
             jsonEncode(features[0]!.queriedFeature.feature);
+        print(geojsonFeatureString);
         PublicSpaceFeature geojsonFeature =
             PublicSpaceFeature.fromJson(jsonDecode(geojsonFeatureString));
 

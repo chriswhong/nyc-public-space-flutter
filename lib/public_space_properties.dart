@@ -1,13 +1,19 @@
 import 'package:mapbox_maps_flutter/mapbox_maps_flutter.dart';
 
 class PublicSpaceProperties {
+  final String space_id;
   final String type;
   final String? name;
   final String? location;
   final Uri? url;
 
   // constructor to initialize the properties
-  PublicSpaceProperties({required this.name, required this.type, required this.location, required this.url});
+  PublicSpaceProperties(
+      {required this.space_id,
+      required this.name,
+      required this.type,
+      required this.location,
+      required this.url});
 
   // optional: Add a toString method for easier debugging
   @override
@@ -35,6 +41,7 @@ class PublicSpaceFeature {
       'type': type,
       'geometry': geometry.toJson(),
       'properties': {
+        'space_id': properties.space_id,
         'name': properties.name,
         'type': properties.type,
         'location': properties.location,
@@ -45,14 +52,19 @@ class PublicSpaceFeature {
 
   // Factory constructor to create PublicSpaceFeature from JSON
   factory PublicSpaceFeature.fromJson(Map<String, dynamic> json) {
+    print('foo');
+    print(json);
     return PublicSpaceFeature(
       type: json['type'],
       geometry: Point.fromJson(json['geometry']),
       properties: PublicSpaceProperties(
+        space_id: json['properties']['space_id'],
         name: json['properties']['name'],
         type: json['properties']['type'],
         location: json['properties']['location'],
-        url: json['properties']['url'] != null ? Uri.parse(json['properties']['url']) : null,  // Parse the URL
+        url: json['properties']['url'] != null
+            ? Uri.parse(json['properties']['url'])
+            : null, // Parse the URL
       ),
     );
   }

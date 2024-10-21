@@ -79,8 +79,6 @@ class _MapHandlerState extends State<MapHandler> {
         selectedImage = widget.miscImage; // Fallback to an empty image
       }
 
-      print(selectedImage);
-
       // Create annotation options
       PointAnnotationOptions annotationOptions = PointAnnotationOptions(
         geometry: feature
@@ -151,7 +149,6 @@ class _MapHandlerState extends State<MapHandler> {
         // Parse the feature and call the parent callback
         var geojsonFeatureString =
             jsonEncode(features[0]!.queriedFeature.feature);
-        print(geojsonFeatureString);
         PublicSpaceFeature geojsonFeature =
             PublicSpaceFeature.fromJson(jsonDecode(geojsonFeatureString));
 

@@ -115,7 +115,6 @@ class _PanelHandlerState extends State<PanelHandler> {
                 onPressed: () async {
                   final uri =
                       getMapLaunchUri(latitude, longitude, isGoogleMaps: true);
-                  print(uri);
                   if (await canLaunchUrl(uri)) {
                     await launchUrl(uri, mode: LaunchMode.externalApplication);
                   } else {
@@ -131,7 +130,6 @@ class _PanelHandlerState extends State<PanelHandler> {
     } else if (Platform.isAndroid) {
       // Directly launch Google Maps on Android
       final uri = getMapLaunchUri(latitude, longitude);
-      print(uri);
       if (await canLaunchUrl(uri)) {
         await launchUrl(uri, mode: LaunchMode.externalApplication);
       } else {
@@ -322,7 +320,6 @@ class _PanelHandlerState extends State<PanelHandler> {
                                 color: Colors.grey[800], // Dark gray icon
                               ),
                               onPressed: () {
-                                print('press1');
                                 widget.onReportAnIssuePressed!();
                               },
                               tooltip: 'Report an Issue',
@@ -368,43 +365,62 @@ class _PanelHandlerState extends State<PanelHandler> {
                   ),
                 ),
                 _lightDivider(),
-                SizedBox(height: 4),
+                _panelContent != null &&
+                        _panelContent!.properties.description != null &&
+                        _panelContent!.properties.description?.isNotEmpty ==
+                            true
+                    ? Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          SizedBox(height: 4),
+                          Text(_panelContent!.properties.description!),
+                          _lightDivider(), // Add the additional widget here
+                        ],
+                      )
+                    : SizedBox.shrink(),
+                _panelContent != null &&
+                        _panelContent!.properties.location != null &&
+                        _panelContent!.properties.location?.isNotEmpty == true
+                    ? Column(
+                        children: [
+                          SizedBox(height: 4),
+                          ListTile(
+                            leading:
+                                FaIcon(FontAwesomeIcons.mapMarkerAlt, size: 18),
 
-                Text(
-                    'This natural waterfront space in Staten Island offers serene walking paths with scenic views of the Arthur Kill, providing a tranquil escape for visitors looking to enjoy the beauty of nature'),
+                            title: Text(
+                                _panelContent!.properties.location ??
+                                    'Address not available',
+                                style: TextStyle(fontSize: 14)),
+                            visualDensity: VisualDensity(
+                                vertical: -4), // Reduce vertical space
+                          ),
+                          _lightDivider(),
+                        ],
+                      )
+                    : SizedBox.shrink(),
+                _panelContent != null && _panelContent!.properties.url != null
+                    ? Column(
+                        children: [
+                          SizedBox(height: 4),
+                          ListTile(
+                            leading: FaIcon(FontAwesomeIcons.link, size: 18),
 
-                SizedBox(height: 4),
-                _lightDivider(),
-                // Wrapping ListView in a Container with fixed height
+                            title: Text(
+                                extractDomainFromUri(
+                                    _panelContent!.properties.url),
+                                style: TextStyle(fontSize: 14)),
+                            visualDensity: VisualDensity(
+                                vertical: -4), // Reduce vertical space
 
-                Column(children: [
-                  ListTile(
-                    leading: FaIcon(FontAwesomeIcons.mapMarkerAlt, size: 18),
-
-                    title: Text(
-                        _panelContent!.properties.location ??
-                            'Address not available',
-                        style: TextStyle(fontSize: 14)),
-                    visualDensity:
-                        VisualDensity(vertical: -4), // Reduce vertical space
-                  ),
-                  _lightDivider(),
-                  if (_panelContent != null &&
-                      _panelContent!.properties.url != null)
-                    ListTile(
-                      leading: FaIcon(FontAwesomeIcons.link, size: 18),
-
-                      title: Text(
-                          extractDomainFromUri(_panelContent!.properties.url),
-                          style: TextStyle(fontSize: 14)),
-                      visualDensity:
-                          VisualDensity(vertical: -4), // Reduce vertical space
-
-                      onTap: () {
-                        _launchURL(_panelContent!.properties.url);
-                      },
-                    ),
-                ])
+                            onTap: () {
+                              _launchURL(_panelContent!.properties.url);
+                            },
+                          ),
+                          _lightDivider(),
+                        ],
+                      )
+                    : SizedBox.shrink(),
               ],
             ),
           ),

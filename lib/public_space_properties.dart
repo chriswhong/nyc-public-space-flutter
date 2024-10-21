@@ -6,6 +6,7 @@ class PublicSpaceProperties {
   final String? name;
   final String? location;
   final Uri? url;
+  final String? description;
 
   // constructor to initialize the properties
   PublicSpaceProperties(
@@ -13,7 +14,8 @@ class PublicSpaceProperties {
       required this.name,
       required this.type,
       required this.location,
-      required this.url});
+      required this.url,
+      required this.description});
 
   // optional: Add a toString method for easier debugging
   @override
@@ -46,14 +48,13 @@ class PublicSpaceFeature {
         'type': properties.type,
         'location': properties.location,
         'url': properties.url,
+        'description': properties.description
       },
     };
   }
 
   // Factory constructor to create PublicSpaceFeature from JSON
   factory PublicSpaceFeature.fromJson(Map<String, dynamic> json) {
-    print('foo');
-    print(json);
     return PublicSpaceFeature(
       type: json['type'],
       geometry: Point.fromJson(json['geometry']),
@@ -64,7 +65,8 @@ class PublicSpaceFeature {
         location: json['properties']['location'],
         url: json['properties']['url'] != null
             ? Uri.parse(json['properties']['url'])
-            : null, // Parse the URL
+            : null,
+        description: json['properties']['description'], // Parse the URL
       ),
     );
   }

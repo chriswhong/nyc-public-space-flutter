@@ -65,7 +65,6 @@ class MapScreenState extends State<MapScreen> {
   }
 
   void _handleReportAnIssuePressed(context) {
-    print('setDrawerTpe');
     setState(() {
       drawerType = 'report';
     });

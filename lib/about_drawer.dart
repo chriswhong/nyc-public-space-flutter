@@ -56,10 +56,10 @@ class AboutDrawer extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: <Widget>[
                     _buildHeader(context, 'About'),
-                    const SizedBox(height: 30),
+                    const SizedBox(height: 15),
                     const Text(
                       "NYC Public Space Map exists to catalog and display a consolidated list of public spaces around the city. The most common types of public space are described below.",
-                      style: TextStyle(fontSize: 16),
+                      style: TextStyle(fontSize: 15),
                     ),
                     const SizedBox(height: 30),
                     const TypeDescription(
@@ -96,6 +96,11 @@ class AboutDrawer extends StatelessWidget {
                       iconPath: 'assets/misc.png',
                       description:
                           'Other public spaces include New York State Parks, sites managed by the National Park Service, private property open to the public (such as cemeteries and nonprofit-owned facilities). Let us know if there\'s a public space we may have missed.',
+                    ),
+                         const SizedBox(height: 30),
+                    const Text(
+                      "Most of the data used came from NYC Open Data and has been augmented by manual and AI-assisted research and updates.",
+                      style: TextStyle(fontSize: 15),
                     ),
                   ],
                 ),

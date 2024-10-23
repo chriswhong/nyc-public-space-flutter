@@ -16,6 +16,7 @@ class FloatingLocatorButton extends StatelessWidget {
 
     mapboxMap?.flyTo(
         CameraOptions(
+            zoom: 14,
             center: Point(
                 coordinates: Position(position.longitude, position.latitude))),
         null);
@@ -24,19 +25,19 @@ class FloatingLocatorButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Positioned(
-      top: 120.0,
-      right: 15,
+      top: 80,
+      right: 20,
       child: FloatingActionButton(
         onPressed:
             _handlePress, // Executes the passed function or defaults to doing nothing
         backgroundColor: Colors.white,
         shape: const CircleBorder(),
-        mini: true,
+        // mini: true,
         child: Transform.translate(
           offset: const Offset(-1, 1),
           child: const FaIcon(
             FontAwesomeIcons.locationArrow,
-            color: Colors.blue,
+            color: Color.fromARGB(255, 116, 116, 116),
             size: 20.0,
           ),
         ),

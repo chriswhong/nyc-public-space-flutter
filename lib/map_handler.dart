@@ -19,17 +19,17 @@ class MapHandler extends StatefulWidget {
   final Uint8List stpImage;
   final Uint8List miscImage;
 
-  const MapHandler({super.key, 
-    required this.selectedFeature,
-    required this.onMapCreated,
-    required this.onFeatureSelected,
-    required this.parkImage,
-    required this.wpaaImage,
-    required this.popsImage,
-    required this.plazaImage,
-    required this.stpImage,
-    required this.miscImage
-  });
+  const MapHandler(
+      {super.key,
+      required this.selectedFeature,
+      required this.onMapCreated,
+      required this.onFeatureSelected,
+      required this.parkImage,
+      required this.wpaaImage,
+      required this.popsImage,
+      required this.plazaImage,
+      required this.stpImage,
+      required this.miscImage});
 
   @override
   _MapHandlerState createState() => _MapHandlerState();
@@ -141,7 +141,6 @@ class _MapHandlerState extends State<MapHandler> {
               'pops-centroids',
               'plaza-centroids',
               'stp-centroids',
-              'nps-centroids',
               'misc-centroids'
             ], filter: null))
         .then((features) async {

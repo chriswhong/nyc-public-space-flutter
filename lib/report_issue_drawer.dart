@@ -56,7 +56,46 @@ class _ReportIssueDrawerState extends State<ReportIssueDrawer> {
     final String spaceName =
         widget.selectedFeature?.properties?.name ?? "this space";
 
-    final String spaceId = widget.selectedFeature?.properties?.space_id ?? 'no_space_id';
+    final String spaceId =
+        widget.selectedFeature?.properties?.space_id ?? 'app_feedback';
+
+    String title = widget.selectedFeature != null
+        ? 'Report an Issue'
+        : 'Share your Feedback';
+
+    String submittedMessage = widget.selectedFeature != null
+    ? 'Thanks for reporting! We will look into it and update the record as soon as possible. 😎'
+    : 'Thanks for sharing! We will use your feedback to improve the app!';
+
+    Widget _prompt() {
+      if (widget.selectedFeature == null) {
+        return Column(crossAxisAlignment: CrossAxisAlignment.start,children: [
+          Text('Your feedback is appreciated!',
+              style: const TextStyle(fontSize: 16)),
+          SizedBox(height: 16),
+          Text(
+              'Feel free to share anything, including suggestions about the user interface, public spaces we may have missed, bugs, errors, or anything else you want to share.',
+              style: const TextStyle(fontSize: 16)),
+        ]);
+      }
+      return Text.rich(
+        TextSpan(
+          text:
+              'Describe the issue you\'re seeing with our information about ', // Regular text
+          children: [
+            TextSpan(
+              text: spaceName, // The space name
+              style: const TextStyle(
+                  fontWeight: FontWeight.bold), // Bold style for spaceName
+            ),
+            const TextSpan(
+              text: ':', // Regular colon
+            ),
+          ],
+        ),
+        style: const TextStyle(fontSize: 16),
+      );
+    }
 
     return Drawer(
       width: screenWidth, // Set full-width for the drawer
@@ -69,43 +108,44 @@ class _ReportIssueDrawerState extends State<ReportIssueDrawer> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: <Widget>[
-                    _buildHeader(context, 'Report an Issue'),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          title,
+                          style: const TextStyle(
+                              fontSize: 24, fontWeight: FontWeight.bold),
+                        ),
+                        IconButton(
+                          icon: const FaIcon(FontAwesomeIcons.times),
+                          onPressed: () => Navigator.of(context).pop(),
+                        ),
+                      ],
+                    ),
                     Padding(
                       padding: const EdgeInsets.all(16.0),
                       child: _isSubmitted
-                          ? const Center(
+                          ? Center(
                               child: Text(
-                                'Thanks for reporting! We will look into it and update the record as soon as possible. 😎',
-                                style: TextStyle(
-                                    fontSize: 18),
+                                submittedMessage,
+                                style: TextStyle(fontSize: 18),
                               ),
                             )
                           : Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                Text.rich(
-                                  TextSpan(
-                                    text: 'Describe the issue you\'re seeing with our information about ', // Regular text
-                                    children: [
-                                      TextSpan(
-                                        text: spaceName, // The space name
-                                        style: const TextStyle(
-                                            fontWeight: FontWeight.bold), // Bold style for spaceName
-                                      ),
-                                      const TextSpan(
-                                        text: ':', // Regular colon
-                                      ),
-                                    ],
-                                  ),
-                                  style: const TextStyle(fontSize: 16),
-                                ),
-                                const SizedBox(height: 8),
+                                _prompt(),
+                                SizedBox(height: 36),
                                 TextField(
                                   controller: _controller,
                                   maxLines: 4,
                                   decoration: const InputDecoration(
                                     border: OutlineInputBorder(),
-                                    // hintText: 'Enter your message',
+                                    focusedBorder: OutlineInputBorder(
+                                      borderSide: BorderSide(
+                                          color: const Color(
+                                              0xAA77bb3f)), // Green border when focused
+                                    ),
                                   ),
                                 ),
                                 const SizedBox(height: 16),
@@ -116,11 +156,15 @@ class _ReportIssueDrawerState extends State<ReportIssueDrawer> {
                                         onPressed: () {
                                           if (_controller.text.isNotEmpty) {
                                             _submitForm(
-                                              spaceId,
-                                              _controller.text
-                                              );
+                                                spaceId, _controller.text);
                                           }
                                         },
+                                        style: ElevatedButton.styleFrom(
+                                          backgroundColor: const Color(
+                                              0xAA77bb3f), // Set the button background color to green
+                                          foregroundColor: Colors
+                                              .white, // Set the button text color to white
+                                        ),
                                         child: const Text('Submit'),
                                       ),
                               ],
@@ -133,22 +177,6 @@ class _ReportIssueDrawerState extends State<ReportIssueDrawer> {
           ],
         ),
       ),
-    );
-  }
-
-  Widget _buildHeader(BuildContext context, String title) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        Text(
-          title,
-          style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-        ),
-        IconButton(
-          icon: const FaIcon(FontAwesomeIcons.times),
-          onPressed: () => Navigator.of(context).pop(),
-        ),
-      ],
     );
   }
 }

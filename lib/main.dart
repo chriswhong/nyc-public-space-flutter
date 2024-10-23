@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:mapbox_maps_flutter/mapbox_maps_flutter.dart';
 import 'package:nyc_public_space_map/map_screen.dart';
+import 'package:flutter/rendering.dart';
 
 void main() {
   // ensure Flutter bindings are initialized
@@ -11,17 +12,17 @@ void main() {
   String accessToken = const String.fromEnvironment("ACCESS_TOKEN");
   MapboxOptions.setAccessToken(accessToken);
 
-    SystemChrome.setPreferredOrientations([
+  SystemChrome.setPreferredOrientations([
     DeviceOrientation.portraitUp,
     DeviceOrientation.portraitDown, // Optional: allow upside-down portrait
   ]).then((_) {
+    // debugPaintSizeEnabled = true; // For debugging purposes
     runApp(MyApp());
   });
 }
 
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
-
 
   @override
   Widget build(BuildContext context) {

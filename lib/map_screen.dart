@@ -71,10 +71,16 @@ class MapScreenState extends State<MapScreen> {
     Scaffold.of(context).openDrawer();
   }
 
+  void _handleFeedbackTap() {
+    setState(() {
+      drawerType = 'report';
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      drawer: SideDrawer(drawerType: drawerType, selectedFeature: selectedFeature),
+      drawer: SideDrawer(drawerType: drawerType, selectedFeature: selectedFeature, onFeedbackTap: _handleFeedbackTap,),
       body: FutureBuilder<void>(
         future: ImageLoader.instance.images,
         builder: (context, snapshot) {
@@ -164,14 +170,14 @@ class MapScreenState extends State<MapScreen> {
                       Alignment.topCenter, // Aligns content to the top center
                   child: Container(
                     decoration: BoxDecoration(
-                      color: Colors.grey[300], // Light gray background
+                      color: const Color(0xAA77bb3f),
                       shape: BoxShape.circle, // Circular shape
                     ),
                     child: IconButton(
                       icon: FaIcon(
                         FontAwesomeIcons.bars, // Navigation icon
                         size: 20, // Icon size
-                        color: Colors.grey[800], // Dark gray icon
+                        color: Colors.white, // Dark gray icon
                       ),
                       onPressed: () {
                         setState(() {

@@ -96,9 +96,13 @@ class _MapHandlerState extends State<MapHandler> {
   _onMapCreated(MapboxMap mapboxMap) async {
     // set the map instance for use later
     this.mapboxMap = mapboxMap;
-
     // set minimum zoom
-    mapboxMap.setBounds(CameraBoundsOptions(minZoom: 10));
+    mapboxMap.setBounds(CameraBoundsOptions(
+        minZoom: 10,
+        bounds: CoordinateBounds(
+            southwest: Point(coordinates: Position(-74.68918, 40.36277)),
+            northeast: Point(coordinates: Position(-73.31198, 41.16886)),
+            infiniteBounds: false)));
 
     // disable compass, scalebar, and rotation
     mapboxMap.compass.updateSettings(CompassSettings(enabled: false));

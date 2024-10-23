@@ -63,7 +63,7 @@ class PublicSpaceFeature {
         name: json['properties']['name'],
         type: json['properties']['type'],
         location: json['properties']['location'],
-        url: json['properties']['url'] != null
+        url: json['properties']['url'] != null &&  json['properties']['url'].isNotEmpty
             ? Uri.parse(json['properties']['url'])
             : null,
         description: json['properties']['description'], // Parse the URL

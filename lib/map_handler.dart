@@ -130,8 +130,7 @@ class _MapHandlerState extends State<MapHandler> {
         await mapboxMap.annotations.createPointAnnotationManager();
   }
 
-  _onMapTapListener(MapContentGestureContext context) async {
-    // query the map at the location of the tap
+  _onMapTapListener(BuildContext buildContext, MapContentGestureContext context) async {
     mapboxMap
         .queryRenderedFeatures(
             RenderedQueryGeometry(
@@ -157,6 +156,16 @@ class _MapHandlerState extends State<MapHandler> {
 
         // Call parent callback to update the selectedFeature in parent state
         widget.onFeatureSelected(geojsonFeature);
+
+        // animate map if screen coordinate was in bottom 20% of screen
+        double screenHeight = MediaQuery.of(buildContext).size.height;
+;
+        double yPercent = context.touchPosition.y/screenHeight;
+
+        if (yPercent > .60) {
+          mapboxMap.flyTo(CameraOptions(center: geojsonFeature.geometry), MapAnimationOptions());
+        }
+
       }
     });
   }
@@ -170,7 +179,8 @@ class _MapHandlerState extends State<MapHandler> {
         zoom: 13,
       ),
       onMapCreated: _onMapCreated,
-      onTapListener: _onMapTapListener,
+      onTapListener: (MapContentGestureContext gestureContext) =>
+          _onMapTapListener(context, gestureContext), // Pass context here,
     );
   }
 }

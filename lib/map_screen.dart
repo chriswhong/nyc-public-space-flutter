@@ -142,7 +142,7 @@ class MapScreenState extends State<MapScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: <Widget>[
                     const Text(
-                      'NYC Public Spaces',
+                      'NYC Public Space',
                       style: TextStyle(
                         fontSize: 20,
                         fontWeight: FontWeight.bold,

@@ -58,7 +58,7 @@ class AboutDrawer extends StatelessWidget {
                     _buildHeader(context, 'About'),
                     const SizedBox(height: 15),
                     const Text(
-                      "NYC Public Space Map exists to catalog and display a consolidated list of public spaces around the city. The most common types of public space are described below.",
+                      "NYC Public Space exists to catalog and display a consolidated list of public spaces around the city. The most common types of public space are described below.",
                       style: TextStyle(fontSize: 15),
                     ),
                     const SizedBox(height: 30),

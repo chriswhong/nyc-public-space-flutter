@@ -18,3 +18,9 @@ samples, guidance on mobile development, and a full API reference.
 ## Production build to my device
 
 flutter run --release --dart-define ACCESS_TOKEN=pk.12345
+
+
+## Android Release
+
+flutter build apk --release
+flutter build appbundle --release

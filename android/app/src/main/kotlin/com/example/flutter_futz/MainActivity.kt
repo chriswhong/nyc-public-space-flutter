@@ -1,4 +1,4 @@
-package com.example.nyc_public_space_map
+package com.nycpublicspace
 
 import io.flutter.embedding.android.FlutterActivity
 

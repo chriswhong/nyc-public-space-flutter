@@ -24,3 +24,12 @@ flutter run --release --dart-define ACCESS_TOKEN=pk.12345
 
 flutter build apk --release
 flutter build appbundle --release
+
+
+## iOS Release
+
+- increment version
+
+- flutter clean
+- flutter build ios --release
+

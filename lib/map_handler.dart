@@ -130,7 +130,8 @@ class _MapHandlerState extends State<MapHandler> {
         await mapboxMap.annotations.createPointAnnotationManager();
   }
 
-  _onMapTapListener(BuildContext buildContext, MapContentGestureContext context) async {
+  _onMapTapListener(
+      BuildContext buildContext, MapContentGestureContext context) async {
     mapboxMap
         .queryRenderedFeatures(
             RenderedQueryGeometry(
@@ -140,14 +141,21 @@ class _MapHandlerState extends State<MapHandler> {
                 type: Type.SCREEN_COORDINATE),
             RenderedQueryOptions(layerIds: [
               'park-centroids',
+              'park-marker',
               'wpaa-centroids',
+              'wpaa-marker',
               'pops-centroids',
+              'pops-marker',
               'plaza-centroids',
+              'plaza-marker',
               'stp-centroids',
-              'misc-centroids'
+              'stp-marker',
+              'misc-centroids',
+              'misc-marker'
             ], filter: null))
         .then((features) async {
       if (features.isNotEmpty) {
+        print(features);
         // Parse the feature and call the parent callback
         var geojsonFeatureString =
             jsonEncode(features[0]!.queriedFeature.feature);
@@ -159,13 +167,13 @@ class _MapHandlerState extends State<MapHandler> {
 
         // animate map if screen coordinate was in bottom 20% of screen
         double screenHeight = MediaQuery.of(buildContext).size.height;
-;
-        double yPercent = context.touchPosition.y/screenHeight;
+        ;
+        double yPercent = context.touchPosition.y / screenHeight;
 
         if (yPercent > .60) {
-          mapboxMap.flyTo(CameraOptions(center: geojsonFeature.geometry), MapAnimationOptions());
+          mapboxMap.flyTo(CameraOptions(center: geojsonFeature.geometry),
+              MapAnimationOptions());
         }
-
       }
     });
   }

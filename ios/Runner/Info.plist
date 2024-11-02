@@ -32,6 +32,12 @@
 	<true/>
 	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
 	<string>Your precise location is used to show your location on the map and to help improve the map.</string>
+	<key>NSLocationAlwaysUsageDescription</key>
+	<string>Your precise location is used to show your location on the map and to help improve the map.</string>
+	<key>NSLocationUsageDescription</key>
+	<string>Your precise location is used to show your location on the map and to help improve the map.</string>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>Your precise location is used to show your location on the map and to help improve the map.</string>
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
 	<key>UILaunchStoryboardName</key>

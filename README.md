@@ -22,7 +22,7 @@ flutter run --release --dart-define ACCESS_TOKEN=pk.12345
 
 ## Android Release
 
-flutter build apk --release
+flutter clean
 flutter build appbundle --release --dart-define ACCESS_TOKEN=pk.12345
 
 ## iOS Release

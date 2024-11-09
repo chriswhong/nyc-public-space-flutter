@@ -24,22 +24,18 @@ class FloatingLocatorButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Positioned(
-      top: 80,
-      right: 20,
-      child: FloatingActionButton(
-        onPressed:
-            _handlePress, // Executes the passed function or defaults to doing nothing
-        backgroundColor: Colors.white,
-        shape: const CircleBorder(),
-        // mini: true,
-        child: Transform.translate(
-          offset: const Offset(-1, 1),
-          child: const FaIcon(
-            FontAwesomeIcons.locationArrow,
-            color: Color.fromARGB(255, 116, 116, 116),
-            size: 20.0,
-          ),
+    return FloatingActionButton(
+      onPressed:
+          _handlePress, // Executes the passed function or defaults to doing nothing
+      backgroundColor: Colors.white,
+      shape: const CircleBorder(),
+      // mini: true,
+      child: Transform.translate(
+        offset: const Offset(-1, 1),
+        child: const FaIcon(
+          FontAwesomeIcons.locationArrow,
+          color: Color.fromARGB(255, 116, 116, 116),
+          size: 20.0,
         ),
       ),
     );

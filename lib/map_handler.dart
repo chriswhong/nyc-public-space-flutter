@@ -113,7 +113,7 @@ class _MapHandlerState extends State<MapHandler> {
     mapboxMap.logo
         .updateSettings(LogoSettings(marginBottom: 75, marginLeft: 15));
     mapboxMap.attribution.updateSettings(
-        (AttributionSettings(marginBottom: 75, marginRight: 15)));
+        (AttributionSettings(position: OrnamentPosition.BOTTOM_LEFT, marginBottom: 75, marginLeft: 100)));
 
     // get location permission from the device
     var status = await Permission.locationWhenInUse.request();

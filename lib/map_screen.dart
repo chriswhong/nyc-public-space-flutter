@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:sliding_up_panel/sliding_up_panel.dart';
 import 'package:mapbox_maps_flutter/mapbox_maps_flutter.dart';
-import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
 import 'package:nyc_public_space_map/map_handler.dart';
 import 'package:nyc_public_space_map/panel_handler.dart';
@@ -9,8 +8,7 @@ import 'package:nyc_public_space_map/panel_handler.dart';
 import 'package:nyc_public_space_map/image_loader.dart';
 import 'package:nyc_public_space_map/floating_locator_button.dart';
 import 'package:nyc_public_space_map/public_space_properties.dart';
-import 'package:nyc_public_space_map/sign_in_screen.dart';
-import 'package:firebase_auth/firebase_auth.dart'; // Add Firebase Auth package
+import 'package:firebase_auth/firebase_auth.dart'; 
 
 class MapScreen extends StatefulWidget {
   final Function(PublicSpaceFeature?) onReportAnIssue;
@@ -179,37 +177,8 @@ class MapScreenState extends State<MapScreen> {
                 ],
               ),
             ),
-            SizedBox(
-              width: 50,
-              height: 50,
-              child: _signInButton(),
-            ),
+          
           ],
-        ),
-      ),
-    );
-  }
-
-  Widget _signInButton() {
-    return Align(
-      alignment: Alignment.topCenter,
-      child: Container(
-        decoration: BoxDecoration(
-          color: const Color(0xAA77bb3f),
-          shape: BoxShape.circle,
-        ),
-        child: IconButton(
-          icon: FaIcon(
-            currentUser == null ? FontAwesomeIcons.user : FontAwesomeIcons.home,
-            size: 20,
-            color: Colors.white,
-          ),
-          onPressed: () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(builder: (context) => SignInScreen()),
-            );
-          },
         ),
       ),
     );

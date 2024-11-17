@@ -3,12 +3,15 @@ import 'package:flutter/services.dart';
 import 'package:mapbox_maps_flutter/mapbox_maps_flutter.dart';
 import 'package:nyc_public_space_map/map_screen.dart';
 import 'package:nyc_public_space_map/about_screen.dart';
+import 'package:nyc_public_space_map/profile_screen.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_dynamic_links/firebase_dynamic_links.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:nyc_public_space_map/side_drawer.dart';
 import 'package:nyc_public_space_map/public_space_properties.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+
 
 Future<void> initDynamicLinks(BuildContext context) async {
   print('Initializing dynamic links...');
@@ -18,23 +21,51 @@ Future<void> initDynamicLinks(BuildContext context) async {
       .listen((PendingDynamicLinkData? dynamicLinkData) async {
     final Uri? deepLink = dynamicLinkData?.link;
 
+    print('deepLink');
+    print(deepLink);
+
     if (deepLink != null &&
         FirebaseAuth.instance.isSignInWithEmailLink(deepLink.toString())) {
       try {
+        // Retrieve the email from shared_preferences
+        final prefs = await SharedPreferences.getInstance();
+        final email = prefs.getString('sign_in_email');
+        if (email == null) {
+          throw Exception("No email found in local storage");
+        }
         // The client SDK will parse the code from the link for you.
         final UserCredential userCredential =
             await FirebaseAuth.instance.signInWithEmailLink(
-          email: "chris.m.whong@gmail.com", // Replace with the user's email
+          email: email, // Replace with the user's email
           emailLink: deepLink.toString(),
         );
+
+              // Delete the email from shared_preferences
+        await prefs.remove('sign_in_email');
 
         // You can access the new user via userCredential.user.
         final String? emailAddress = userCredential.user?.email;
 
         print('Successfully signed in with email link!');
         print('Email Address: $emailAddress');
+
+        // Show a toast and switch to the Profile tab
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Successfully signed in!')),
+        );
+
+        // Close all navigation pages and go to HomeScreen
+        Navigator.popUntil(context, (route) => route.isFirst);
+
+        homeScreenKey.currentState?.switchToMapTab();
+
       } catch (error) {
         print('Error signing in with email link: $error');
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+              content:
+                  Text('We could not sign you in with that link. Try again.')),
+        );
       }
     } else {
       print('Dynamic link received, but it is not a valid email sign-in link.');
@@ -73,10 +104,13 @@ class MyApp extends StatelessWidget {
       theme: ThemeData(
         primarySwatch: Colors.blue,
       ),
-      home: HomeScreen(),
+      home: HomeScreen(key: homeScreenKey),
     );
   }
 }
+
+final GlobalKey<_HomeScreenState> homeScreenKey = GlobalKey<_HomeScreenState>();
+
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -127,6 +161,13 @@ class _HomeScreenState extends State<HomeScreen> {
     });
   }
 
+  void switchToMapTab() {
+    print('switching to map tab');
+    setState(() {
+      _selectedIndex = 0; // Index of the Profile tab
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -141,7 +182,7 @@ class _HomeScreenState extends State<HomeScreen> {
       bottomNavigationBar: BottomNavigationBar(
         items: const <BottomNavigationBarItem>[
           BottomNavigationBarItem(
-            icon: Icon(FontAwesomeIcons.infoCircle),
+            icon: Icon(FontAwesomeIcons.map),
             label: 'Map',
           ),
           BottomNavigationBarItem(
@@ -156,20 +197,6 @@ class _HomeScreenState extends State<HomeScreen> {
         currentIndex: _selectedIndex,
         selectedItemColor: Colors.blue,
         onTap: _onItemTapped,
-      ),
-    );
-  }
-}
-
-class ProfileScreen extends StatelessWidget {
-  const ProfileScreen({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return const Center(
-      child: Text(
-        'Profile Screen',
-        style: TextStyle(fontSize: 24),
       ),
     );
   }

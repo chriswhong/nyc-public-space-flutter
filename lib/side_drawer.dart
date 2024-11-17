@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:nyc_public_space_map/about_drawer.dart';
 import 'package:nyc_public_space_map/public_space_properties.dart';
 import 'package:nyc_public_space_map/report_issue_drawer.dart';
 // import 'package:nyc_public_space_map/feedback_drawer.dart';

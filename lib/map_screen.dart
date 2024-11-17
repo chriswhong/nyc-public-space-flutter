@@ -10,6 +10,7 @@ import 'package:nyc_public_space_map/image_loader.dart';
 import 'package:nyc_public_space_map/floating_locator_button.dart';
 import 'package:nyc_public_space_map/public_space_properties.dart';
 import 'package:nyc_public_space_map/side_drawer.dart';
+import 'package:nyc_public_space_map/sign_in_screen.dart';
 
 class MapScreen extends StatefulWidget {
   const MapScreen({super.key});
@@ -187,6 +188,11 @@ class MapScreenState extends State<MapScreen> {
               height: 50,
               child: _buildDrawerButton(),
             ),
+            SizedBox(
+              width: 50,
+              height: 50,
+              child: _signInButton(),
+            ),
           ],
         ),
       ),
@@ -212,6 +218,31 @@ class MapScreenState extends State<MapScreen> {
               drawerType = 'default';
             });
             Scaffold.of(context).openDrawer();
+          },
+        ),
+      ),
+    );
+  }
+
+  Widget _signInButton() {
+    return Align(
+      alignment: Alignment.topCenter,
+      child: Container(
+        decoration: BoxDecoration(
+          color: const Color(0xAA77bb3f),
+          shape: BoxShape.circle,
+        ),
+        child: IconButton(
+          icon: const FaIcon(
+            FontAwesomeIcons.user,
+            size: 20,
+            color: Colors.white,
+          ),
+          onPressed: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => SignInScreen()),
+            );
           },
         ),
       ),

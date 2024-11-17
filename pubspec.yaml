@@ -37,6 +37,9 @@ dependencies:
   geolocator: ^9.0.0
   url_launcher: ^6.1.7
   flutter_launcher_icons: ^0.10.0
+  firebase_auth: ^5.3.3
+  firebase_core: ^3.8.0
+  firebase_dynamic_links: ^6.0.0
 
 
   # The following adds the Cupertino Icons font to your application.

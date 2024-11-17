@@ -11,6 +11,8 @@ import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:nyc_public_space_map/side_drawer.dart';
 import 'package:nyc_public_space_map/public_space_properties.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:cloud_firestore/cloud_firestore.dart' as firestore;
+
 
 
 Future<void> initDynamicLinks(BuildContext context) async {
@@ -89,6 +91,7 @@ void main() {
     // debugPaintSizeEnabled = true; // For debugging purposes
 
     await Firebase.initializeApp();
+    firestore.FirebaseFirestore.instance.settings = const firestore.Settings(persistenceEnabled: false);
     runApp(MyApp());
   });
 }

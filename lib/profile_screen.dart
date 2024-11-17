@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+
 import 'package:nyc_public_space_map/sign_in_screen.dart';
+import 'package:nyc_public_space_map/username_input_screen.dart';
 
 class ProfileScreen extends StatelessWidget {
   const ProfileScreen({super.key});
@@ -25,60 +28,90 @@ class ProfileScreen extends StatelessWidget {
                 ),
               ),
             ),
-            StreamBuilder<User?>(
+            Expanded(
+              child: StreamBuilder<User?>(
                 stream: FirebaseAuth.instance.authStateChanges(),
                 builder: (context, snapshot) {
                   if (snapshot.connectionState == ConnectionState.waiting) {
-                    // Show a loading indicator while waiting for the auth state
+                    // Loading state while checking authentication
                     return const Center(child: CircularProgressIndicator());
                   }
 
-                  if (snapshot.hasData && snapshot.data != null) {
-                    // User is signed in
-                    final user = snapshot.data!;
-                    return _buildSignedInContent(context, user);
-                  } else {
-                    // User is not signed in
+                  if (!snapshot.hasData || snapshot.data == null) {
+                    // User is signed out
                     return _buildSignInButton(context);
                   }
+
+                  final user = snapshot.data!;
+                  return FutureBuilder<DocumentSnapshot>(
+                    future: FirebaseFirestore.instance
+                        .collection('users')
+                        .doc(user.uid)
+                        .get(),
+                    builder: (context, userSnapshot) {
+                      if (userSnapshot.connectionState ==
+                          ConnectionState.waiting) {
+                        return const Center(child: CircularProgressIndicator());
+                      }
+
+                      if (userSnapshot.hasError) {
+                        // Error loading user data
+                        return const Center(
+                          child: Text('Error loading user data.'),
+                        );
+                      }
+
+                      final userDoc = userSnapshot.data;
+                      if (userDoc == null ||
+                          !userDoc.exists ||
+                          userDoc['username'] == null) {
+                        // Navigate to username input screen
+                        WidgetsBinding.instance.addPostFrameCallback((_) {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                                builder: (_) =>  UsernameInputScreen()),
+                          );
+                        });
+                        return Container(); // Placeholder while navigating
+                      }
+
+                      // User is signed in with a username
+                      final username = userDoc['username'];
+                      return _buildSignedInContent(context, user, username);
+                    },
+                  );
                 },
               ),
-            
+            ),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildSignedInContent(BuildContext context, User user) {
+  Widget _buildSignedInContent(
+      BuildContext context, User user, String username) {
     return Padding(
       padding: const EdgeInsets.all(16.0),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          const Text(
-            'User:',
-            style: TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          const SizedBox(height: 8),
           Text(
-            user.uid, // Display the user's UID
+            'Welcome, $username!',
             style: const TextStyle(
-              fontSize: 14,
-              color: Colors.grey,
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
             ),
           ),
           const SizedBox(height: 16),
           ElevatedButton(
-            onPressed: () => _signOut(context), // Sign-out logic
+            onPressed: () => _signOut(context),
             style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.red, // Button color
-              foregroundColor: Colors.white, // Text color
-              fixedSize: const Size(double.infinity, 50), // Full-width button
+              backgroundColor: Colors.red,
+              foregroundColor: Colors.white,
+              fixedSize: const Size(double.infinity, 50),
             ),
             child: const Text('Sign Out'),
           ),
@@ -87,34 +120,34 @@ class ProfileScreen extends StatelessWidget {
     );
   }
 
-Widget _buildSignInButton(BuildContext context) {
-  return Padding(
-    padding: const EdgeInsets.all(16.0),
-    child: SizedBox(
-      width: double.infinity, // Ensures the button is full width
-      child: ElevatedButton(
-        onPressed: () {
-          // Navigate to the Sign In screen
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (context) => SignInScreen(),
-            ),
-          );
-        },
-        style: ElevatedButton.styleFrom(
-          backgroundColor: const Color(0xAA77bb3f), // Button color
-          foregroundColor: Colors.white, // Text color
-          padding: const EdgeInsets.symmetric(vertical: 16), // Adjust vertical padding
-        ),
-        child: const Text(
-          'Sign In',
-          style: TextStyle(fontSize: 16), // Adjust font size
+  Widget _buildSignInButton(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.all(16.0),
+      child: SizedBox(
+        width: double.infinity,
+        child: ElevatedButton(
+          onPressed: () {
+            // Navigate to the Sign In screen
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) =>  SignInScreen(),
+              ),
+            );
+          },
+          style: ElevatedButton.styleFrom(
+            backgroundColor: const Color(0xAA77bb3f),
+            foregroundColor: Colors.white,
+            padding: const EdgeInsets.symmetric(vertical: 16),
+          ),
+          child: const Text(
+            'Sign In',
+            style: TextStyle(fontSize: 16),
+          ),
         ),
       ),
-    ),
-  );
-}
+    );
+  }
 
   Future<void> _signOut(BuildContext context) async {
     try {

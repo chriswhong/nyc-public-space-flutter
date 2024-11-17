@@ -5,15 +5,17 @@ import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
 import 'package:nyc_public_space_map/map_handler.dart';
 import 'package:nyc_public_space_map/panel_handler.dart';
-import 'package:nyc_public_space_map/search_handler.dart';
+// import 'package:nyc_public_space_map/search_handler.dart';
 import 'package:nyc_public_space_map/image_loader.dart';
 import 'package:nyc_public_space_map/floating_locator_button.dart';
 import 'package:nyc_public_space_map/public_space_properties.dart';
-import 'package:nyc_public_space_map/side_drawer.dart';
 import 'package:nyc_public_space_map/sign_in_screen.dart';
+import 'package:firebase_auth/firebase_auth.dart'; // Add Firebase Auth package
 
 class MapScreen extends StatefulWidget {
-  const MapScreen({super.key});
+  final Function(PublicSpaceFeature?) onReportAnIssue;
+
+  const MapScreen({super.key, required this.onReportAnIssue});
 
   @override
   State createState() => MapScreenState();
@@ -22,16 +24,24 @@ class MapScreen extends StatefulWidget {
 class MapScreenState extends State<MapScreen> {
   static const double defaultFloatingButtonOffset = 115;
   final PanelController _pc = PanelController();
-  String drawerType = 'default';
   double floatingButtonOffset = defaultFloatingButtonOffset;
 
   MapboxMap? mapboxMap;
   PublicSpaceFeature? selectedFeature;
 
+  User? currentUser; // Firebase User instance
+
   @override
   void initState() {
     super.initState();
     ImageLoader.instance.loadImages();
+    _checkCurrentUser(); // Check the user's login status
+  }
+
+  Future<void> _checkCurrentUser() async {
+    setState(() {
+      currentUser = FirebaseAuth.instance.currentUser; // Get the current user
+    });
   }
 
   void _onMapCreated(MapboxMap mapInstance) {
@@ -61,26 +71,12 @@ class MapScreenState extends State<MapScreen> {
   }
 
   void _handleReportAnIssuePressed(BuildContext context) {
-    setState(() {
-      drawerType = 'report';
-    });
-    Scaffold.of(context).openDrawer();
-  }
-
-  void _handleFeedbackTap() {
-    setState(() {
-      drawerType = 'report';
-    });
+    widget.onReportAnIssue(selectedFeature);
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      drawer: SideDrawer(
-        drawerType: drawerType,
-        selectedFeature: selectedFeature,
-        onFeedbackTap: _handleFeedbackTap,
-      ),
       body: _buildBody(),
     );
   }
@@ -186,39 +182,9 @@ class MapScreenState extends State<MapScreen> {
             SizedBox(
               width: 50,
               height: 50,
-              child: _buildDrawerButton(),
-            ),
-            SizedBox(
-              width: 50,
-              height: 50,
               child: _signInButton(),
             ),
           ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildDrawerButton() {
-    return Align(
-      alignment: Alignment.topCenter,
-      child: Container(
-        decoration: BoxDecoration(
-          color: const Color(0xAA77bb3f),
-          shape: BoxShape.circle,
-        ),
-        child: IconButton(
-          icon: const FaIcon(
-            FontAwesomeIcons.bars,
-            size: 20,
-            color: Colors.white,
-          ),
-          onPressed: () {
-            setState(() {
-              drawerType = 'default';
-            });
-            Scaffold.of(context).openDrawer();
-          },
         ),
       ),
     );
@@ -233,8 +199,8 @@ class MapScreenState extends State<MapScreen> {
           shape: BoxShape.circle,
         ),
         child: IconButton(
-          icon: const FaIcon(
-            FontAwesomeIcons.user,
+          icon: FaIcon(
+            currentUser == null ? FontAwesomeIcons.user : FontAwesomeIcons.home,
             size: 20,
             color: Colors.white,
           ),

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:mapbox_maps_flutter/mapbox_maps_flutter.dart';
 import 'package:geolocator/geolocator.dart' as geo;
+import 'package:nyc_public_space_map/colors.dart';
 
 class FloatingLocatorButton extends StatelessWidget {
   final MapboxMap? mapboxMap;
@@ -34,7 +35,7 @@ class FloatingLocatorButton extends StatelessWidget {
         offset: const Offset(-1, 1),
         child: const FaIcon(
           FontAwesomeIcons.locationArrow,
-          color: Color.fromARGB(255, 116, 116, 116),
+          color: AppColors.gray,
           size: 20.0,
         ),
       ),

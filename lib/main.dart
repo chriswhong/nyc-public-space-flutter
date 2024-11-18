@@ -1,18 +1,22 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:provider/provider.dart';
 import 'package:mapbox_maps_flutter/mapbox_maps_flutter.dart';
-import 'package:nyc_public_space_map/map_screen.dart';
-import 'package:nyc_public_space_map/about_screen.dart';
-import 'package:nyc_public_space_map/profile_screen.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_dynamic_links/firebase_dynamic_links.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
-import 'package:nyc_public_space_map/side_drawer.dart';
-import 'package:nyc_public_space_map/public_space_properties.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:cloud_firestore/cloud_firestore.dart' as firestore;
 
+import 'colors.dart';
+import 'map_screen.dart';
+import 'about_screen.dart';
+import 'profile_screen.dart';
+import 'side_drawer.dart';
+import 'public_space_properties.dart';
+import 'user_provider.dart'; 
+import 'username_input_screen.dart';
 
 
 Future<void> initDynamicLinks(BuildContext context) async {
@@ -42,7 +46,7 @@ Future<void> initDynamicLinks(BuildContext context) async {
           emailLink: deepLink.toString(),
         );
 
-              // Delete the email from shared_preferences
+        // Delete the email from shared_preferences
         await prefs.remove('sign_in_email');
 
         // You can access the new user via userCredential.user.
@@ -60,7 +64,6 @@ Future<void> initDynamicLinks(BuildContext context) async {
         Navigator.popUntil(context, (route) => route.isFirst);
 
         homeScreenKey.currentState?.switchToMapTab();
-
       } catch (error) {
         print('Error signing in with email link: $error');
         ScaffoldMessenger.of(context).showSnackBar(
@@ -91,29 +94,52 @@ void main() {
     // debugPaintSizeEnabled = true; // For debugging purposes
 
     await Firebase.initializeApp();
-    firestore.FirebaseFirestore.instance.settings = const firestore.Settings(persistenceEnabled: false);
-    runApp(MyApp());
+    firestore.FirebaseFirestore.instance.settings =
+        const firestore.Settings(persistenceEnabled: false);
+    runApp(
+      ChangeNotifierProvider(
+        create: (context) {
+          final userProvider = UserProvider();
+          userProvider.initializeAuth(context); // Initialize auth
+          return userProvider;
+        },
+        child: MyApp(),
+      ),
+    );
   });
 }
 
+final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
+
 class MyApp extends StatelessWidget {
+
   const MyApp({super.key});
+  
 
   @override
   Widget build(BuildContext context) {
+      final userProvider = Provider.of<UserProvider>(context, listen: false);
+
     return MaterialApp(
+      navigatorKey: navigatorKey,
       title: 'Flutter Bottom Navigation',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
         primarySwatch: Colors.blue,
       ),
       home: HomeScreen(key: homeScreenKey),
+      routes: {
+        '/username_input': (context) => UsernameInputScreen(
+              onUsernameCreated: (newUsername) {
+                userProvider.setUsernameLocally(newUsername);
+              },
+            ),
+      },
     );
   }
 }
 
 final GlobalKey<_HomeScreenState> homeScreenKey = GlobalKey<_HomeScreenState>();
-
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -174,33 +200,52 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      key: _scaffoldKey, // Attach the key to the Scaffold
-      drawer: SideDrawer(
-        selectedFeature: _selectedFeature,
-      ),
-      body: IndexedStack(
-        index: _selectedIndex, // Display the selected tab
-        children: _pages, // Keep all pages mounted
-      ),
-      bottomNavigationBar: BottomNavigationBar(
-        items: const <BottomNavigationBarItem>[
-          BottomNavigationBarItem(
-            icon: Icon(FontAwesomeIcons.map),
-            label: 'Map',
+        key: _scaffoldKey, // Attach the key to the Scaffold
+        drawer: SideDrawer(
+          selectedFeature: _selectedFeature,
+        ),
+        body: IndexedStack(
+          index: _selectedIndex, // Display the selected tab
+          children: _pages, // Keep all pages mounted
+        ),
+        bottomNavigationBar: SizedBox(
+          height: 90,
+          child: BottomNavigationBar(
+            backgroundColor: Colors.white,
+            items: const <BottomNavigationBarItem>[
+              BottomNavigationBarItem(
+                icon: Padding(
+                  padding: EdgeInsets.only(
+                      top: 8.0, bottom: 4.0), // Add padding above the icon
+                  child: Icon(FontAwesomeIcons.map),
+                ),
+                label: 'Map',
+              ),
+              BottomNavigationBarItem(
+                icon: Padding(
+                  padding: EdgeInsets.only(
+                      top: 8.0, bottom: 4.0), // Add padding above the icon
+                  child: Icon(FontAwesomeIcons.infoCircle),
+                ),
+                label: 'About',
+              ),
+              BottomNavigationBarItem(
+                icon: Padding(
+                  padding: EdgeInsets.only(
+                      top: 8.0, bottom: 4.0), // Add padding above the icon
+                  child: Icon(FontAwesomeIcons.user),
+                ),
+                label: 'Profile',
+              ),
+            ],
+            currentIndex: _selectedIndex,
+            selectedItemColor: AppColors.dark,
+            selectedLabelStyle: TextStyle(fontSize: 10), // Adjust font size
+            unselectedItemColor: AppColors.gray,
+            unselectedLabelStyle: TextStyle(fontSize: 10),
+            iconSize: 20, // Set the desired size for the icons
+            onTap: _onItemTapped,
           ),
-          BottomNavigationBarItem(
-            icon: Icon(FontAwesomeIcons.infoCircle),
-            label: 'About',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(FontAwesomeIcons.user),
-            label: 'Profile',
-          ),
-        ],
-        currentIndex: _selectedIndex,
-        selectedItemColor: Colors.blue,
-        onTap: _onItemTapped,
-      ),
-    );
+        ));
   }
 }

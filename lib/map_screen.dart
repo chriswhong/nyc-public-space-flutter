@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:nyc_public_space_map/colors.dart';
 import 'package:sliding_up_panel/sliding_up_panel.dart';
 import 'package:mapbox_maps_flutter/mapbox_maps_flutter.dart';
 
@@ -170,7 +171,7 @@ class MapScreenState extends State<MapScreen> {
                     'Tap a marker to learn more or get directions',
                     style: TextStyle(
                       fontSize: 12,
-                      color: Colors.grey,
+                      color: AppColors.gray,
                     ),
                   ),
                   SizedBox(height: 16),

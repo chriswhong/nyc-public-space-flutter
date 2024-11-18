@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:http/http.dart' as http;
+
 import 'package:nyc_public_space_map/public_space_properties.dart';
+import 'package:nyc_public_space_map/colors.dart';
 
 class ReportIssueDrawer extends StatefulWidget {
   final PublicSpaceFeature? selectedFeature;
@@ -159,12 +161,7 @@ class _ReportIssueDrawerState extends State<ReportIssueDrawer> {
                                                 spaceId, _controller.text);
                                           }
                                         },
-                                        style: ElevatedButton.styleFrom(
-                                          backgroundColor: const Color(
-                                              0xAA77bb3f), // Set the button background color to green
-                                          foregroundColor: Colors
-                                              .white, // Set the button text color to white
-                                        ),
+                                        style: AppStyles.buttonStyle,
                                         child: const Text('Submit'),
                                       ),
                               ],

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:nyc_public_space_map/magic_link_sent_screen.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:nyc_public_space_map/colors.dart';
 
 class SignInScreen extends StatefulWidget {
   @override
@@ -59,6 +60,7 @@ class _SignInScreenState extends State<SignInScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: AppColors.pageBackground,
       appBar: AppBar(title: const Text("Sign In")),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
@@ -74,6 +76,7 @@ class _SignInScreenState extends State<SignInScreen> {
             ElevatedButton(
               onPressed: _sendSignInLinkToEmail,
               child: const Text("Send Magic Link"),
+              style: AppStyles.buttonStyle,
             ),
           ],
         ),

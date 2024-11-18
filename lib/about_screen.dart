@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:nyc_public_space_map/colors.dart';
+
 
 class TypeDescription extends StatelessWidget {
   final String iconPath;
@@ -44,13 +46,13 @@ class AboutScreen extends StatelessWidget {
     final double screenWidth = MediaQuery.of(context).size.width;
 
     return Scaffold(
+      backgroundColor: AppColors.pageBackground,
       body: SafeArea(
         child: Column(
           children: [
             // Fixed Header
             Container(
               width: double.infinity,
-              // color: const Color(0xFF77bb3f), // Header background color
               padding: const EdgeInsets.all(16.0),
               child: const Text(
                 'About NYC Public Space',
@@ -59,7 +61,7 @@ class AboutScreen extends StatelessWidget {
                 style: TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
-                  color: Color.fromARGB(255, 0, 0, 0), // Header text color
+                  color: AppColors.dark, // Header text color
                 ),
               ),
             ),
@@ -85,7 +87,7 @@ class AboutScreen extends StatelessWidget {
                       style: TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.bold,
-                        color: Colors.black,
+                        color: AppColors.dark,
                       ),
                     ),
                     SizedBox(height: 10),
@@ -130,7 +132,7 @@ class AboutScreen extends StatelessWidget {
                       style: TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.bold,
-                        color: Colors.black,
+                        color: AppColors.dark,
                       ),
                     ),
                     SizedBox(height: 10),
@@ -149,10 +151,7 @@ class AboutScreen extends StatelessWidget {
                 width: double.infinity,
                 child: ElevatedButton(
                   onPressed: onFeedbackTap,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xAA77bb3f), // Button color
-                    foregroundColor: Colors.white, // Text color
-                  ),
+                  style: AppStyles.buttonStyle,
                   child: const Text('Share your Feedback'),
                 ),
               ),

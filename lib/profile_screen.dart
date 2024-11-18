@@ -1,16 +1,28 @@
 import 'package:flutter/material.dart';
-import 'package:firebase_auth/firebase_auth.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
-
-import 'package:nyc_public_space_map/sign_in_screen.dart';
-import 'package:nyc_public_space_map/username_input_screen.dart';
+import 'package:provider/provider.dart';
+import 'user_provider.dart';
+import 'sign_in_screen.dart';
+import 'username_input_screen.dart';
+import 'colors.dart';
 
 class ProfileScreen extends StatelessWidget {
   const ProfileScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
+    final userProvider = Provider.of<UserProvider>(context);
+
+    if (!userProvider.isAuthenticated || userProvider.username == null) {
+      return Scaffold(
+        backgroundColor: AppColors.pageBackground,
+        body: Center(
+          child: _buildSignInButton(context),
+        ),
+      );
+    }
+
     return Scaffold(
+      backgroundColor: AppColors.pageBackground,
       body: SafeArea(
         child: Column(
           children: [
@@ -24,65 +36,12 @@ class ProfileScreen extends StatelessWidget {
                 style: TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
-                  color: Color.fromARGB(255, 0, 0, 0),
+                  color: AppColors.dark,
                 ),
               ),
             ),
             Expanded(
-              child: StreamBuilder<User?>(
-                stream: FirebaseAuth.instance.authStateChanges(),
-                builder: (context, snapshot) {
-                  if (snapshot.connectionState == ConnectionState.waiting) {
-                    // Loading state while checking authentication
-                    return const Center(child: CircularProgressIndicator());
-                  }
-
-                  if (!snapshot.hasData || snapshot.data == null) {
-                    // User is signed out
-                    return _buildSignInButton(context);
-                  }
-
-                  final user = snapshot.data!;
-                  return FutureBuilder<DocumentSnapshot>(
-                    future: FirebaseFirestore.instance
-                        .collection('users')
-                        .doc(user.uid)
-                        .get(),
-                    builder: (context, userSnapshot) {
-                      if (userSnapshot.connectionState ==
-                          ConnectionState.waiting) {
-                        return const Center(child: CircularProgressIndicator());
-                      }
-
-                      if (userSnapshot.hasError) {
-                        // Error loading user data
-                        return const Center(
-                          child: Text('Error loading user data.'),
-                        );
-                      }
-
-                      final userDoc = userSnapshot.data;
-                      if (userDoc == null ||
-                          !userDoc.exists ||
-                          userDoc['username'] == null) {
-                        // Navigate to username input screen
-                        WidgetsBinding.instance.addPostFrameCallback((_) {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                                builder: (_) =>  UsernameInputScreen()),
-                          );
-                        });
-                        return Container(); // Placeholder while navigating
-                      }
-
-                      // User is signed in with a username
-                      final username = userDoc['username'];
-                      return _buildSignedInContent(context, user, username);
-                    },
-                  );
-                },
-              ),
+              child: _buildSignedInContent(context, userProvider.username!),
             ),
           ],
         ),
@@ -90,30 +49,64 @@ class ProfileScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildSignedInContent(
-      BuildContext context, User user, String username) {
+  Widget _buildSignedInContent(BuildContext context, String username) {
+    final userProvider = Provider.of<UserProvider>(context, listen: false);
+
     return Padding(
       padding: const EdgeInsets.all(16.0),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        mainAxisAlignment: MainAxisAlignment.center,
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          Text(
-            'Welcome, $username!',
-            style: const TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
+          // Top third with username and icon
+          Expanded(
+            flex: 1,
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const Icon(Icons.person, size: 40, color: Colors.black),
+                    const SizedBox(width: 8),
+                    Text(
+                      username,
+                      style: const TextStyle(
+                        fontSize: 32,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ],
+                ),
+              ],
             ),
           ),
-          const SizedBox(height: 16),
-          ElevatedButton(
-            onPressed: () => _signOut(context),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.red,
-              foregroundColor: Colors.white,
-              fixedSize: const Size(double.infinity, 50),
+          // Button with margin
+          Expanded(
+            flex: 2,
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.start,
+              children: [
+                const SizedBox(height: 16),
+                SizedBox(
+                  width: double.infinity,
+                  child: OutlinedButton(
+                    onPressed: () => userProvider.signOut(),
+                    style: OutlinedButton.styleFrom(
+                      side: const BorderSide(color: Colors.red, width: 2),
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                    ),
+                    child: const Text(
+                      'Sign Out',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.red,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
             ),
-            child: const Text('Sign Out'),
           ),
         ],
       ),
@@ -127,16 +120,15 @@ class ProfileScreen extends StatelessWidget {
         width: double.infinity,
         child: ElevatedButton(
           onPressed: () {
-            // Navigate to the Sign In screen
             Navigator.push(
               context,
               MaterialPageRoute(
-                builder: (context) =>  SignInScreen(),
+                builder: (context) => SignInScreen(),
               ),
             );
           },
           style: ElevatedButton.styleFrom(
-            backgroundColor: const Color(0xAA77bb3f),
+            backgroundColor: AppColors.green,
             foregroundColor: Colors.white,
             padding: const EdgeInsets.symmetric(vertical: 16),
           ),
@@ -147,18 +139,5 @@ class ProfileScreen extends StatelessWidget {
         ),
       ),
     );
-  }
-
-  Future<void> _signOut(BuildContext context) async {
-    try {
-      await FirebaseAuth.instance.signOut();
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Successfully signed out')),
-      );
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error signing out: $e')),
-      );
-    }
   }
 }

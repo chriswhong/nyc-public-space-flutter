@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:nyc_public_space_map/colors.dart';
 
 class MagicLinkSentScreen extends StatelessWidget {
   final String email;
@@ -15,7 +17,7 @@ class MagicLinkSentScreen extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.center,
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            const Icon(Icons.email, size: 100, color: Colors.blue),
+            const Icon(FontAwesomeIcons.envelope, size: 48,),
             const SizedBox(height: 16),
             Text(
               'Magic Link Sent!',
@@ -33,6 +35,7 @@ class MagicLinkSentScreen extends StatelessWidget {
             ElevatedButton(
               onPressed: () => Navigator.pop(context),
               child: const Text("Back to Login"),
+              style: AppStyles.buttonStyle,
             ),
           ],
         ),

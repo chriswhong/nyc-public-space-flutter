@@ -1,9 +1,11 @@
 import 'dart:ffi';
 import 'dart:io';
 import 'package:flutter/material.dart';
-import 'package:nyc_public_space_map/public_space_properties.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:url_launcher/url_launcher.dart'; // Import the url_launcher package
+
+import 'package:nyc_public_space_map/public_space_properties.dart';
+import 'package:nyc_public_space_map/colors.dart';
 
 String extractDomainFromUri(Uri? uri) {
   // Define a regular expression to match the domain part of the URL
@@ -141,7 +143,7 @@ class _PanelHandlerState extends State<PanelHandler> {
 
   Widget _lightDivider() {
     return Divider(
-      color: const Color.fromARGB(255, 204, 204, 204), // Color of the line
+      color: AppColors.gray, // Color of the line
       thickness: 0.5, // Thickness of the line
     );
   }
@@ -154,27 +156,27 @@ class _PanelHandlerState extends State<PanelHandler> {
     switch (type) {
       case 'pops':
         typeLabel = 'Privately Owned Public Space';
-        typeColor = const Color(0xAA6b82d6);
+        typeColor = AppColors.popsColor;
         break;
       case 'park':
         typeLabel = 'Park';
-        typeColor = const Color(0xAA77bb3f);
+        typeColor = AppColors.parkColor;
         break;
       case 'wpaa':
         typeLabel = 'Waterfront Public Access Area';
-        typeColor = const Color(0xAA0ad6f5);
+        typeColor = AppColors.wpaaColor;
         break;
       case 'plaza':
         typeLabel = 'Street Plaza';
-        typeColor = const Color(0xAAffbf47);
+        typeColor = AppColors.plazaColor;
         break;
       case 'stp':
         typeLabel = 'Schoolyards to Playgrounds';
-        typeColor = const Color(0xAAF55353);
+        typeColor = AppColors.stpColor;
         break;
       default:
         typeLabel = 'Miscellaneous';
-        typeColor = const Color(0xAACCCCCC);
+        typeColor = AppColors.miscColor;
     }
 
     return Row(
@@ -430,7 +432,7 @@ class _PanelHandlerState extends State<PanelHandler> {
           right: 10,
           top: 10,
           child: IconButton(
-            icon: const Icon(Icons.close, color: Colors.black),
+            icon: const Icon(Icons.close, color: AppColors.dark),
             onPressed:
                 widget.onClosePanel, // Call the close function when tapped
           ),

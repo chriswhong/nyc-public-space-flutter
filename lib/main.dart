@@ -27,9 +27,6 @@ Future<void> initDynamicLinks(BuildContext context) async {
       .listen((PendingDynamicLinkData? dynamicLinkData) async {
     final Uri? deepLink = dynamicLinkData?.link;
 
-    print('deepLink');
-    print(deepLink);
-
     if (deepLink != null &&
         FirebaseAuth.instance.isSignInWithEmailLink(deepLink.toString())) {
       try {

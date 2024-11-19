@@ -70,7 +70,7 @@ class _UsernameInputScreenState extends State<UsernameInputScreen> {
 
       if (docSnapshot.exists) {
         setState(() {
-          _errorMessage = 'Username is already taken.';
+          _errorMessage = 'That username is not available.';
           _isSubmitting = false;
         });
         return;
@@ -103,11 +103,20 @@ class _UsernameInputScreenState extends State<UsernameInputScreen> {
     }
   }
 
+    Future<void> _signOut() async {
+    await FirebaseAuth.instance.signOut();
+    Navigator.pushReplacementNamed(context, '/login'); // Redirect to login screen
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.pageBackground,
-      appBar: AppBar(title: const Text('Set Username')),
+      appBar: AppBar(
+        title: const Text('Set Username'),
+          automaticallyImplyLeading: false, // Hides the back arrow
+
+        ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
@@ -134,6 +143,17 @@ class _UsernameInputScreenState extends State<UsernameInputScreen> {
                 child: const Text('Submit'),
                 style: AppStyles.buttonStyle,
               ),
+              const SizedBox(height: 20),
+            TextButton(
+              onPressed: _signOut,
+              child: const Text(
+                'Sign Out',
+                style: TextStyle(
+                  color: AppColors.dark, // Use a custom link color
+                  decoration: TextDecoration.underline, // Underline the text
+                ),
+              ),
+            ),
           ],
         ),
       ),

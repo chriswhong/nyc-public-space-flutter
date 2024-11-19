@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/services.dart';
 import 'package:nyc_public_space_map/colors.dart';
 
 class UsernameInputScreen extends StatefulWidget {
@@ -18,12 +19,31 @@ class _UsernameInputScreenState extends State<UsernameInputScreen> {
   bool _isSubmitting = false;
   String? _errorMessage;
 
+  // Regex for username validation: letters, numbers, underscores, dashes
+  final _usernameRegex = RegExp(r'^[a-zA-Z0-9_-]+$');
+
   Future<void> _submitUsername() async {
     final username = _usernameController.text.trim();
 
+    // Validate username length and format
     if (username.isEmpty) {
       setState(() {
         _errorMessage = 'Username cannot be empty.';
+      });
+      return;
+    }
+
+    if (username.length > 30) {
+      setState(() {
+        _errorMessage = 'Username cannot exceed 30 characters.';
+      });
+      return;
+    }
+
+    if (!_usernameRegex.hasMatch(username)) {
+      setState(() {
+        _errorMessage =
+            'Username can only contain letters, numbers, underscores, and dashes.';
       });
       return;
     }
@@ -94,9 +114,15 @@ class _UsernameInputScreenState extends State<UsernameInputScreen> {
           children: [
             TextField(
               controller: _usernameController,
+              maxLength: 30, // Enforce maximum character limit
+              inputFormatters: [
+                FilteringTextInputFormatter.allow(RegExp(r'[a-zA-Z0-9_-]')),
+              ],
               decoration: InputDecoration(
                 labelText: 'Username',
                 errorText: _errorMessage,
+                counterText:
+                    '', // Hide the character counter below the text field
               ),
             ),
             const SizedBox(height: 20),
@@ -106,7 +132,7 @@ class _UsernameInputScreenState extends State<UsernameInputScreen> {
               ElevatedButton(
                 onPressed: _submitUsername,
                 child: const Text('Submit'),
-                style: AppStyles.buttonStyle
+                style: AppStyles.buttonStyle,
               ),
           ],
         ),

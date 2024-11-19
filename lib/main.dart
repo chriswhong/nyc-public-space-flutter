@@ -15,9 +15,8 @@ import 'about_screen.dart';
 import 'profile_screen.dart';
 import 'side_drawer.dart';
 import 'public_space_properties.dart';
-import 'user_provider.dart'; 
+import 'user_provider.dart';
 import 'username_input_screen.dart';
-
 
 Future<void> initDynamicLinks(BuildContext context) async {
   print('Initializing dynamic links...');
@@ -109,13 +108,11 @@ void main() {
 final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 
 class MyApp extends StatelessWidget {
-
   const MyApp({super.key});
-  
 
   @override
   Widget build(BuildContext context) {
-      final userProvider = Provider.of<UserProvider>(context, listen: false);
+    final userProvider = Provider.of<UserProvider>(context, listen: false);
 
     return MaterialApp(
       navigatorKey: navigatorKey,
@@ -123,6 +120,20 @@ class MyApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
         primarySwatch: Colors.blue,
+        inputDecorationTheme: InputDecorationTheme(
+          labelStyle: TextStyle(color: AppColors.gray), // Label text color
+          focusedBorder: OutlineInputBorder(
+            borderSide: BorderSide(
+                color: AppColors.green, width: 2.0), // Focused border color
+          ),
+          enabledBorder: OutlineInputBorder(
+            borderSide: BorderSide(
+                color: AppColors.gray, width: 1.0), // Enabled border color
+          ),
+        ),
+        textSelectionTheme: TextSelectionThemeData(
+          cursorColor: AppColors.dark, // Set the cursor color globally
+        ),
       ),
       home: HomeScreen(key: homeScreenKey),
       routes: {

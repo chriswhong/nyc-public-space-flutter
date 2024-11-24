@@ -56,10 +56,10 @@ class _ReportIssueDrawerState extends State<ReportIssueDrawer> {
     final double screenWidth = MediaQuery.of(context).size.width;
 
     final String spaceName =
-        widget.selectedFeature?.properties?.name ?? "this space";
+        widget.selectedFeature?.properties.name ?? "this space";
 
     final String spaceId =
-        widget.selectedFeature?.properties?.space_id ?? 'app_feedback';
+        widget.selectedFeature?.properties.space_id ?? 'app_feedback';
 
     String title = widget.selectedFeature != null
         ? 'Report an Issue'
@@ -69,15 +69,15 @@ class _ReportIssueDrawerState extends State<ReportIssueDrawer> {
     ? 'Thanks for reporting! We will look into it and update the record as soon as possible. 😎'
     : 'Thanks for sharing! We will use your feedback to improve the app!';
 
-    Widget _prompt() {
+    Widget prompt() {
       if (widget.selectedFeature == null) {
-        return Column(crossAxisAlignment: CrossAxisAlignment.start,children: [
+        return const Column(crossAxisAlignment: CrossAxisAlignment.start,children: [
           Text('Your feedback is appreciated!',
-              style: const TextStyle(fontSize: 16)),
+              style: TextStyle(fontSize: 16)),
           SizedBox(height: 16),
           Text(
               'Feel free to share anything, including suggestions about the user interface, public spaces we may have missed, bugs, errors, or anything else you want to share.',
-              style: const TextStyle(fontSize: 16)),
+              style: TextStyle(fontSize: 16)),
         ]);
       }
       return Text.rich(
@@ -130,14 +130,14 @@ class _ReportIssueDrawerState extends State<ReportIssueDrawer> {
                           ? Center(
                               child: Text(
                                 submittedMessage,
-                                style: TextStyle(fontSize: 18),
+                                style: const TextStyle(fontSize: 18),
                               ),
                             )
                           : Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                _prompt(),
-                                SizedBox(height: 36),
+                                prompt(),
+                                const SizedBox(height: 36),
                                 TextField(
                                   controller: _controller,
                                   maxLines: 4,
@@ -145,7 +145,7 @@ class _ReportIssueDrawerState extends State<ReportIssueDrawer> {
                                     border: OutlineInputBorder(),
                                     focusedBorder: OutlineInputBorder(
                                       borderSide: BorderSide(
-                                          color: const Color(
+                                          color: Color(
                                               0xAA77bb3f)), // Green border when focused
                                     ),
                                   ),

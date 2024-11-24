@@ -38,6 +38,10 @@
 	<string>Your precise location is used to show your location on the map and to help improve the map.</string>
 	<key>NSLocationWhenInUseUsageDescription</key>
 	<string>Your precise location is used to show your location on the map and to help improve the map.</string>
+    <key>NSCameraUsageDescription</key>
+    <string>We need camera access to allow you to take photos.</string>
+    <key>NSPhotoLibraryUsageDescription</key>
+    <string>We need photo library access to allow you to select photos.</string>
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
 	<key>UILaunchStoryboardName</key>

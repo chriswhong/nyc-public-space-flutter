@@ -5,6 +5,8 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:nyc_public_space_map/colors.dart';
 
 class SignInScreen extends StatefulWidget {
+  const SignInScreen({super.key});
+
   @override
   _SignInScreenState createState() => _SignInScreenState();
 }
@@ -75,8 +77,8 @@ class _SignInScreenState extends State<SignInScreen> {
             const SizedBox(height: 20),
             ElevatedButton(
               onPressed: _sendSignInLinkToEmail,
-              child: const Text("Send Magic Link"),
               style: AppStyles.buttonStyle,
+              child: const Text("Send Magic Link"),
             ),
           ],
         ),

@@ -99,7 +99,7 @@ void main() {
           userProvider.initializeAuth(context); // Initialize auth
           return userProvider;
         },
-        child: MyApp(),
+        child: const MyApp(),
       ),
     );
   });
@@ -120,7 +120,7 @@ class MyApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
         primarySwatch: Colors.blue,
-        inputDecorationTheme: InputDecorationTheme(
+        inputDecorationTheme: const InputDecorationTheme(
           labelStyle: TextStyle(color: AppColors.gray), // Label text color
           focusedBorder: OutlineInputBorder(
             borderSide: BorderSide(
@@ -131,7 +131,7 @@ class MyApp extends StatelessWidget {
                 color: AppColors.gray, width: 1.0), // Enabled border color
           ),
         ),
-        textSelectionTheme: TextSelectionThemeData(
+        textSelectionTheme: const TextSelectionThemeData(
           cursorColor: AppColors.dark, // Set the cursor color globally
         ),
       ),
@@ -248,9 +248,9 @@ class _HomeScreenState extends State<HomeScreen> {
             ],
             currentIndex: _selectedIndex,
             selectedItemColor: AppColors.dark,
-            selectedLabelStyle: TextStyle(fontSize: 10), // Adjust font size
+            selectedLabelStyle: const TextStyle(fontSize: 10), // Adjust font size
             unselectedItemColor: AppColors.gray,
-            unselectedLabelStyle: TextStyle(fontSize: 10),
+            unselectedLabelStyle: const TextStyle(fontSize: 10),
             iconSize: 20, // Set the desired size for the icons
             onTap: _onItemTapped,
           ),

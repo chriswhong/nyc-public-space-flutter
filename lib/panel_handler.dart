@@ -3,9 +3,12 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:url_launcher/url_launcher.dart'; // Import the url_launcher package
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_storage/firebase_storage.dart';
 
-import 'package:nyc_public_space_map/public_space_properties.dart';
-import 'package:nyc_public_space_map/colors.dart';
+import './public_space_properties.dart';
+import './colors.dart';
+import './submit_image.dart';
 
 String extractDomainFromUri(Uri? uri) {
   // Define a regular expression to match the domain part of the URL
@@ -26,13 +29,15 @@ class PanelHandler extends StatefulWidget {
   final VoidCallback? onClosePanel; // Callback to close the panel
   final VoidCallback? onPanelContentUpdated; // Callback to close the panel
   final VoidCallback? onReportAnIssuePressed;
+  final VoidCallback? onSubmitPhotoPressed;
 
   const PanelHandler(
       {super.key,
       required this.selectedFeature,
       this.onClosePanel,
       this.onPanelContentUpdated,
-      this.onReportAnIssuePressed});
+      this.onReportAnIssuePressed,
+      this.onSubmitPhotoPressed});
 
   @override
   _PanelHandlerState createState() => _PanelHandlerState();
@@ -40,6 +45,7 @@ class PanelHandler extends StatefulWidget {
 
 class _PanelHandlerState extends State<PanelHandler> {
   late PublicSpaceFeature? _panelContent;
+  List<String> imageUrls = [];
 
   @override
   void initState() {
@@ -48,15 +54,55 @@ class _PanelHandlerState extends State<PanelHandler> {
     _panelContent = widget.selectedFeature;
   }
 
+  Future<void> fetchImages() async {
+    try {
+      final querySnapshot = await FirebaseFirestore.instance
+          .collection('images')
+          .where('spaceId',
+              isEqualTo: widget.selectedFeature?.properties.firestoreId)
+          .get();
+
+      print('querySnapshot: $querySnapshot');
+
+      List<String> urls = [];
+      for (var doc in querySnapshot.docs) {
+        String filename = doc['filename'];
+        String spaceId = doc['spaceId'];
+        String url = await getDownloadUrl(filename, spaceId);
+        urls.add(url);
+      }
+
+      print('urls: $urls');
+      setState(() {
+        imageUrls = urls;
+      });
+    } catch (e) {
+      print('Error fetching images: $e');
+    }
+  }
+
+  Future<String> getDownloadUrl(String filename, String spaceId) async {
+    try {
+      final ref = FirebaseStorage.instance.ref().child('spaces_images/$spaceId/$filename');
+      return await ref.getDownloadURL();
+    } catch (e) {
+      print('Error getting download URL: $e');
+      return '';
+    }
+  }
+
   // Update the panel when the selectedFeature changes
   @override
   void didUpdateWidget(PanelHandler oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (widget.selectedFeature != oldWidget.selectedFeature &&
         widget.selectedFeature != null) {
+      
       setState(() {
+        imageUrls = [];
         _panelContent = widget.selectedFeature;
       });
+      fetchImages();
     }
   }
 
@@ -97,11 +143,11 @@ class _PanelHandlerState extends State<PanelHandler> {
         context: context, // Ensure this is within a valid BuildContext
         builder: (BuildContext context) {
           return AlertDialog(
-            title: Text('Open in Maps'),
-            content: Text('Which app would you like to use?'),
+            title: const Text('Open in Maps'),
+            content: const Text('Which app would you like to use?'),
             actions: <Widget>[
               TextButton(
-                child: Text('Apple Maps'),
+                child: const Text('Apple Maps'),
                 onPressed: () async {
                   final uri = getMapLaunchUri(latitude, longitude);
                   if (await canLaunchUrl(uri)) {
@@ -113,7 +159,7 @@ class _PanelHandlerState extends State<PanelHandler> {
                 },
               ),
               TextButton(
-                child: Text('Google Maps'),
+                child: const Text('Google Maps'),
                 onPressed: () async {
                   final uri =
                       getMapLaunchUri(latitude, longitude, isGoogleMaps: true);
@@ -142,7 +188,7 @@ class _PanelHandlerState extends State<PanelHandler> {
   }
 
   Widget _lightDivider() {
-    return Divider(
+    return const Divider(
       color: AppColors.gray, // Color of the line
       thickness: 0.5, // Thickness of the line
     );
@@ -247,6 +293,23 @@ class _PanelHandlerState extends State<PanelHandler> {
                   children: [_buildPill(_panelContent!.properties.type)],
                 ),
                 const SizedBox(height: 8),
+                if (imageUrls.isNotEmpty)
+                  SingleChildScrollView(
+                    scrollDirection: Axis.horizontal,
+                    child: Row(
+                      children: imageUrls.map((url) {
+                        return Padding(
+                          padding: const EdgeInsets.all(8.0),
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(
+                                8.0), // Adjust the radius as needed
+                            child: Image.network(url, height: 200),
+                          ),
+                        );
+                      }).toList(),
+                    ),
+                  ),
+                const SizedBox(height: 8),
                 // Location text
                 // Row(
                 //   children: [
@@ -306,7 +369,7 @@ class _PanelHandlerState extends State<PanelHandler> {
                           ),
                         ],
                       ),
-                      SizedBox(width: 10),
+                      const SizedBox(width: 10),
                       Column(
                         children: [
                           Container(
@@ -331,6 +394,42 @@ class _PanelHandlerState extends State<PanelHandler> {
                               height: 4), // Space between icon and text
                           const Text(
                             'Report an Issue',
+                            style: TextStyle(fontSize: 12), // Small text label
+                          ),
+                        ],
+                      ),
+                      const SizedBox(width: 10),
+                      Column(
+                        children: [
+                          Container(
+                            decoration: BoxDecoration(
+                              color: Colors.grey[300], // Light gray background
+                              shape: BoxShape.circle, // Circular shape
+                            ),
+                            child: IconButton(
+                              icon: FaIcon(
+                                FontAwesomeIcons.camera, // Navigation icon
+                                size: 20, // Icon size
+                                color: Colors.grey[800], // Dark gray icon
+                              ),
+                              onPressed: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => PhotoSubmissionScreen(
+                                      spaceId: _panelContent!.properties
+                                          .firestoreId, // Replace with the space ID
+                                    ),
+                                  ),
+                                );
+                              },
+                              tooltip: 'Report an Issue',
+                            ),
+                          ),
+                          const SizedBox(
+                              height: 4), // Space between icon and text
+                          const Text(
+                            'Submit a Photo',
                             style: TextStyle(fontSize: 12), // Small text label
                           ),
                         ],
@@ -374,45 +473,46 @@ class _PanelHandlerState extends State<PanelHandler> {
                     ? Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          SizedBox(height: 4),
+                          const SizedBox(height: 4),
                           Text(_panelContent!.properties.description!),
                           _lightDivider(), // Add the additional widget here
                         ],
                       )
-                    : SizedBox.shrink(),
+                    : const SizedBox.shrink(),
                 _panelContent != null &&
                         _panelContent!.properties.location != null &&
                         _panelContent!.properties.location?.isNotEmpty == true
                     ? Column(
                         children: [
-                          SizedBox(height: 4),
+                          const SizedBox(height: 4),
                           ListTile(
-                            leading:
-                                FaIcon(FontAwesomeIcons.mapMarkerAlt, size: 18),
+                            leading: const FaIcon(FontAwesomeIcons.mapMarkerAlt,
+                                size: 18),
 
                             title: Text(
                                 _panelContent!.properties.location ??
                                     'Address not available',
-                                style: TextStyle(fontSize: 14)),
-                            visualDensity: VisualDensity(
+                                style: const TextStyle(fontSize: 14)),
+                            visualDensity: const VisualDensity(
                                 vertical: -4), // Reduce vertical space
                           ),
                           _lightDivider(),
                         ],
                       )
-                    : SizedBox.shrink(),
+                    : const SizedBox.shrink(),
                 _panelContent != null && _panelContent!.properties.url != null
                     ? Column(
                         children: [
-                          SizedBox(height: 4),
+                          const SizedBox(height: 4),
                           ListTile(
-                            leading: FaIcon(FontAwesomeIcons.link, size: 18),
+                            leading:
+                                const FaIcon(FontAwesomeIcons.link, size: 18),
 
                             title: Text(
                                 extractDomainFromUri(
                                     _panelContent!.properties.url),
-                                style: TextStyle(fontSize: 14)),
-                            visualDensity: VisualDensity(
+                                style: const TextStyle(fontSize: 14)),
+                            visualDensity: const VisualDensity(
                                 vertical: -4), // Reduce vertical space
 
                             onTap: () {
@@ -422,7 +522,7 @@ class _PanelHandlerState extends State<PanelHandler> {
                           _lightDivider(),
                         ],
                       )
-                    : SizedBox.shrink(),
+                    : const SizedBox.shrink(),
               ],
             ),
           ),

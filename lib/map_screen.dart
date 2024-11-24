@@ -152,13 +152,13 @@ class MapScreenState extends State<MapScreen> {
           ],
         ),
         padding: const EdgeInsets.all(16.0),
-        child: Row(
+        child: const Row(
           children: <Widget>[
             Expanded(
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
-                children: const <Widget>[
+                children: <Widget>[
                   Text(
                     'NYC Public Space',
                     style: TextStyle(

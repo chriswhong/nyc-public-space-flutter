@@ -19,10 +19,10 @@ class MagicLinkSentScreen extends StatelessWidget {
           children: [
             const Icon(FontAwesomeIcons.envelope, size: 48,),
             const SizedBox(height: 16),
-            Text(
+            const Text(
               'Magic Link Sent!',
               textAlign: TextAlign.center,
-              style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+              style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 16),
             Text(
@@ -34,8 +34,8 @@ class MagicLinkSentScreen extends StatelessWidget {
             const SizedBox(height: 24),
             ElevatedButton(
               onPressed: () => Navigator.pop(context),
-              child: const Text("Back to Login"),
               style: AppStyles.buttonStyle,
+              child: const Text("Back to Login"),
             ),
           ],
         ),

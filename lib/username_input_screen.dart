@@ -7,8 +7,7 @@ import 'package:nyc_public_space_map/colors.dart';
 class UsernameInputScreen extends StatefulWidget {
   final Function(String) onUsernameCreated;
 
-  const UsernameInputScreen({Key? key, required this.onUsernameCreated})
-      : super(key: key);
+  const UsernameInputScreen({super.key, required this.onUsernameCreated});
 
   @override
   _UsernameInputScreenState createState() => _UsernameInputScreenState();
@@ -140,8 +139,8 @@ class _UsernameInputScreenState extends State<UsernameInputScreen> {
             else
               ElevatedButton(
                 onPressed: _submitUsername,
-                child: const Text('Submit'),
                 style: AppStyles.buttonStyle,
+                child: const Text('Submit'),
               ),
               const SizedBox(height: 20),
             TextButton(

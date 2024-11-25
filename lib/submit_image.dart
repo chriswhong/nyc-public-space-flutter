@@ -18,63 +18,63 @@ class PhotoSubmissionScreen extends StatefulWidget {
 }
 
 class _PhotoSubmissionScreenState extends State<PhotoSubmissionScreen> {
-  File? _selectedImage;
+  List<File> _selectedImages = [];
   bool _isUploading = false;
 
-  Future<void> _pickImage(ImageSource source) async {
+  Future<void> _pickImages(ImageSource source) async {
     final picker = ImagePicker();
-    final pickedFile = await picker.pickImage(source: source);
+    final pickedFiles = await picker.pickMultiImage();
 
-    if (pickedFile != null) {
+    if (pickedFiles != null && pickedFiles.isNotEmpty) {
       setState(() {
-        _selectedImage = File(pickedFile.path);
+        _selectedImages = pickedFiles.map((file) => File(file.path)).toList();
       });
     }
   }
 
-  Future<void> _uploadPhoto() async {
-    if (_selectedImage == null) return;
+  Future<void> _uploadPhotos() async {
+    if (_selectedImages.isEmpty) return;
 
     setState(() {
       _isUploading = true;
     });
 
     try {
-      // Get the current user
       final user = FirebaseAuth.instance.currentUser;
-      print(user.toString());
       if (user == null) {
         throw Exception('No user is logged in');
       }
 
-      // Upload to Firebase Storage
+      for (var image in _selectedImages) {
+        final filename = '${DateTime.now().millisecondsSinceEpoch}.jpg';
+        final storageRef = FirebaseStorage.instance
+            .ref()
+            .child('spaces_images')
+            .child(widget.spaceId)
+            .child(filename);
+        final uploadTask = await storageRef.putFile(image);
+        final imageUrl = await uploadTask.ref.getDownloadURL();
 
-      final filename = '${DateTime.now().millisecondsSinceEpoch}.jpg';
-      final storageRef = FirebaseStorage.instance
-          .ref()
-          .child('spaces_images')
-          .child(widget.spaceId)  
-          .child(filename);
-      final uploadTask = await storageRef.putFile(_selectedImage!);
-      final imageUrl = await uploadTask.ref.getDownloadURL();
-      // Save to Firestore
-      await FirebaseFirestore.instance.collection('images').add({
-        'spaceId': widget.spaceId,
-        'timestamp': FieldValue.serverTimestamp(),
-        'userId': user.uid,
-        'filename': filename,
-        'approved': false,
-      });
+        // Save metadata to Firestore
+        await FirebaseFirestore.instance.collection('images').add({
+          'spaceId': widget.spaceId,
+          'timestamp': FieldValue.serverTimestamp(),
+          'userId': user.uid,
+          'filename': filename,
+          'approved': false,
+          'imageUrl': imageUrl,
+        });
+      }
 
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Photo submitted successfully!')),
+        const SnackBar(content: Text('Photos submitted successfully!')),
       );
 
       Navigator.of(context).pop(); // Close the screen after submission
     } catch (e) {
       print(e);
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error uploading photo: $e')),
+        SnackBar(content: Text('Error uploading photos: $e')),
       );
     } finally {
       setState(() {
@@ -87,7 +87,7 @@ class _PhotoSubmissionScreenState extends State<PhotoSubmissionScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Submit Photo'),
+        title: const Text('Submit Photos'),
       ),
       body: Center(
         child: _isUploading
@@ -95,30 +95,35 @@ class _PhotoSubmissionScreenState extends State<PhotoSubmissionScreen> {
             : Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  _selectedImage != null
-                      ? Image.file(_selectedImage!)
-                      : const Text('No image selected.'),
+                  _selectedImages.isNotEmpty
+                      ? SizedBox(
+                          height: 200,
+                          child: ListView.builder(
+                            scrollDirection: Axis.horizontal,
+                            itemCount: _selectedImages.length,
+                            itemBuilder: (context, index) {
+                              return Padding(
+                                padding: const EdgeInsets.all(8.0),
+                                child: Image.file(
+                                  _selectedImages[index],
+                                  width: 100,
+                                  fit: BoxFit.cover,
+                                ),
+                              );
+                            },
+                          ),
+                        )
+                      : const Text('No images selected.'),
                   const SizedBox(height: 20),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      ElevatedButton.icon(
-                        icon: const Icon(Icons.camera),
-                        label: const Text('Take Photo'),
-                        onPressed: () => _pickImage(ImageSource.camera),
-                      ),
-                      const SizedBox(width: 10),
-                      ElevatedButton.icon(
-                        icon: const Icon(Icons.photo_library),
-                        label: const Text('Choose from Gallery'),
-                        onPressed: () => _pickImage(ImageSource.gallery),
-                      ),
-                    ],
+                  ElevatedButton.icon(
+                    icon: const Icon(Icons.photo_library),
+                    label: const Text('Choose Images'),
+                    onPressed: () => _pickImages(ImageSource.gallery),
                   ),
                   const SizedBox(height: 20),
                   ElevatedButton(
-                    onPressed: _selectedImage != null ? _uploadPhoto : null,
-                    child: const Text('Submit Photo'),
+                    onPressed: _selectedImages.isNotEmpty ? _uploadPhotos : null,
+                    child: const Text('Submit Photos'),
                   ),
                 ],
               ),

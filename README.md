@@ -22,12 +22,29 @@ flutter run --release --dart-define ACCESS_TOKEN=pk.12345
 
 ## Android Release
 
-flutter clean
-flutter build appbundle --release --dart-define ACCESS_TOKEN=pk.12345
+- increment version in pubspec.yaml
+- flutter clean
+- flutter build appbundle --release --dart-define ACCESS_TOKEN=pk.12345
+
+Login to Google Play Developer Console
 
 ## iOS Release
 
-- increment version
+- increment version in pubspec.yaml
 - flutter clean
 - flutter build ios --release --dart-define ACCESS_TOKEN=pk.12345
 
+Open Xcode:
+
+Navigate to ios/ and open the Runner.xcworkspace file.
+
+Archive the Build:
+    In Xcode, go to Product > Archive.
+    After the archiving process, the Organizer window opens.
+
+Validate and Upload:
+    Select the new archive, click Distribute App, and follow the steps:
+    Method: App Store Connect.
+    Team: Ensure the correct team is selected.
+    Validation: Resolve any errors or warnings.
+    Upload: Complete the upload process.

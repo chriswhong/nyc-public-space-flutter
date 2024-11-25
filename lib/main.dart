@@ -13,7 +13,6 @@ import 'colors.dart';
 import 'map_screen.dart';
 import 'about_screen.dart';
 import 'profile_screen.dart';
-import 'side_drawer.dart';
 import 'public_space_properties.dart';
 import 'user_provider.dart';
 import 'username_input_screen.dart';
@@ -175,7 +174,7 @@ class _HomeScreenState extends State<HomeScreen> {
     // Initialize the list of pages with the feedback tap handler
     _pages = <Widget>[
       MapScreen(onReportAnIssue: _handleReportAnIssue),
-      AboutScreen(),
+      const AboutScreen(),
       const ProfileScreen(),
     ];
   }

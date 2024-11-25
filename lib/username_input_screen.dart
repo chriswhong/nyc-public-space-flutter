@@ -10,10 +10,10 @@ class UsernameInputScreen extends StatefulWidget {
   const UsernameInputScreen({super.key, required this.onUsernameCreated});
 
   @override
-  _UsernameInputScreenState createState() => _UsernameInputScreenState();
+  UsernameInputScreenState createState() => UsernameInputScreenState();
 }
 
-class _UsernameInputScreenState extends State<UsernameInputScreen> {
+class UsernameInputScreenState extends State<UsernameInputScreen> {
   final _usernameController = TextEditingController();
   bool _isSubmitting = false;
   String? _errorMessage;

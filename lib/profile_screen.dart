@@ -63,7 +63,7 @@ class ProfileScreen extends StatelessWidget {
             Navigator.push(
               context,
               MaterialPageRoute(
-                builder: (context) => SignInScreen(),
+                builder: (context) => const SignInScreen(),
               ),
             );
           },
@@ -165,7 +165,7 @@ class ProfileScreen extends StatelessWidget {
           //   ),
           // ),
           _buildUserButtonGroup(context, userProvider),
-          SizedBox(height: 20),
+          const SizedBox(height: 20),
           ProfileButtonGroup(buttons: [
             ProfileButton(
                 text: 'Rate the app',
@@ -178,7 +178,7 @@ class ProfileScreen extends StatelessWidget {
                   Navigator.push(
                     context,
                     MaterialPageRoute(
-                      builder: (context) => FeedbackScreen(),
+                      builder: (context) => const FeedbackScreen(),
                     ),
                   );
                 }),
@@ -187,7 +187,7 @@ class ProfileScreen extends StatelessWidget {
                 icon: FontAwesomeIcons.shareFromSquare,
                 onTap: () => {}),
           ]),
-          SizedBox(height: 20),
+          const SizedBox(height: 20),
           ProfileButtonGroup(buttons: [
             ProfileButton(
                 text: 'Privacy Policy',
@@ -245,7 +245,7 @@ class ProfileScreen extends StatelessWidget {
             Navigator.push(
               context,
               MaterialPageRoute(
-                builder: (context) => SignInScreen(),
+                builder: (context) => const SignInScreen(),
               ),
             );
           },
@@ -267,7 +267,7 @@ class ProfileScreen extends StatelessWidget {
 class ProfileButtonGroup extends StatelessWidget {
   final List<ProfileButton> buttons;
 
-  const ProfileButtonGroup({required this.buttons, Key? key}) : super(key: key);
+  const ProfileButtonGroup({required this.buttons, super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -314,10 +314,9 @@ class ProfileButton extends StatelessWidget {
     required this.icon,
     required this.onTap,
     this.showChevron = true,
-    Key? key,
+    super.key,
   })  : assert(text != null || textWidget != null,
-            'Either text or textWidget must be provided'),
-        super(key: key);
+            'Either text or textWidget must be provided');
 
   @override
   Widget build(BuildContext context) {

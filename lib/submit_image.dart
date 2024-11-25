@@ -29,7 +29,7 @@ class _PhotoSubmissionScreenState extends State<PhotoSubmissionScreen> {
     final picker = ImagePicker();
     final pickedFiles = await picker.pickMultiImage();
 
-    if (pickedFiles != null && pickedFiles.isNotEmpty) {
+    if (pickedFiles.isNotEmpty) {
       setState(() {
         _selectedImages = pickedFiles.map((file) => File(file.path)).toList();
       });

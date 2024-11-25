@@ -1,4 +1,3 @@
-import 'dart:ffi';
 import 'dart:io';
 import 'dart:ui';
 import 'package:flutter/material.dart';
@@ -316,7 +315,7 @@ class _PanelHandlerState extends State<PanelHandler> {
                 ),
                 const SizedBox(height: 8),
                 if (_isLoading)
-                  SizedBox(
+                  const SizedBox(
                     height: 160, // Spinner height
                     child: Center(
                       child: CircularProgressIndicator(),
@@ -420,7 +419,7 @@ class _PanelHandlerState extends State<PanelHandler> {
                               Navigator.push(
                                 context,
                                 MaterialPageRoute(
-                                  builder: (context) => SignInScreen(),
+                                  builder: (context) => const SignInScreen(),
                                 ),
                               );
                             }
@@ -562,7 +561,7 @@ class _PanelHandlerState extends State<PanelHandler> {
                                     context,
                                     MaterialPageRoute(
                                       builder: (context) =>
-                                          SignInScreen(), // Replace with your sign-in screen widget
+                                          const SignInScreen(), // Replace with your sign-in screen widget
                                     ),
                                   );
                                 }

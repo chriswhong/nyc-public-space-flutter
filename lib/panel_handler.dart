@@ -260,7 +260,6 @@ class _PanelHandlerState extends State<PanelHandler> {
       return const SizedBox.shrink(); // Return an empty widget
     }
 
-    print(imageList);
     return Stack(
       children: [
         Positioned(
@@ -327,8 +326,7 @@ class _PanelHandlerState extends State<PanelHandler> {
                                       filter: ImageFilter.blur(
                                           sigmaX: 10.0, sigmaY: 10.0),
                                       child: Container(
-                                        color: Colors.black.withOpacity(
-                                            0.2), // Slight overlay color
+                                        color: Colors.black.withOpacity(0.2),
                                         child: const Center(
                                           child: Text(
                                             'Pending Approval',
@@ -347,6 +345,65 @@ class _PanelHandlerState extends State<PanelHandler> {
                           ),
                         );
                       }).toList(),
+                    ),
+                  )
+                else
+                  Container(
+                    decoration: BoxDecoration(
+                      border: Border.all(
+                        color: Colors.grey, // Border color
+                        width: 2.0, // Border width
+                      ),
+                      borderRadius:
+                          BorderRadius.circular(16.0), // Rounded corners
+                    ),
+                    padding: const EdgeInsets.all(16.0),
+                    margin: const EdgeInsets.symmetric(
+                        horizontal: 16.0, vertical: 10.0),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const Icon(
+                          Icons.photo_album,
+                          size: 40,
+                          color: Colors.grey,
+                        ),
+                        const SizedBox(height: 10),
+                        const Text(
+                          'No photos available for this space.',
+                          style: TextStyle(fontSize: 16, color: Colors.grey),
+                          textAlign: TextAlign.center,
+                        ),
+                        const SizedBox(height: 10),
+                        ElevatedButton.icon(
+                          icon: const Icon(FontAwesomeIcons.camera),
+                          label: const Text('Add the first photo'),
+                          onPressed: () {
+                            final user = FirebaseAuth.instance.currentUser;
+
+                            if (user != null) {
+                              // If the user is signed in, navigate to the PhotoSubmissionScreen
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => PhotoSubmissionScreen(
+                                    spaceId:
+                                        _panelContent!.properties.firestoreId,
+                                  ),
+                                ),
+                              );
+                            } else {
+                              // If the user is not signed in, navigate to the SignInScreen
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => SignInScreen(),
+                                ),
+                              );
+                            }
+                          },
+                        ),
+                      ],
                     ),
                   ),
                 const SizedBox(height: 8),

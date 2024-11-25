@@ -438,7 +438,7 @@ class _PanelHandlerState extends State<PanelHandler> {
                           const SizedBox(
                               height: 4), // Space between icon and text
                           const Text(
-                            'Report an Issue',
+                            'Report a Data Issue',
                             style: TextStyle(fontSize: 12), // Small text label
                           ),
                         ],

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:nyc_public_space_map/colors.dart';
 
+import './feedback_screen.dart';
 
 class TypeDescription extends StatelessWidget {
   final String iconPath;
@@ -36,10 +37,7 @@ class TypeDescription extends StatelessWidget {
 }
 
 class AboutScreen extends StatelessWidget {
-  final VoidCallback
-      onFeedbackTap; // Function passed to handle feedback button tap
-
-  const AboutScreen({super.key, required this.onFeedbackTap});
+  const AboutScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -150,7 +148,14 @@ class AboutScreen extends StatelessWidget {
               child: SizedBox(
                 width: double.infinity,
                 child: ElevatedButton(
-                  onPressed: onFeedbackTap,
+                  onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => FeedbackScreen(),
+                    ),
+                  );
+                },
                   style: AppStyles.buttonStyle,
                   child: const Text('Share your Feedback'),
                 ),

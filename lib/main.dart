@@ -174,7 +174,7 @@ class _HomeScreenState extends State<HomeScreen> {
     // Initialize the list of pages with the feedback tap handler
     _pages = <Widget>[
       MapScreen(onReportAnIssue: _handleReportAnIssue),
-      AboutScreen(onFeedbackTap: _handleFeedbackTap),
+      AboutScreen(),
       const ProfileScreen(),
     ];
   }

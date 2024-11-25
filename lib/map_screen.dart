@@ -68,11 +68,7 @@ class MapScreenState extends State<MapScreen> {
       selectedFeature = null;
     });
   }
-
-  void _handleReportAnIssuePressed(BuildContext context) {
-    widget.onReportAnIssue(selectedFeature);
-  }
-
+  
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -203,9 +199,6 @@ class MapScreenState extends State<MapScreen> {
             selectedFeature: selectedFeature,
             onPanelContentUpdated: _updatePanel,
             onClosePanel: _closePanel,
-            onReportAnIssuePressed: () {
-              _handleReportAnIssuePressed(context);
-            },
           ),
         ],
       ),

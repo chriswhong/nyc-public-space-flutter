@@ -52,17 +52,18 @@ class _PhotoSubmissionScreenState extends State<PhotoSubmissionScreen> {
       final filename = '${DateTime.now().millisecondsSinceEpoch}.jpg';
       final storageRef = FirebaseStorage.instance
           .ref()
-          .child('spaces_images_moderation')
+          .child('spaces_images')
           .child(widget.spaceId)  
           .child(filename);
       final uploadTask = await storageRef.putFile(_selectedImage!);
       final imageUrl = await uploadTask.ref.getDownloadURL();
       // Save to Firestore
-      await FirebaseFirestore.instance.collection('images_moderation').add({
+      await FirebaseFirestore.instance.collection('images').add({
         'spaceId': widget.spaceId,
         'timestamp': FieldValue.serverTimestamp(),
         'userId': user.uid,
         'filename': filename,
+        'approved': false,
       });
 
       ScaffoldMessenger.of(context).showSnackBar(

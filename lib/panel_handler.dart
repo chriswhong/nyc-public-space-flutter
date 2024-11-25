@@ -1,5 +1,6 @@
 import 'dart:ffi';
 import 'dart:io';
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:url_launcher/url_launcher.dart'; // Import the url_launcher package
@@ -9,6 +10,7 @@ import 'package:firebase_storage/firebase_storage.dart';
 import './public_space_properties.dart';
 import './colors.dart';
 import './submit_image.dart';
+import './feedback_screen.dart';
 
 String extractDomainFromUri(Uri? uri) {
   // Define a regular expression to match the domain part of the URL
@@ -28,7 +30,6 @@ class PanelHandler extends StatefulWidget {
   final PublicSpaceFeature? selectedFeature; // Feature passed from parent
   final VoidCallback? onClosePanel; // Callback to close the panel
   final VoidCallback? onPanelContentUpdated; // Callback to close the panel
-  final VoidCallback? onReportAnIssuePressed;
   final VoidCallback? onSubmitPhotoPressed;
 
   const PanelHandler(
@@ -36,7 +37,6 @@ class PanelHandler extends StatefulWidget {
       required this.selectedFeature,
       this.onClosePanel,
       this.onPanelContentUpdated,
-      this.onReportAnIssuePressed,
       this.onSubmitPhotoPressed});
 
   @override
@@ -45,7 +45,7 @@ class PanelHandler extends StatefulWidget {
 
 class _PanelHandlerState extends State<PanelHandler> {
   late PublicSpaceFeature? _panelContent;
-  List<String> imageUrls = [];
+  List<Map<String, dynamic>> imageList = [];
 
   @override
   void initState() {
@@ -60,21 +60,24 @@ class _PanelHandlerState extends State<PanelHandler> {
           .collection('images')
           .where('spaceId',
               isEqualTo: widget.selectedFeature?.properties.firestoreId)
+          .orderBy('timestamp', descending: false) // Sort by createdAt
           .get();
 
-      print('querySnapshot: $querySnapshot');
-
-      List<String> urls = [];
+      List<Map<String, dynamic>> imageListUpdate = [];
       for (var doc in querySnapshot.docs) {
         String filename = doc['filename'];
         String spaceId = doc['spaceId'];
+        bool approved = doc['approved'] ?? false; // Fetch the approved field
         String url = await getDownloadUrl(filename, spaceId);
-        urls.add(url);
+
+        imageListUpdate.add({
+          'url': url,
+          'approved': approved,
+        });
       }
 
-      print('urls: $urls');
       setState(() {
-        imageUrls = urls;
+        imageList = imageListUpdate;
       });
     } catch (e) {
       print('Error fetching images: $e');
@@ -83,7 +86,9 @@ class _PanelHandlerState extends State<PanelHandler> {
 
   Future<String> getDownloadUrl(String filename, String spaceId) async {
     try {
-      final ref = FirebaseStorage.instance.ref().child('spaces_images/$spaceId/$filename');
+      final ref = FirebaseStorage.instance
+          .ref()
+          .child('spaces_images/$spaceId/$filename');
       return await ref.getDownloadURL();
     } catch (e) {
       print('Error getting download URL: $e');
@@ -97,9 +102,8 @@ class _PanelHandlerState extends State<PanelHandler> {
     super.didUpdateWidget(oldWidget);
     if (widget.selectedFeature != oldWidget.selectedFeature &&
         widget.selectedFeature != null) {
-      
       setState(() {
-        imageUrls = [];
+        imageList = [];
         _panelContent = widget.selectedFeature;
       });
       fetchImages();
@@ -253,6 +257,8 @@ class _PanelHandlerState extends State<PanelHandler> {
     if (_panelContent == null) {
       return const SizedBox.shrink(); // Return an empty widget
     }
+
+    print(imageList);
     return Stack(
       children: [
         Positioned(
@@ -293,17 +299,49 @@ class _PanelHandlerState extends State<PanelHandler> {
                   children: [_buildPill(_panelContent!.properties.type)],
                 ),
                 const SizedBox(height: 8),
-                if (imageUrls.isNotEmpty)
+                if (imageList.isNotEmpty)
                   SingleChildScrollView(
                     scrollDirection: Axis.horizontal,
                     child: Row(
-                      children: imageUrls.map((url) {
+                      children: imageList.map((imageData) {
+                        final bool approved = imageData['approved'];
+                        final String url = imageData['url'];
+
                         return Padding(
                           padding: const EdgeInsets.all(8.0),
                           child: ClipRRect(
-                            borderRadius: BorderRadius.circular(
-                                8.0), // Adjust the radius as needed
-                            child: Image.network(url, height: 200),
+                            borderRadius: BorderRadius.circular(8.0),
+                            child: Stack(
+                              children: [
+                                Image.network(
+                                  url,
+                                  height: 200,
+                                  width: 200,
+                                  fit: BoxFit.cover,
+                                ),
+                                if (!approved)
+                                  Positioned.fill(
+                                    child: BackdropFilter(
+                                      filter: ImageFilter.blur(
+                                          sigmaX: 10.0, sigmaY: 10.0),
+                                      child: Container(
+                                        color: Colors.black.withOpacity(
+                                            0.2), // Slight overlay color
+                                        child: const Center(
+                                          child: Text(
+                                            'Pending Approval',
+                                            style: TextStyle(
+                                              color: Colors.white,
+                                              fontWeight: FontWeight.bold,
+                                              fontSize: 14,
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                              ],
+                            ),
                           ),
                         );
                       }).toList(),
@@ -385,7 +423,14 @@ class _PanelHandlerState extends State<PanelHandler> {
                                 color: Colors.grey[800], // Dark gray icon
                               ),
                               onPressed: () {
-                                widget.onReportAnIssuePressed!();
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => FeedbackScreen(
+                                        selectedFeature:
+                                            widget.selectedFeature),
+                                  ),
+                                );
                               },
                               tooltip: 'Report an Issue',
                             ),

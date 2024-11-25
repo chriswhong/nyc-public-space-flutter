@@ -1,6 +1,7 @@
 import 'package:mapbox_maps_flutter/mapbox_maps_flutter.dart';
 
 class PublicSpaceProperties {
+  final String firestoreId;
   final String space_id;
   final String type;
   final String? name;
@@ -10,7 +11,8 @@ class PublicSpaceProperties {
 
   // constructor to initialize the properties
   PublicSpaceProperties(
-      {required this.space_id,
+      {required this.firestoreId,
+      required this.space_id,
       required this.name,
       required this.type,
       required this.location,
@@ -43,6 +45,7 @@ class PublicSpaceFeature {
       'type': type,
       'geometry': geometry.toJson(),
       'properties': {
+        'firestoreId': properties.firestoreId,
         'space_id': properties.space_id,
         'name': properties.name,
         'type': properties.type,
@@ -59,6 +62,7 @@ class PublicSpaceFeature {
       type: json['type'],
       geometry: Point.fromJson(json['geometry']),
       properties: PublicSpaceProperties(
+        firestoreId: json['properties']['firestoreId'],
         space_id: json['properties']['space_id'],
         name: json['properties']['name'],
         type: json['properties']['type'],

@@ -1,9 +1,18 @@
 import 'dart:ffi';
 import 'dart:io';
+import 'dart:ui';
 import 'package:flutter/material.dart';
-import 'package:nyc_public_space_map/public_space_properties.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:url_launcher/url_launcher.dart'; // Import the url_launcher package
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_storage/firebase_storage.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+
+import './public_space_properties.dart';
+import './colors.dart';
+import './submit_image.dart';
+import './feedback_screen.dart';
+import './sign_in_screen.dart';
 
 String extractDomainFromUri(Uri? uri) {
   // Define a regular expression to match the domain part of the URL
@@ -23,14 +32,12 @@ class PanelHandler extends StatefulWidget {
   final PublicSpaceFeature? selectedFeature; // Feature passed from parent
   final VoidCallback? onClosePanel; // Callback to close the panel
   final VoidCallback? onPanelContentUpdated; // Callback to close the panel
-  final VoidCallback? onReportAnIssuePressed;
 
   const PanelHandler(
       {super.key,
       required this.selectedFeature,
       this.onClosePanel,
-      this.onPanelContentUpdated,
-      this.onReportAnIssuePressed});
+      this.onPanelContentUpdated});
 
   @override
   _PanelHandlerState createState() => _PanelHandlerState();
@@ -38,12 +45,60 @@ class PanelHandler extends StatefulWidget {
 
 class _PanelHandlerState extends State<PanelHandler> {
   late PublicSpaceFeature? _panelContent;
+  List<Map<String, dynamic>> imageList = [];
+  bool _isLoading = true; // Initially loading
 
   @override
   void initState() {
     super.initState();
     // Initialize with an empty feature or the passed selectedFeature
     _panelContent = widget.selectedFeature;
+  }
+
+  Future<void> fetchImages() async {
+    try {
+      final querySnapshot = await FirebaseFirestore.instance
+          .collection('images')
+          .where('spaceId',
+              isEqualTo: widget.selectedFeature?.properties.firestoreId)
+          .orderBy('timestamp', descending: false)
+          .get();
+
+      List<Map<String, dynamic>> imageListUpdate = [];
+      for (var doc in querySnapshot.docs) {
+        String filename = doc['filename'];
+        String spaceId = doc['spaceId'];
+        bool approved = doc['approved'] ?? false;
+        String url = await getDownloadUrl(filename, spaceId);
+
+        imageListUpdate.add({
+          'url': url,
+          'approved': approved,
+        });
+      }
+
+      setState(() {
+        imageList = imageListUpdate;
+        _isLoading = false; // Loading complete
+      });
+    } catch (e) {
+      print('Error fetching images: $e');
+      setState(() {
+        _isLoading = false; // Loading complete even if there is an error
+      });
+    }
+  }
+
+  Future<String> getDownloadUrl(String filename, String spaceId) async {
+    try {
+      final ref = FirebaseStorage.instance
+          .ref()
+          .child('spaces_images/$spaceId/$filename');
+      return await ref.getDownloadURL();
+    } catch (e) {
+      print('Error getting download URL: $e');
+      return '';
+    }
   }
 
   // Update the panel when the selectedFeature changes
@@ -53,9 +108,22 @@ class _PanelHandlerState extends State<PanelHandler> {
     if (widget.selectedFeature != oldWidget.selectedFeature &&
         widget.selectedFeature != null) {
       setState(() {
+        imageList = [];
         _panelContent = widget.selectedFeature;
+        _isLoading = true; // Reset loading state
       });
+      fetchImages();
     }
+  }
+
+  void _handleClosePanel() {
+    if (widget.onClosePanel != null) {
+      widget.onClosePanel!();
+    }
+    setState(() {
+      _isLoading = true; // Reset loading state
+      imageList = []; // Clear image list
+    });
   }
 
   // Function to launch URL
@@ -95,11 +163,11 @@ class _PanelHandlerState extends State<PanelHandler> {
         context: context, // Ensure this is within a valid BuildContext
         builder: (BuildContext context) {
           return AlertDialog(
-            title: Text('Open in Maps'),
-            content: Text('Which app would you like to use?'),
+            title: const Text('Open in Maps'),
+            content: const Text('Which app would you like to use?'),
             actions: <Widget>[
               TextButton(
-                child: Text('Apple Maps'),
+                child: const Text('Apple Maps'),
                 onPressed: () async {
                   final uri = getMapLaunchUri(latitude, longitude);
                   if (await canLaunchUrl(uri)) {
@@ -111,7 +179,7 @@ class _PanelHandlerState extends State<PanelHandler> {
                 },
               ),
               TextButton(
-                child: Text('Google Maps'),
+                child: const Text('Google Maps'),
                 onPressed: () async {
                   final uri =
                       getMapLaunchUri(latitude, longitude, isGoogleMaps: true);
@@ -140,8 +208,8 @@ class _PanelHandlerState extends State<PanelHandler> {
   }
 
   Widget _lightDivider() {
-    return Divider(
-      color: const Color.fromARGB(255, 204, 204, 204), // Color of the line
+    return const Divider(
+      color: AppColors.gray, // Color of the line
       thickness: 0.5, // Thickness of the line
     );
   }
@@ -154,27 +222,27 @@ class _PanelHandlerState extends State<PanelHandler> {
     switch (type) {
       case 'pops':
         typeLabel = 'Privately Owned Public Space';
-        typeColor = const Color(0xAA6b82d6);
+        typeColor = AppColors.popsColor;
         break;
       case 'park':
         typeLabel = 'Park';
-        typeColor = const Color(0xAA77bb3f);
+        typeColor = AppColors.parkColor;
         break;
       case 'wpaa':
         typeLabel = 'Waterfront Public Access Area';
-        typeColor = const Color(0xAA0ad6f5);
+        typeColor = AppColors.wpaaColor;
         break;
       case 'plaza':
         typeLabel = 'Street Plaza';
-        typeColor = const Color(0xAAffbf47);
+        typeColor = AppColors.plazaColor;
         break;
       case 'stp':
         typeLabel = 'Schoolyards to Playgrounds';
-        typeColor = const Color(0xAAF55353);
+        typeColor = AppColors.stpColor;
         break;
       default:
         typeLabel = 'Miscellaneous';
-        typeColor = const Color(0xAACCCCCC);
+        typeColor = AppColors.miscColor;
     }
 
     return Row(
@@ -205,6 +273,9 @@ class _PanelHandlerState extends State<PanelHandler> {
     if (_panelContent == null) {
       return const SizedBox.shrink(); // Return an empty widget
     }
+
+    print('is loading: $_isLoading');
+
     return Stack(
       children: [
         Positioned(
@@ -213,7 +284,6 @@ class _PanelHandlerState extends State<PanelHandler> {
           right: 10,
           child: Container(
             padding: const EdgeInsets.all(8.0),
-            color: Colors.white.withOpacity(0.8),
             child: Column(
               mainAxisSize: MainAxisSize
                   .min, // This ensures the Column takes only necessary space
@@ -245,6 +315,121 @@ class _PanelHandlerState extends State<PanelHandler> {
                   children: [_buildPill(_panelContent!.properties.type)],
                 ),
                 const SizedBox(height: 8),
+                if (_isLoading)
+                  SizedBox(
+                    height: 160, // Spinner height
+                    child: Center(
+                      child: CircularProgressIndicator(),
+                    ),
+                  )
+                else if (imageList.isNotEmpty)
+                  SingleChildScrollView(
+                    scrollDirection: Axis.horizontal,
+                    child: Row(
+                      children: imageList.map((imageData) {
+                        final bool approved = imageData['approved'];
+                        final String url = imageData['url'];
+
+                        return Padding(
+                          padding: const EdgeInsets.all(8.0),
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(8.0),
+                            child: Stack(
+                              children: [
+                                Image.network(
+                                  url,
+                                  height: 160,
+                                  width: 200,
+                                  fit: BoxFit.cover,
+                                ),
+                                if (!approved)
+                                  Positioned.fill(
+                                    child: BackdropFilter(
+                                      filter: ImageFilter.blur(
+                                          sigmaX: 10.0, sigmaY: 10.0),
+                                      child: Container(
+                                        color: Colors.black.withOpacity(0.2),
+                                        child: const Center(
+                                          child: Text(
+                                            'Pending Approval',
+                                            style: TextStyle(
+                                              color: Colors.white,
+                                              fontWeight: FontWeight.bold,
+                                              fontSize: 14,
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                              ],
+                            ),
+                          ),
+                        );
+                      }).toList(),
+                    ),
+                  )
+                else
+                  Container(
+                    decoration: BoxDecoration(
+                      border: Border.all(
+                        color: Colors.grey, // Border color
+                        width: 0.5, // Border width
+                      ),
+                      borderRadius:
+                          BorderRadius.circular(16.0), // Rounded corners
+                    ),
+                    padding: const EdgeInsets.all(16.0),
+                    margin: const EdgeInsets.symmetric(
+                        horizontal: 16.0, vertical: 10.0),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const Icon(
+                          Icons.photo_album,
+                          size: 40,
+                          color: Colors.grey,
+                        ),
+                        const SizedBox(height: 10),
+                        const Text(
+                          'No photos available for this space.',
+                          style: TextStyle(fontSize: 16, color: Colors.grey),
+                          textAlign: TextAlign.center,
+                        ),
+                        const SizedBox(height: 10),
+                        ElevatedButton.icon(
+                          icon: const Icon(FontAwesomeIcons.camera),
+                          style: AppStyles.buttonStyle,
+                          label: const Text('Add the first photo'),
+                          onPressed: () {
+                            final user = FirebaseAuth.instance.currentUser;
+
+                            if (user != null) {
+                              // If the user is signed in, navigate to the PhotoSubmissionScreen
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => PhotoSubmissionScreen(
+                                    spaceId:
+                                        _panelContent!.properties.firestoreId,
+                                  ),
+                                ),
+                              );
+                            } else {
+                              // If the user is not signed in, navigate to the SignInScreen
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => SignInScreen(),
+                                ),
+                              );
+                            }
+                          },
+                        ),
+                      ],
+                    ),
+                  ),
+                const SizedBox(height: 4),
                 // Location text
                 // Row(
                 //   children: [
@@ -261,7 +446,6 @@ class _PanelHandlerState extends State<PanelHandler> {
                 //     ),
                 //   ],
                 // ),
-                const SizedBox(height: 8),
                 Padding(
                   padding:
                       const EdgeInsets.all(8.0), // Add padding around the row
@@ -304,7 +488,7 @@ class _PanelHandlerState extends State<PanelHandler> {
                           ),
                         ],
                       ),
-                      SizedBox(width: 10),
+                      const SizedBox(width: 10),
                       Column(
                         children: [
                           Container(
@@ -320,7 +504,14 @@ class _PanelHandlerState extends State<PanelHandler> {
                                 color: Colors.grey[800], // Dark gray icon
                               ),
                               onPressed: () {
-                                widget.onReportAnIssuePressed!();
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => FeedbackScreen(
+                                        selectedFeature:
+                                            widget.selectedFeature),
+                                  ),
+                                );
                               },
                               tooltip: 'Report an Issue',
                             ),
@@ -328,7 +519,61 @@ class _PanelHandlerState extends State<PanelHandler> {
                           const SizedBox(
                               height: 4), // Space between icon and text
                           const Text(
-                            'Report an Issue',
+                            'Report a Data Issue',
+                            style: TextStyle(fontSize: 12), // Small text label
+                          ),
+                        ],
+                      ),
+                      const SizedBox(width: 10),
+                      Column(
+                        children: [
+                          Container(
+                            decoration: BoxDecoration(
+                              color: Colors.grey[300], // Light gray background
+                              shape: BoxShape.circle, // Circular shape
+                            ),
+                            child: IconButton(
+                              icon: FaIcon(
+                                FontAwesomeIcons.camera, // Navigation icon
+                                size: 20, // Icon size
+                                color: Colors.grey[800], // Dark gray icon
+                              ),
+                              onPressed: () async {
+                                final user = FirebaseAuth.instance.currentUser;
+
+                                if (user != null) {
+                                  // If the user is signed in, navigate to the PhotoSubmissionScreen
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) =>
+                                          PhotoSubmissionScreen(
+                                        spaceId: _panelContent!
+                                            .properties.firestoreId,
+                                        onSubmissionComplete: () {
+                                          fetchImages(); // Callback to refresh the images
+                                        }, // Replace with the space ID
+                                      ),
+                                    ),
+                                  );
+                                } else {
+                                  // If the user is not signed in, navigate to the SignInScreen
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) =>
+                                          SignInScreen(), // Replace with your sign-in screen widget
+                                    ),
+                                  );
+                                }
+                              },
+                              tooltip: 'Report an Issue',
+                            ),
+                          ),
+                          const SizedBox(
+                              height: 4), // Space between icon and text
+                          const Text(
+                            'Submit a Photo',
                             style: TextStyle(fontSize: 12), // Small text label
                           ),
                         ],
@@ -372,45 +617,46 @@ class _PanelHandlerState extends State<PanelHandler> {
                     ? Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          SizedBox(height: 4),
+                          const SizedBox(height: 4),
                           Text(_panelContent!.properties.description!),
                           _lightDivider(), // Add the additional widget here
                         ],
                       )
-                    : SizedBox.shrink(),
+                    : const SizedBox.shrink(),
                 _panelContent != null &&
                         _panelContent!.properties.location != null &&
                         _panelContent!.properties.location?.isNotEmpty == true
                     ? Column(
                         children: [
-                          SizedBox(height: 4),
+                          const SizedBox(height: 4),
                           ListTile(
-                            leading:
-                                FaIcon(FontAwesomeIcons.mapMarkerAlt, size: 18),
+                            leading: const FaIcon(FontAwesomeIcons.mapMarkerAlt,
+                                size: 18),
 
                             title: Text(
                                 _panelContent!.properties.location ??
                                     'Address not available',
-                                style: TextStyle(fontSize: 14)),
-                            visualDensity: VisualDensity(
+                                style: const TextStyle(fontSize: 14)),
+                            visualDensity: const VisualDensity(
                                 vertical: -4), // Reduce vertical space
                           ),
                           _lightDivider(),
                         ],
                       )
-                    : SizedBox.shrink(),
+                    : const SizedBox.shrink(),
                 _panelContent != null && _panelContent!.properties.url != null
                     ? Column(
                         children: [
-                          SizedBox(height: 4),
+                          const SizedBox(height: 4),
                           ListTile(
-                            leading: FaIcon(FontAwesomeIcons.link, size: 18),
+                            leading:
+                                const FaIcon(FontAwesomeIcons.link, size: 18),
 
                             title: Text(
                                 extractDomainFromUri(
                                     _panelContent!.properties.url),
-                                style: TextStyle(fontSize: 14)),
-                            visualDensity: VisualDensity(
+                                style: const TextStyle(fontSize: 14)),
+                            visualDensity: const VisualDensity(
                                 vertical: -4), // Reduce vertical space
 
                             onTap: () {
@@ -420,7 +666,7 @@ class _PanelHandlerState extends State<PanelHandler> {
                           _lightDivider(),
                         ],
                       )
-                    : SizedBox.shrink(),
+                    : const SizedBox.shrink(),
               ],
             ),
           ),
@@ -430,9 +676,8 @@ class _PanelHandlerState extends State<PanelHandler> {
           right: 10,
           top: 10,
           child: IconButton(
-            icon: const Icon(Icons.close, color: Colors.black),
-            onPressed:
-                widget.onClosePanel, // Call the close function when tapped
+            icon: const Icon(Icons.close, color: AppColors.dark),
+            onPressed: _handleClosePanel, // Call the close function when tapped
           ),
         ),
       ],

@@ -1,36 +1,46 @@
 import 'package:flutter/material.dart';
+import 'package:nyc_public_space_map/colors.dart';
 import 'package:sliding_up_panel/sliding_up_panel.dart';
 import 'package:mapbox_maps_flutter/mapbox_maps_flutter.dart';
-import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
 import 'package:nyc_public_space_map/map_handler.dart';
 import 'package:nyc_public_space_map/panel_handler.dart';
-import 'package:nyc_public_space_map/search_handler.dart';
+// import 'package:nyc_public_space_map/search_handler.dart';
 import 'package:nyc_public_space_map/image_loader.dart';
 import 'package:nyc_public_space_map/floating_locator_button.dart';
 import 'package:nyc_public_space_map/public_space_properties.dart';
-import 'package:nyc_public_space_map/side_drawer.dart';
+import 'package:firebase_auth/firebase_auth.dart'; 
 
 class MapScreen extends StatefulWidget {
-  const MapScreen({super.key});
+  final Function(PublicSpaceFeature?) onReportAnIssue;
+
+  const MapScreen({super.key, required this.onReportAnIssue});
 
   @override
   State createState() => MapScreenState();
 }
 
 class MapScreenState extends State<MapScreen> {
-  static const double defaultFloatingButtonOffset = 115;
+  static const double defaultFloatingButtonOffset = 95;
   final PanelController _pc = PanelController();
-  String drawerType = 'default';
   double floatingButtonOffset = defaultFloatingButtonOffset;
 
   MapboxMap? mapboxMap;
   PublicSpaceFeature? selectedFeature;
 
+  User? currentUser; // Firebase User instance
+
   @override
   void initState() {
     super.initState();
     ImageLoader.instance.loadImages();
+    _checkCurrentUser(); // Check the user's login status
+  }
+
+  Future<void> _checkCurrentUser() async {
+    setState(() {
+      currentUser = FirebaseAuth.instance.currentUser; // Get the current user
+    });
   }
 
   void _onMapCreated(MapboxMap mapInstance) {
@@ -58,28 +68,10 @@ class MapScreenState extends State<MapScreen> {
       selectedFeature = null;
     });
   }
-
-  void _handleReportAnIssuePressed(BuildContext context) {
-    setState(() {
-      drawerType = 'report';
-    });
-    Scaffold.of(context).openDrawer();
-  }
-
-  void _handleFeedbackTap() {
-    setState(() {
-      drawerType = 'report';
-    });
-  }
-
+  
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      drawer: SideDrawer(
-        drawerType: drawerType,
-        selectedFeature: selectedFeature,
-        onFeedbackTap: _handleFeedbackTap,
-      ),
       body: _buildBody(),
     );
   }
@@ -156,13 +148,13 @@ class MapScreenState extends State<MapScreen> {
           ],
         ),
         padding: const EdgeInsets.all(16.0),
-        child: Row(
+        child: const Row(
           children: <Widget>[
             Expanded(
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
-                children: const <Widget>[
+                children: <Widget>[
                   Text(
                     'NYC Public Space',
                     style: TextStyle(
@@ -175,44 +167,15 @@ class MapScreenState extends State<MapScreen> {
                     'Tap a marker to learn more or get directions',
                     style: TextStyle(
                       fontSize: 12,
-                      color: Colors.grey,
+                      color: AppColors.gray,
                     ),
                   ),
-                  SizedBox(height: 16),
+                  // SizedBox(height: 16),
                 ],
               ),
             ),
-            SizedBox(
-              width: 50,
-              height: 50,
-              child: _buildDrawerButton(),
-            ),
+          
           ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildDrawerButton() {
-    return Align(
-      alignment: Alignment.topCenter,
-      child: Container(
-        decoration: BoxDecoration(
-          color: const Color(0xAA77bb3f),
-          shape: BoxShape.circle,
-        ),
-        child: IconButton(
-          icon: const FaIcon(
-            FontAwesomeIcons.bars,
-            size: 20,
-            color: Colors.white,
-          ),
-          onPressed: () {
-            setState(() {
-              drawerType = 'default';
-            });
-            Scaffold.of(context).openDrawer();
-          },
         ),
       ),
     );
@@ -236,9 +199,6 @@ class MapScreenState extends State<MapScreen> {
             selectedFeature: selectedFeature,
             onPanelContentUpdated: _updatePanel,
             onClosePanel: _closePanel,
-            onReportAnIssuePressed: () {
-              _handleReportAnIssuePressed(context);
-            },
           ),
         ],
       ),

@@ -26,7 +26,7 @@ class _SignInScreenState extends State<SignInScreen> {
 
     final actionCodeSettings = ActionCodeSettings(
       url:
-          'https://nycpublicspaceapp.page.link/qL6j', // Replace with your dynamic link
+          'https://publicspace.page.link/qL6j', // Replace with your dynamic link
       handleCodeInApp: true,
       iOSBundleId: 'com.nycpublicspace', // Replace with your iOS bundle ID
       androidPackageName:
@@ -78,7 +78,7 @@ class _SignInScreenState extends State<SignInScreen> {
               ),
             ),
             const SizedBox(height: 15),
-                   const Text(
+            const Text(
               "We will send a magic link to your email. Click the link to sign in.",
               textAlign: TextAlign.center,
               style: TextStyle(

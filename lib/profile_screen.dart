@@ -54,7 +54,6 @@ class ProfileScreen extends StatelessWidget {
 
   Widget _buildUserButtonGroup(
       BuildContext context, UserProvider userProvider) {
-    print(userProvider.toString());
     if (!userProvider.isAuthenticated || userProvider.username == null) {
       return ProfileButtonGroup(buttons: [
         ProfileButton(
@@ -107,12 +106,15 @@ class ProfileScreen extends StatelessWidget {
               return AlertDialog(
                 title: const Text('Confirm Sign Out'),
                 content: const Text('Are you sure you want to sign out?'),
+                backgroundColor: AppColors.pageBackground,
                 actions: [
                   TextButton(
+                    style: AppStyles.buttonStyle,
                     onPressed: () => Navigator.of(context).pop(false), // Cancel
                     child: const Text('Cancel'),
                   ),
                   TextButton(
+                    style: AppStyles.buttonStyle,
                     onPressed: () => Navigator.of(context).pop(true), // Confirm
                     child: const Text('Sign Out'),
                   ),

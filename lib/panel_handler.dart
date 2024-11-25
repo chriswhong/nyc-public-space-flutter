@@ -32,14 +32,12 @@ class PanelHandler extends StatefulWidget {
   final PublicSpaceFeature? selectedFeature; // Feature passed from parent
   final VoidCallback? onClosePanel; // Callback to close the panel
   final VoidCallback? onPanelContentUpdated; // Callback to close the panel
-  final VoidCallback? onSubmitPhotoPressed;
 
   const PanelHandler(
       {super.key,
       required this.selectedFeature,
       this.onClosePanel,
-      this.onPanelContentUpdated,
-      this.onSubmitPhotoPressed});
+      this.onPanelContentUpdated});
 
   @override
   _PanelHandlerState createState() => _PanelHandlerState();
@@ -48,6 +46,7 @@ class PanelHandler extends StatefulWidget {
 class _PanelHandlerState extends State<PanelHandler> {
   late PublicSpaceFeature? _panelContent;
   List<Map<String, dynamic>> imageList = [];
+  bool _isLoading = true; // Initially loading
 
   @override
   void initState() {
@@ -62,14 +61,14 @@ class _PanelHandlerState extends State<PanelHandler> {
           .collection('images')
           .where('spaceId',
               isEqualTo: widget.selectedFeature?.properties.firestoreId)
-          .orderBy('timestamp', descending: false) // Sort by createdAt
+          .orderBy('timestamp', descending: false)
           .get();
 
       List<Map<String, dynamic>> imageListUpdate = [];
       for (var doc in querySnapshot.docs) {
         String filename = doc['filename'];
         String spaceId = doc['spaceId'];
-        bool approved = doc['approved'] ?? false; // Fetch the approved field
+        bool approved = doc['approved'] ?? false;
         String url = await getDownloadUrl(filename, spaceId);
 
         imageListUpdate.add({
@@ -80,9 +79,13 @@ class _PanelHandlerState extends State<PanelHandler> {
 
       setState(() {
         imageList = imageListUpdate;
+        _isLoading = false; // Loading complete
       });
     } catch (e) {
       print('Error fetching images: $e');
+      setState(() {
+        _isLoading = false; // Loading complete even if there is an error
+      });
     }
   }
 
@@ -107,9 +110,20 @@ class _PanelHandlerState extends State<PanelHandler> {
       setState(() {
         imageList = [];
         _panelContent = widget.selectedFeature;
+        _isLoading = true; // Reset loading state
       });
       fetchImages();
     }
+  }
+
+  void _handleClosePanel() {
+    if (widget.onClosePanel != null) {
+      widget.onClosePanel!();
+    }
+    setState(() {
+      _isLoading = true; // Reset loading state
+      imageList = []; // Clear image list
+    });
   }
 
   // Function to launch URL
@@ -260,6 +274,8 @@ class _PanelHandlerState extends State<PanelHandler> {
       return const SizedBox.shrink(); // Return an empty widget
     }
 
+    print('is loading: $_isLoading');
+
     return Stack(
       children: [
         Positioned(
@@ -268,7 +284,6 @@ class _PanelHandlerState extends State<PanelHandler> {
           right: 10,
           child: Container(
             padding: const EdgeInsets.all(8.0),
-            color: Colors.white.withOpacity(0.8),
             child: Column(
               mainAxisSize: MainAxisSize
                   .min, // This ensures the Column takes only necessary space
@@ -300,7 +315,14 @@ class _PanelHandlerState extends State<PanelHandler> {
                   children: [_buildPill(_panelContent!.properties.type)],
                 ),
                 const SizedBox(height: 8),
-                if (imageList.isNotEmpty)
+                if (_isLoading)
+                  SizedBox(
+                    height: 160, // Spinner height
+                    child: Center(
+                      child: CircularProgressIndicator(),
+                    ),
+                  )
+                else if (imageList.isNotEmpty)
                   SingleChildScrollView(
                     scrollDirection: Axis.horizontal,
                     child: Row(
@@ -352,7 +374,7 @@ class _PanelHandlerState extends State<PanelHandler> {
                     decoration: BoxDecoration(
                       border: Border.all(
                         color: Colors.grey, // Border color
-                        width: 2.0, // Border width
+                        width: 0.5, // Border width
                       ),
                       borderRadius:
                           BorderRadius.circular(16.0), // Rounded corners
@@ -377,6 +399,7 @@ class _PanelHandlerState extends State<PanelHandler> {
                         const SizedBox(height: 10),
                         ElevatedButton.icon(
                           icon: const Icon(FontAwesomeIcons.camera),
+                          style: AppStyles.buttonStyle,
                           label: const Text('Add the first photo'),
                           onPressed: () {
                             final user = FirebaseAuth.instance.currentUser;
@@ -406,7 +429,7 @@ class _PanelHandlerState extends State<PanelHandler> {
                       ],
                     ),
                   ),
-                const SizedBox(height: 8),
+                const SizedBox(height: 4),
                 // Location text
                 // Row(
                 //   children: [
@@ -423,7 +446,6 @@ class _PanelHandlerState extends State<PanelHandler> {
                 //     ),
                 //   ],
                 // ),
-                const SizedBox(height: 8),
                 Padding(
                   padding:
                       const EdgeInsets.all(8.0), // Add padding around the row
@@ -526,8 +548,11 @@ class _PanelHandlerState extends State<PanelHandler> {
                                     MaterialPageRoute(
                                       builder: (context) =>
                                           PhotoSubmissionScreen(
-                                        spaceId: _panelContent!.properties
-                                            .firestoreId, // Replace with the space ID
+                                        spaceId: _panelContent!
+                                            .properties.firestoreId,
+                                        onSubmissionComplete: () {
+                                          fetchImages(); // Callback to refresh the images
+                                        }, // Replace with the space ID
                                       ),
                                     ),
                                   );
@@ -652,8 +677,7 @@ class _PanelHandlerState extends State<PanelHandler> {
           top: 10,
           child: IconButton(
             icon: const Icon(Icons.close, color: AppColors.dark),
-            onPressed:
-                widget.onClosePanel, // Call the close function when tapped
+            onPressed: _handleClosePanel, // Call the close function when tapped
           ),
         ),
       ],

@@ -25,6 +25,7 @@ Future<void> initDynamicLinks(BuildContext context) async {
   FirebaseDynamicLinks.instance.onLink
       .listen((PendingDynamicLinkData? dynamicLinkData) async {
     final Uri? deepLink = dynamicLinkData?.link;
+    print('Dynamic link received: $deepLink');
 
     if (deepLink != null &&
         FirebaseAuth.instance.isSignInWithEmailLink(deepLink.toString())) {
@@ -216,8 +217,16 @@ class _HomeScreenState extends State<HomeScreen> {
           index: _selectedIndex, // Display the selected tab
           children: _pages, // Keep all pages mounted
         ),
-        bottomNavigationBar: SizedBox(
-          height: 90,
+        bottomNavigationBar: Container(
+          decoration: BoxDecoration(
+            color: Colors.white, // Background color of the BottomNavigationBar
+            border: Border(
+              top: BorderSide(
+                color: Colors.grey.shade300, // Subtle gray border
+                width: 0.5, // Thickness of the border
+              ),
+            ),
+          ),
           child: BottomNavigationBar(
             backgroundColor: Colors.white,
             items: const <BottomNavigationBarItem>[
@@ -248,7 +257,8 @@ class _HomeScreenState extends State<HomeScreen> {
             ],
             currentIndex: _selectedIndex,
             selectedItemColor: AppColors.dark,
-            selectedLabelStyle: const TextStyle(fontSize: 10), // Adjust font size
+            selectedLabelStyle:
+                const TextStyle(fontSize: 10), // Adjust font size
             unselectedItemColor: AppColors.gray,
             unselectedLabelStyle: const TextStyle(fontSize: 10),
             iconSize: 20, // Set the desired size for the icons

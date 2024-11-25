@@ -111,11 +111,11 @@ class _MapHandlerState extends State<MapHandler> {
 
     // position logo and attribution
     mapboxMap.logo
-        .updateSettings(LogoSettings(marginBottom: 75, marginLeft: 15));
+        .updateSettings(LogoSettings(marginBottom: 90, marginLeft: 15));
     mapboxMap.attribution.updateSettings((AttributionSettings(
         position: OrnamentPosition.BOTTOM_LEFT,
-        marginBottom: 75,
-        marginLeft: 100)));
+        marginBottom: 90,
+        marginLeft: 110)));
 
     // get location permission from the device
     var status = await Permission.locationWhenInUse.request();
@@ -157,11 +157,12 @@ class _MapHandlerState extends State<MapHandler> {
             ], filter: null))
         .then((features) async {
       if (features.isNotEmpty) {
-        print(features);
+        print('Clicked feature: $features[0]!.queriedFeature.feature');
         // Parse the feature and call the parent callback
 
         var geojsonFeatureString =
             jsonEncode(features[0]!.queriedFeature.feature);
+          
         PublicSpaceFeature geojsonFeature =
             PublicSpaceFeature.fromJson(jsonDecode(geojsonFeatureString));
 

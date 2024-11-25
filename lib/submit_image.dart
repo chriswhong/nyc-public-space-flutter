@@ -5,12 +5,16 @@ import 'package:firebase_storage/firebase_storage.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
+import 'colors.dart';
+
 class PhotoSubmissionScreen extends StatefulWidget {
   final String spaceId;
+  final VoidCallback? onSubmissionComplete;
 
   const PhotoSubmissionScreen({
     super.key,
     required this.spaceId,
+    this.onSubmissionComplete,
   });
 
   @override
@@ -71,8 +75,11 @@ class _PhotoSubmissionScreenState extends State<PhotoSubmissionScreen> {
       );
 
       Navigator.of(context).pop(); // Close the screen after submission
+
+      if (widget.onSubmissionComplete != null) {
+        widget.onSubmissionComplete!();
+      }
     } catch (e) {
-      print(e);
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Error uploading photos: $e')),
       );
@@ -117,12 +124,14 @@ class _PhotoSubmissionScreenState extends State<PhotoSubmissionScreen> {
                   const SizedBox(height: 20),
                   ElevatedButton.icon(
                     icon: const Icon(Icons.photo_library),
+                    style: AppStyles.buttonStyle,
                     label: const Text('Choose Images'),
                     onPressed: () => _pickImages(ImageSource.gallery),
                   ),
                   const SizedBox(height: 20),
                   ElevatedButton(
-                    onPressed: _selectedImages.isNotEmpty ? _uploadPhotos : null,
+                    onPressed:
+                        _selectedImages.isNotEmpty ? _uploadPhotos : null,
                     child: const Text('Submit Photos'),
                   ),
                 ],

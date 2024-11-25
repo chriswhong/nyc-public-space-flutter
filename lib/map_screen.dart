@@ -21,7 +21,7 @@ class MapScreen extends StatefulWidget {
 }
 
 class MapScreenState extends State<MapScreen> {
-  static const double defaultFloatingButtonOffset = 115;
+  static const double defaultFloatingButtonOffset = 95;
   final PanelController _pc = PanelController();
   double floatingButtonOffset = defaultFloatingButtonOffset;
 
@@ -170,7 +170,7 @@ class MapScreenState extends State<MapScreen> {
                       color: AppColors.gray,
                     ),
                   ),
-                  SizedBox(height: 16),
+                  // SizedBox(height: 16),
                 ],
               ),
             ),

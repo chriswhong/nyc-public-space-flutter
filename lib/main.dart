@@ -209,9 +209,9 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
         key: _scaffoldKey, // Attach the key to the Scaffold
-        drawer: SideDrawer(
-          selectedFeature: _selectedFeature,
-        ),
+        // drawer: SideDrawer(
+        //   selectedFeature: _selectedFeature,
+        // ),
         body: IndexedStack(
           index: _selectedIndex, // Display the selected tab
           children: _pages, // Keep all pages mounted

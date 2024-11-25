@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:nyc_public_space_map/public_space_properties.dart';
-import 'package:nyc_public_space_map/report_issue_drawer.dart';
-// import 'package:nyc_public_space_map/feedback_drawer.dart';
+import 'package:nyc_public_space_map/feedback_screen.dart';
 
 class SideDrawer extends StatelessWidget {
   final PublicSpaceFeature? selectedFeature;
@@ -10,6 +9,6 @@ class SideDrawer extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ReportIssueDrawer(selectedFeature: selectedFeature);
+    return FeedbackScreen(selectedFeature: selectedFeature);
   }
 }

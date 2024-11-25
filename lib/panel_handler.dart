@@ -6,11 +6,13 @@ import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:url_launcher/url_launcher.dart'; // Import the url_launcher package
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_storage/firebase_storage.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 import './public_space_properties.dart';
 import './colors.dart';
 import './submit_image.dart';
 import './feedback_screen.dart';
+import './sign_in_screen.dart';
 
 String extractDomainFromUri(Uri? uri) {
   // Define a regular expression to match the domain part of the URL
@@ -315,7 +317,7 @@ class _PanelHandlerState extends State<PanelHandler> {
                               children: [
                                 Image.network(
                                   url,
-                                  height: 200,
+                                  height: 160,
                                   width: 200,
                                   fit: BoxFit.cover,
                                 ),
@@ -457,16 +459,31 @@ class _PanelHandlerState extends State<PanelHandler> {
                                 size: 20, // Icon size
                                 color: Colors.grey[800], // Dark gray icon
                               ),
-                              onPressed: () {
-                                Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (context) => PhotoSubmissionScreen(
-                                      spaceId: _panelContent!.properties
-                                          .firestoreId, // Replace with the space ID
+                              onPressed: () async {
+                                final user = FirebaseAuth.instance.currentUser;
+
+                                if (user != null) {
+                                  // If the user is signed in, navigate to the PhotoSubmissionScreen
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) =>
+                                          PhotoSubmissionScreen(
+                                        spaceId: _panelContent!.properties
+                                            .firestoreId, // Replace with the space ID
+                                      ),
                                     ),
-                                  ),
-                                );
+                                  );
+                                } else {
+                                  // If the user is not signed in, navigate to the SignInScreen
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) =>
+                                          SignInScreen(), // Replace with your sign-in screen widget
+                                    ),
+                                  );
+                                }
                               },
                               tooltip: 'Report an Issue',
                             ),

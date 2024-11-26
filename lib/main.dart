@@ -20,60 +20,73 @@ import 'username_input_screen.dart';
 Future<void> initDynamicLinks(BuildContext context) async {
   print('Initializing dynamic links...');
 
+  // Check for initial dynamic link
+  final PendingDynamicLinkData? initialLink =
+      await FirebaseDynamicLinks.instance.getInitialLink();
+
+  if (initialLink?.link != null) {
+    await _handleDynamicLink(initialLink!.link!, context);
+  }
+
   // Listen for dynamic link while app is in the foreground
-  FirebaseDynamicLinks.instance.onLink
-      .listen((PendingDynamicLinkData? dynamicLinkData) async {
-    final Uri? deepLink = dynamicLinkData?.link;
-    print('Dynamic link received: $deepLink');
-
-    if (deepLink != null &&
-        FirebaseAuth.instance.isSignInWithEmailLink(deepLink.toString())) {
-      try {
-        // Retrieve the email from shared_preferences
-        final prefs = await SharedPreferences.getInstance();
-        final email = prefs.getString('sign_in_email');
-        if (email == null) {
-          throw Exception("No email found in local storage");
-        }
-        // The client SDK will parse the code from the link for you.
-        final UserCredential userCredential =
-            await FirebaseAuth.instance.signInWithEmailLink(
-          email: email, // Replace with the user's email
-          emailLink: deepLink.toString(),
-        );
-
-        // Delete the email from shared_preferences
-        await prefs.remove('sign_in_email');
-
-        // You can access the new user via userCredential.user.
-        final String? emailAddress = userCredential.user?.email;
-
-        print('Successfully signed in with email link!');
-        print('Email Address: $emailAddress');
-
-        // Show a toast and switch to the Profile tab
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Successfully signed in!')),
-        );
-
-        // Close all navigation pages and go to HomeScreen
-        Navigator.popUntil(context, (route) => route.isFirst);
-
-        homeScreenKey.currentState?.switchToMapTab();
-      } catch (error) {
-        print('Error signing in with email link: $error');
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-              content:
-                  Text('We could not sign you in with that link. Try again.')),
-        );
+  FirebaseDynamicLinks.instance.onLink.listen(
+    (PendingDynamicLinkData? dynamicLinkData) async {
+      final Uri? deepLink = dynamicLinkData?.link;
+      if (deepLink != null) {
+        await _handleDynamicLink(deepLink, context);
       }
-    } else {
-      print('Dynamic link received, but it is not a valid email sign-in link.');
+    },
+    onError: (error) {
+      print('Error processing dynamic link: $error');
+    },
+  );
+}
+
+Future<void> _handleDynamicLink(Uri deepLink, BuildContext context) async {
+  print('Dynamic link received: $deepLink');
+
+  if (FirebaseAuth.instance.isSignInWithEmailLink(deepLink.toString())) {
+    try {
+      // Retrieve the email from shared_preferences
+      final prefs = await SharedPreferences.getInstance();
+      final email = prefs.getString('sign_in_email');
+      if (email == null) {
+        throw Exception("No email found in local storage");
+      }
+
+      // Sign in the user
+      final UserCredential userCredential =
+          await FirebaseAuth.instance.signInWithEmailLink(
+        email: email,
+        emailLink: deepLink.toString(),
+      );
+
+      // Delete the email from shared_preferences
+      await prefs.remove('sign_in_email');
+
+      final String? emailAddress = userCredential.user?.email;
+
+      print('Successfully signed in with email link!');
+      print('Email Address: $emailAddress');
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Successfully signed in!')),
+      );
+
+      Navigator.popUntil(context, (route) => route.isFirst);
+
+      homeScreenKey.currentState?.switchToMapTab();
+    } catch (error) {
+      print('Error signing in with email link: $error');
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+            content: Text(
+                'We could not sign you in with that link. Try again.')),
+      );
     }
-  }).onError((error) {
-    print('Error processing dynamic link: $error');
-  });
+  } else {
+    print('Dynamic link received, but it is not a valid email sign-in link.');
+  }
 }
 
 void main() {

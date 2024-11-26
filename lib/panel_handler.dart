@@ -273,8 +273,6 @@ class _PanelHandlerState extends State<PanelHandler> {
       return const SizedBox.shrink(); // Return an empty widget
     }
 
-    print('is loading: $_isLoading');
-
     return Stack(
       children: [
         Positioned(

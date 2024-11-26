@@ -26,7 +26,11 @@ flutter run --release --dart-define ACCESS_TOKEN=pk.12345
 - flutter clean
 - flutter build appbundle --release --dart-define ACCESS_TOKEN=pk.12345
 
-Login to Google Play Developer Console
+Login to Google Play Console
+Closed Testing > Create a new release
+Drag and drop app bundle (build/app/outputs/bundle/release/app-release.aab)
+
+
 
 ## iOS Release
 

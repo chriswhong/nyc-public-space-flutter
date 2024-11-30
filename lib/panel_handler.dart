@@ -72,6 +72,9 @@ class _PanelHandlerState extends State<PanelHandler> {
         String filename = doc['filename'];
         String spaceId = doc['spaceId'];
         String status = doc['status'];
+        String username = doc['username'];
+        Timestamp timestamp = doc['timestamp'];
+        
         String thumbnailUrl = await getThumbnailUrl(filename, spaceId);
         String mediumUrl = await getMediumUrl(filename, spaceId);
 
@@ -79,6 +82,8 @@ class _PanelHandlerState extends State<PanelHandler> {
           'thumbnailUrl': thumbnailUrl,
           'mediumUrl': mediumUrl,
           'status': status,
+          'username': username,
+          'timestamp': timestamp
         });
       }
 
@@ -332,375 +337,398 @@ class _PanelHandlerState extends State<PanelHandler> {
                   children: [_buildPill(_panelContent!.properties.type)],
                 ),
                 const SizedBox(height: 8),
-                Expanded(child: SingleChildScrollView(child: Column(children: [
-                   if (_isLoading)
-                  const SizedBox(
-                    height: 160, // Spinner height
-                    child: Center(
-                      child: CircularProgressIndicator(),
-                    ),
-                  )
-                else if (imageList.isNotEmpty)
-                  SingleChildScrollView(
-                    scrollDirection: Axis.horizontal,
-                    child: Row(
-                      children: imageList.map((imageData) {
-                        final String status = imageData['status'];
-                        final String thumbnailUrl = imageData['thumbnailUrl'];
+                Expanded(
+                  child: SingleChildScrollView(
+                    child: Column(children: [
+                      if (_isLoading)
+                        const SizedBox(
+                          height: 160, // Spinner height
+                          child: Center(
+                            child: CircularProgressIndicator(),
+                          ),
+                        )
+                      else if (imageList.isNotEmpty)
+                        SingleChildScrollView(
+                          scrollDirection: Axis.horizontal,
+                          child: Row(
+                            children: imageList.map((imageData) {
+                              final String status = imageData['status'];
+                              final String thumbnailUrl =
+                                  imageData['thumbnailUrl'];
 
-                        return GestureDetector(
-                            onTap: () {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) => ImageViewer(
-                                    imageList: imageList
-                                        .map((imageData) => imageData['mediumUrl'])
-                                        .toList(),
-                                    initialIndex: imageList.indexOf(imageData),
-                                  ),
-                                ),
-                              );
-                            },
-                            child: Padding(
-                              padding: const EdgeInsets.all(8.0),
-                              child: ClipRRect(
-                                borderRadius: BorderRadius.circular(8.0),
-                                child: Stack(
-                                  children: [
-                                    Image.network(
-                                      thumbnailUrl,
-                                      height: 160,
-                                      width: 200,
-                                      fit: BoxFit.cover,
-                                    ),
-                                    if (status == 'pending')
-                                      Positioned.fill(
-                                        child: BackdropFilter(
-                                          filter: ImageFilter.blur(
-                                              sigmaX: 10.0, sigmaY: 10.0),
-                                          child: Container(
-                                            color:
-                                                Colors.black.withOpacity(0.2),
-                                            child: const Center(
-                                              child: Text(
-                                                'Pending Approval',
-                                                style: TextStyle(
-                                                  color: Colors.white,
-                                                  fontWeight: FontWeight.bold,
-                                                  fontSize: 14,
+                              return GestureDetector(
+                                  onTap: () {
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (context) => ImageViewer(
+                                          imageList: imageList,
+                                          initialIndex:
+                                              imageList.indexOf(imageData),
+                                        ),
+                                      ),
+                                    );
+                                  },
+                                  child: Padding(
+                                    padding: const EdgeInsets.all(8.0),
+                                    child: ClipRRect(
+                                      borderRadius: BorderRadius.circular(8.0),
+                                      child: Stack(
+                                        children: [
+                                          Image.network(
+                                            thumbnailUrl,
+                                            height: 160,
+                                            width: 200,
+                                            fit: BoxFit.cover,
+                                          ),
+                                          if (status == 'pending')
+                                            Positioned.fill(
+                                              child: BackdropFilter(
+                                                filter: ImageFilter.blur(
+                                                    sigmaX: 10.0, sigmaY: 10.0),
+                                                child: Container(
+                                                  color: Colors.black
+                                                      .withOpacity(0.2),
+                                                  child: const Center(
+                                                    child: Text(
+                                                      'Pending Approval',
+                                                      style: TextStyle(
+                                                        color: Colors.white,
+                                                        fontWeight:
+                                                            FontWeight.bold,
+                                                        fontSize: 14,
+                                                      ),
+                                                    ),
+                                                  ),
                                                 ),
                                               ),
                                             ),
-                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ));
+                            }).toList(),
+                          ),
+                        )
+                      else
+                        Container(
+                          decoration: BoxDecoration(
+                            border: Border.all(
+                              color: Colors.grey, // Border color
+                              width: 0.5, // Border width
+                            ),
+                            borderRadius:
+                                BorderRadius.circular(16.0), // Rounded corners
+                          ),
+                          padding: const EdgeInsets.all(16.0),
+                          margin: const EdgeInsets.symmetric(
+                              horizontal: 16.0, vertical: 10.0),
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              const Icon(
+                                Icons.photo_album,
+                                size: 40,
+                                color: Colors.grey,
+                              ),
+                              const SizedBox(height: 10),
+                              const Text(
+                                'No photos available for this space.',
+                                style:
+                                    TextStyle(fontSize: 16, color: Colors.grey),
+                                textAlign: TextAlign.center,
+                              ),
+                              const SizedBox(height: 10),
+                              ElevatedButton.icon(
+                                icon: const Icon(FontAwesomeIcons.camera),
+                                style: AppStyles.buttonStyle,
+                                label: const Text('Add the first photo'),
+                                onPressed: () {
+                                  final user =
+                                      FirebaseAuth.instance.currentUser;
+
+                                  if (user != null) {
+                                    // If the user is signed in, navigate to the PhotoSubmissionScreen
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (context) =>
+                                            PhotoSubmissionScreen(
+                                          spaceId: _panelContent!
+                                              .properties.firestoreId,
                                         ),
                                       ),
-                                  ],
-                                ),
-                              ),
-                            ));
-                      }).toList(),
-                    ),
-                  )
-                else
-                  Container(
-                    decoration: BoxDecoration(
-                      border: Border.all(
-                        color: Colors.grey, // Border color
-                        width: 0.5, // Border width
-                      ),
-                      borderRadius:
-                          BorderRadius.circular(16.0), // Rounded corners
-                    ),
-                    padding: const EdgeInsets.all(16.0),
-                    margin: const EdgeInsets.symmetric(
-                        horizontal: 16.0, vertical: 10.0),
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        const Icon(
-                          Icons.photo_album,
-                          size: 40,
-                          color: Colors.grey,
-                        ),
-                        const SizedBox(height: 10),
-                        const Text(
-                          'No photos available for this space.',
-                          style: TextStyle(fontSize: 16, color: Colors.grey),
-                          textAlign: TextAlign.center,
-                        ),
-                        const SizedBox(height: 10),
-                        ElevatedButton.icon(
-                          icon: const Icon(FontAwesomeIcons.camera),
-                          style: AppStyles.buttonStyle,
-                          label: const Text('Add the first photo'),
-                          onPressed: () {
-                            final user = FirebaseAuth.instance.currentUser;
-
-                            if (user != null) {
-                              // If the user is signed in, navigate to the PhotoSubmissionScreen
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) => PhotoSubmissionScreen(
-                                    spaceId:
-                                        _panelContent!.properties.firestoreId,
-                                  ),
-                                ),
-                              );
-                            } else {
-                              // If the user is not signed in, navigate to the SignInScreen
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) => const SignInScreen(),
-                                ),
-                              );
-                            }
-                          },
-                        ),
-                      ],
-                    ),
-                  ),
-                const SizedBox(height: 4),
-                // Location text
-                // Row(
-                //   children: [
-                //     Flexible(
-                //       child: Text(
-                //         _panelContent!.properties.location ?? '',
-                //         style: const TextStyle(
-                //           fontSize: 14,
-                //           fontWeight: FontWeight.normal,
-                //         ),
-                //         softWrap: true, // Allows the text to wrap
-                //         overflow: TextOverflow.visible, // Ensures no clipping
-                //       ),
-                //     ),
-                //   ],
-                // ),
-                Padding(
-                  padding:
-                      const EdgeInsets.all(8.0), // Add padding around the row
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment
-                        .spaceEvenly, // Evenly space the buttons
-                    children: [
-                      // First button for "Get Directions"
-                      Column(
-                        children: [
-                          Container(
-                            decoration: BoxDecoration(
-                              color: Colors.grey[300], // Light gray background
-                              shape: BoxShape.circle, // Circular shape
-                            ),
-                            child: IconButton(
-                              icon: FaIcon(
-                                FontAwesomeIcons
-                                    .diamondTurnRight, // Navigation icon
-                                size: 20, // Icon size
-                                color: Colors.grey[800], // Dark gray icon
-                              ),
-                              onPressed: () {
-                                _openMaps(
-                                  (_panelContent!.geometry.coordinates.lat)
-                                      .toDouble(),
-                                  (_panelContent!.geometry.coordinates.lng)
-                                      .toDouble(),
-                                  context,
-                                );
-                              },
-                              tooltip: 'Open in Maps',
-                            ),
-                          ),
-                          const SizedBox(
-                              height: 4), // Space between icon and text
-                          const Text(
-                            'Open in Maps',
-                            style: TextStyle(fontSize: 12), // Small text label
-                          ),
-                        ],
-                      ),
-                      const SizedBox(width: 10),
-                      Column(
-                        children: [
-                          Container(
-                            decoration: BoxDecoration(
-                              color: Colors.grey[300], // Light gray background
-                              shape: BoxShape.circle, // Circular shape
-                            ),
-                            child: IconButton(
-                              icon: FaIcon(
-                                FontAwesomeIcons
-                                    .triangleExclamation, // Navigation icon
-                                size: 20, // Icon size
-                                color: Colors.grey[800], // Dark gray icon
-                              ),
-                              onPressed: () {
-                                Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (context) => FeedbackScreen(
-                                        selectedFeature:
-                                            widget.selectedFeature),
-                                  ),
-                                );
-                              },
-                              tooltip: 'Report an Issue',
-                            ),
-                          ),
-                          const SizedBox(
-                              height: 4), // Space between icon and text
-                          const Text(
-                            'Report a Data Issue',
-                            style: TextStyle(fontSize: 12), // Small text label
-                          ),
-                        ],
-                      ),
-                      const SizedBox(width: 10),
-                      Column(
-                        children: [
-                          Container(
-                            decoration: BoxDecoration(
-                              color: Colors.grey[300], // Light gray background
-                              shape: BoxShape.circle, // Circular shape
-                            ),
-                            child: IconButton(
-                              icon: FaIcon(
-                                FontAwesomeIcons.camera, // Navigation icon
-                                size: 20, // Icon size
-                                color: Colors.grey[800], // Dark gray icon
-                              ),
-                              onPressed: () async {
-                                final user = FirebaseAuth.instance.currentUser;
-
-                                if (user != null) {
-                                  // If the user is signed in, navigate to the PhotoSubmissionScreen
-                                  Navigator.push(
-                                    context,
-                                    MaterialPageRoute(
-                                      builder: (context) =>
-                                          PhotoSubmissionScreen(
-                                        spaceId: _panelContent!
-                                            .properties.firestoreId,
-                                        onSubmissionComplete: () {
-                                          fetchImages(); // Callback to refresh the images
-                                        }, // Replace with the space ID
+                                    );
+                                  } else {
+                                    // If the user is not signed in, navigate to the SignInScreen
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (context) =>
+                                            const SignInScreen(),
                                       ),
+                                    );
+                                  }
+                                },
+                              ),
+                            ],
+                          ),
+                        ),
+                      const SizedBox(height: 4),
+                      // Location text
+                      // Row(
+                      //   children: [
+                      //     Flexible(
+                      //       child: Text(
+                      //         _panelContent!.properties.location ?? '',
+                      //         style: const TextStyle(
+                      //           fontSize: 14,
+                      //           fontWeight: FontWeight.normal,
+                      //         ),
+                      //         softWrap: true, // Allows the text to wrap
+                      //         overflow: TextOverflow.visible, // Ensures no clipping
+                      //       ),
+                      //     ),
+                      //   ],
+                      // ),
+                      Padding(
+                        padding: const EdgeInsets.all(
+                            8.0), // Add padding around the row
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment
+                              .spaceEvenly, // Evenly space the buttons
+                          children: [
+                            // First button for "Get Directions"
+                            Column(
+                              children: [
+                                Container(
+                                  decoration: BoxDecoration(
+                                    color: Colors
+                                        .grey[300], // Light gray background
+                                    shape: BoxShape.circle, // Circular shape
+                                  ),
+                                  child: IconButton(
+                                    icon: FaIcon(
+                                      FontAwesomeIcons
+                                          .diamondTurnRight, // Navigation icon
+                                      size: 20, // Icon size
+                                      color: Colors.grey[800], // Dark gray icon
                                     ),
-                                  );
-                                } else {
-                                  // If the user is not signed in, navigate to the SignInScreen
-                                  Navigator.push(
-                                    context,
-                                    MaterialPageRoute(
-                                      builder: (context) =>
-                                          const SignInScreen(), // Replace with your sign-in screen widget
-                                    ),
-                                  );
-                                }
-                              },
-                              tooltip: 'Report an Issue',
+                                    onPressed: () {
+                                      _openMaps(
+                                        (_panelContent!
+                                                .geometry.coordinates.lat)
+                                            .toDouble(),
+                                        (_panelContent!
+                                                .geometry.coordinates.lng)
+                                            .toDouble(),
+                                        context,
+                                      );
+                                    },
+                                    tooltip: 'Open in Maps',
+                                  ),
+                                ),
+                                const SizedBox(
+                                    height: 4), // Space between icon and text
+                                const Text(
+                                  'Open in Maps',
+                                  style: TextStyle(
+                                      fontSize: 12), // Small text label
+                                ),
+                              ],
                             ),
-                          ),
-                          const SizedBox(
-                              height: 4), // Space between icon and text
-                          const Text(
-                            'Submit a Photo',
-                            style: TextStyle(fontSize: 12), // Small text label
-                          ),
-                        ],
+                            const SizedBox(width: 10),
+                            Column(
+                              children: [
+                                Container(
+                                  decoration: BoxDecoration(
+                                    color: Colors
+                                        .grey[300], // Light gray background
+                                    shape: BoxShape.circle, // Circular shape
+                                  ),
+                                  child: IconButton(
+                                    icon: FaIcon(
+                                      FontAwesomeIcons
+                                          .triangleExclamation, // Navigation icon
+                                      size: 20, // Icon size
+                                      color: Colors.grey[800], // Dark gray icon
+                                    ),
+                                    onPressed: () {
+                                      Navigator.push(
+                                        context,
+                                        MaterialPageRoute(
+                                          builder: (context) => FeedbackScreen(
+                                              selectedFeature:
+                                                  widget.selectedFeature),
+                                        ),
+                                      );
+                                    },
+                                    tooltip: 'Report an Issue',
+                                  ),
+                                ),
+                                const SizedBox(
+                                    height: 4), // Space between icon and text
+                                const Text(
+                                  'Report a Data Issue',
+                                  style: TextStyle(
+                                      fontSize: 12), // Small text label
+                                ),
+                              ],
+                            ),
+                            const SizedBox(width: 10),
+                            Column(
+                              children: [
+                                Container(
+                                  decoration: BoxDecoration(
+                                    color: Colors
+                                        .grey[300], // Light gray background
+                                    shape: BoxShape.circle, // Circular shape
+                                  ),
+                                  child: IconButton(
+                                    icon: FaIcon(
+                                      FontAwesomeIcons
+                                          .camera, // Navigation icon
+                                      size: 20, // Icon size
+                                      color: Colors.grey[800], // Dark gray icon
+                                    ),
+                                    onPressed: () async {
+                                      final user =
+                                          FirebaseAuth.instance.currentUser;
+
+                                      if (user != null) {
+                                        // If the user is signed in, navigate to the PhotoSubmissionScreen
+                                        Navigator.push(
+                                          context,
+                                          MaterialPageRoute(
+                                            builder: (context) =>
+                                                PhotoSubmissionScreen(
+                                              spaceId: _panelContent!
+                                                  .properties.firestoreId,
+                                              onSubmissionComplete: () {
+                                                fetchImages(); // Callback to refresh the images
+                                              }, // Replace with the space ID
+                                            ),
+                                          ),
+                                        );
+                                      } else {
+                                        // If the user is not signed in, navigate to the SignInScreen
+                                        Navigator.push(
+                                          context,
+                                          MaterialPageRoute(
+                                            builder: (context) =>
+                                                const SignInScreen(), // Replace with your sign-in screen widget
+                                          ),
+                                        );
+                                      }
+                                    },
+                                    tooltip: 'Report an Issue',
+                                  ),
+                                ),
+                                const SizedBox(
+                                    height: 4), // Space between icon and text
+                                const Text(
+                                  'Submit a Photo',
+                                  style: TextStyle(
+                                      fontSize: 12), // Small text label
+                                ),
+                              ],
+                            ),
+                            // Second button for "More Info"
+                            // if (_panelContent != null && _panelContent!.properties.url != null)
+                            //   Column(
+                            //     children: [
+                            //       Container(
+                            //         decoration: BoxDecoration(
+                            //           color: Colors.grey[300], // Light gray background
+                            //           shape: BoxShape.circle, // Circular shape
+                            //         ),
+                            //         child: IconButton(
+                            //           icon: FaIcon(
+                            //             FontAwesomeIcons.infoCircle, // Web info icon
+                            //             size: 20, // Icon size
+                            //             color: Colors.grey[800], // Dark gray icon
+                            //           ),
+                            //           onPressed: () {
+                            //             _launchURL(_panelContent!.properties.url);
+                            //           },
+                            //           tooltip: 'Website',
+                            //         ),
+                            //       ),
+                            //       const SizedBox(height: 4), // Space between icon and text
+                            //       const Text(
+                            //         'Website',
+                            //         style: TextStyle(fontSize: 12), // Small text label
+                            //       ),
+                            //     ],
+                            //   ),
+                          ],
+                        ),
                       ),
-                      // Second button for "More Info"
-                      // if (_panelContent != null && _panelContent!.properties.url != null)
-                      //   Column(
-                      //     children: [
-                      //       Container(
-                      //         decoration: BoxDecoration(
-                      //           color: Colors.grey[300], // Light gray background
-                      //           shape: BoxShape.circle, // Circular shape
-                      //         ),
-                      //         child: IconButton(
-                      //           icon: FaIcon(
-                      //             FontAwesomeIcons.infoCircle, // Web info icon
-                      //             size: 20, // Icon size
-                      //             color: Colors.grey[800], // Dark gray icon
-                      //           ),
-                      //           onPressed: () {
-                      //             _launchURL(_panelContent!.properties.url);
-                      //           },
-                      //           tooltip: 'Website',
-                      //         ),
-                      //       ),
-                      //       const SizedBox(height: 4), // Space between icon and text
-                      //       const Text(
-                      //         'Website',
-                      //         style: TextStyle(fontSize: 12), // Small text label
-                      //       ),
-                      //     ],
-                      //   ),
-                    ],
+                      _lightDivider(),
+                      _panelContent != null &&
+                              _panelContent!.properties.description != null &&
+                              _panelContent!
+                                      .properties.description?.isNotEmpty ==
+                                  true
+                          ? Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const SizedBox(height: 4),
+                                Text(_panelContent!.properties.description!),
+                                _lightDivider(), // Add the additional widget here
+                              ],
+                            )
+                          : const SizedBox.shrink(),
+                      _panelContent != null &&
+                              _panelContent!.properties.location != null &&
+                              _panelContent!.properties.location?.isNotEmpty ==
+                                  true
+                          ? Column(
+                              children: [
+                                const SizedBox(height: 4),
+                                ListTile(
+                                  leading: const FaIcon(
+                                      FontAwesomeIcons.mapMarkerAlt,
+                                      size: 18),
+
+                                  title: Text(
+                                      _panelContent!.properties.location ??
+                                          'Address not available',
+                                      style: const TextStyle(fontSize: 14)),
+                                  visualDensity: const VisualDensity(
+                                      vertical: -4), // Reduce vertical space
+                                ),
+                                _lightDivider(),
+                              ],
+                            )
+                          : const SizedBox.shrink(),
+                      _panelContent != null &&
+                              _panelContent!.properties.url != null
+                          ? Column(
+                              children: [
+                                const SizedBox(height: 4),
+                                ListTile(
+                                  leading: const FaIcon(FontAwesomeIcons.link,
+                                      size: 18),
+
+                                  title: Text(
+                                      extractDomainFromUri(
+                                          _panelContent!.properties.url),
+                                      style: const TextStyle(fontSize: 14)),
+                                  visualDensity: const VisualDensity(
+                                      vertical: -4), // Reduce vertical space
+
+                                  onTap: () {
+                                    _launchURL(_panelContent!.properties.url);
+                                  },
+                                ),
+                                _lightDivider(),
+                              ],
+                            )
+                          : const SizedBox.shrink(),
+                    ]),
                   ),
-                ),
-                _lightDivider(),
-                _panelContent != null &&
-                        _panelContent!.properties.description != null &&
-                        _panelContent!.properties.description?.isNotEmpty ==
-                            true
-                    ? Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const SizedBox(height: 4),
-                          Text(_panelContent!.properties.description!),
-                          _lightDivider(), // Add the additional widget here
-                        ],
-                      )
-                    : const SizedBox.shrink(),
-                _panelContent != null &&
-                        _panelContent!.properties.location != null &&
-                        _panelContent!.properties.location?.isNotEmpty == true
-                    ? Column(
-                        children: [
-                          const SizedBox(height: 4),
-                          ListTile(
-                            leading: const FaIcon(FontAwesomeIcons.mapMarkerAlt,
-                                size: 18),
-
-                            title: Text(
-                                _panelContent!.properties.location ??
-                                    'Address not available',
-                                style: const TextStyle(fontSize: 14)),
-                            visualDensity: const VisualDensity(
-                                vertical: -4), // Reduce vertical space
-                          ),
-                          _lightDivider(),
-                        ],
-                      )
-                    : const SizedBox.shrink(),
-                _panelContent != null && _panelContent!.properties.url != null
-                    ? Column(
-                        children: [
-                          const SizedBox(height: 4),
-                          ListTile(
-                            leading:
-                                const FaIcon(FontAwesomeIcons.link, size: 18),
-
-                            title: Text(
-                                extractDomainFromUri(
-                                    _panelContent!.properties.url),
-                                style: const TextStyle(fontSize: 14)),
-                            visualDensity: const VisualDensity(
-                                vertical: -4), // Reduce vertical space
-
-                            onTap: () {
-                              _launchURL(_panelContent!.properties.url);
-                            },
-                          ),
-                          _lightDivider(),
-                        ],
-                      )
-                    : const SizedBox.shrink(),
-                ]),),)
+                )
               ],
             ),
           ),

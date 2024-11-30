@@ -157,14 +157,17 @@ class _MapHandlerState extends State<MapHandler> {
             ], filter: null))
         .then((features) async {
       if (features.isNotEmpty) {
-        print('Clicked feature: $features[0]!.queriedFeature.feature');
         // Parse the feature and call the parent callback
 
         var geojsonFeatureString =
             jsonEncode(features[0]!.queriedFeature.feature);
-          
+
         PublicSpaceFeature geojsonFeature =
             PublicSpaceFeature.fromJson(jsonDecode(geojsonFeatureString));
+
+        String firestoreId = geojsonFeature.properties.firestoreId;
+      
+        print('Clicked feature: $firestoreId');
 
         // Call parent callback to update the selectedFeature in parent state
         widget.onFeatureSelected(geojsonFeature);

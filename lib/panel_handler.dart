@@ -12,6 +12,7 @@ import './colors.dart';
 import './submit_image.dart';
 import './feedback_screen.dart';
 import './sign_in_screen.dart';
+import './image_viewer.dart';
 
 String extractDomainFromUri(Uri? uri) {
   // Define a regular expression to match the domain part of the URL
@@ -60,19 +61,24 @@ class _PanelHandlerState extends State<PanelHandler> {
           .collection('images')
           .where('spaceId',
               isEqualTo: widget.selectedFeature?.properties.firestoreId)
+          .where('status', isNotEqualTo: 'rejected')
           .orderBy('timestamp', descending: false)
           .get();
+
+      print(querySnapshot.docs.length);
 
       List<Map<String, dynamic>> imageListUpdate = [];
       for (var doc in querySnapshot.docs) {
         String filename = doc['filename'];
         String spaceId = doc['spaceId'];
-        bool approved = doc['approved'] ?? false;
-        String url = await getDownloadUrl(filename, spaceId);
+        String status = doc['status'];
+        String thumbnailUrl = await getThumbnailUrl(filename, spaceId);
+        String mediumUrl = await getMediumUrl(filename, spaceId);
 
         imageListUpdate.add({
-          'url': url,
-          'approved': approved,
+          'thumbnailUrl': thumbnailUrl,
+          'mediumUrl': mediumUrl,
+          'status': status,
         });
       }
 
@@ -88,14 +94,26 @@ class _PanelHandlerState extends State<PanelHandler> {
     }
   }
 
-  Future<String> getDownloadUrl(String filename, String spaceId) async {
+  Future<String> getThumbnailUrl(String filename, String spaceId) async {
     try {
       final ref = FirebaseStorage.instance
           .ref()
-          .child('spaces_images/$spaceId/$filename');
+          .child('spaces_images/$spaceId/thumbnail/$filename');
       return await ref.getDownloadURL();
     } catch (e) {
-      print('Error getting download URL: $e');
+      print('Error getting thumbnail URL: $e');
+      return '';
+    }
+  }
+
+  Future<String> getMediumUrl(String filename, String spaceId) async {
+    try {
+      final ref = FirebaseStorage.instance
+          .ref()
+          .child('spaces_images/$spaceId/medium/$filename');
+      return await ref.getDownloadURL();
+    } catch (e) {
+      print('Error getting medium URL: $e');
       return '';
     }
   }
@@ -279,6 +297,8 @@ class _PanelHandlerState extends State<PanelHandler> {
           top: 10,
           left: 10,
           right: 10,
+          bottom: 10, // Add bottom constraint for scrollability
+
           child: Container(
             padding: const EdgeInsets.all(8.0),
             child: Column(
@@ -312,7 +332,8 @@ class _PanelHandlerState extends State<PanelHandler> {
                   children: [_buildPill(_panelContent!.properties.type)],
                 ),
                 const SizedBox(height: 8),
-                if (_isLoading)
+                Expanded(child: SingleChildScrollView(child: Column(children: [
+                   if (_isLoading)
                   const SizedBox(
                     height: 160, // Spinner height
                     child: Center(
@@ -324,45 +345,60 @@ class _PanelHandlerState extends State<PanelHandler> {
                     scrollDirection: Axis.horizontal,
                     child: Row(
                       children: imageList.map((imageData) {
-                        final bool approved = imageData['approved'];
-                        final String url = imageData['url'];
+                        final String status = imageData['status'];
+                        final String thumbnailUrl = imageData['thumbnailUrl'];
 
-                        return Padding(
-                          padding: const EdgeInsets.all(8.0),
-                          child: ClipRRect(
-                            borderRadius: BorderRadius.circular(8.0),
-                            child: Stack(
-                              children: [
-                                Image.network(
-                                  url,
-                                  height: 160,
-                                  width: 200,
-                                  fit: BoxFit.cover,
+                        return GestureDetector(
+                            onTap: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => ImageViewer(
+                                    imageList: imageList
+                                        .map((imageData) => imageData['mediumUrl'])
+                                        .toList(),
+                                    initialIndex: imageList.indexOf(imageData),
+                                  ),
                                 ),
-                                if (!approved)
-                                  Positioned.fill(
-                                    child: BackdropFilter(
-                                      filter: ImageFilter.blur(
-                                          sigmaX: 10.0, sigmaY: 10.0),
-                                      child: Container(
-                                        color: Colors.black.withOpacity(0.2),
-                                        child: const Center(
-                                          child: Text(
-                                            'Pending Approval',
-                                            style: TextStyle(
-                                              color: Colors.white,
-                                              fontWeight: FontWeight.bold,
-                                              fontSize: 14,
+                              );
+                            },
+                            child: Padding(
+                              padding: const EdgeInsets.all(8.0),
+                              child: ClipRRect(
+                                borderRadius: BorderRadius.circular(8.0),
+                                child: Stack(
+                                  children: [
+                                    Image.network(
+                                      thumbnailUrl,
+                                      height: 160,
+                                      width: 200,
+                                      fit: BoxFit.cover,
+                                    ),
+                                    if (status == 'pending')
+                                      Positioned.fill(
+                                        child: BackdropFilter(
+                                          filter: ImageFilter.blur(
+                                              sigmaX: 10.0, sigmaY: 10.0),
+                                          child: Container(
+                                            color:
+                                                Colors.black.withOpacity(0.2),
+                                            child: const Center(
+                                              child: Text(
+                                                'Pending Approval',
+                                                style: TextStyle(
+                                                  color: Colors.white,
+                                                  fontWeight: FontWeight.bold,
+                                                  fontSize: 14,
+                                                ),
+                                              ),
                                             ),
                                           ),
                                         ),
                                       ),
-                                    ),
-                                  ),
-                              ],
-                            ),
-                          ),
-                        );
+                                  ],
+                                ),
+                              ),
+                            ));
                       }).toList(),
                     ),
                   )
@@ -664,6 +700,7 @@ class _PanelHandlerState extends State<PanelHandler> {
                         ],
                       )
                     : const SizedBox.shrink(),
+                ]),),)
               ],
             ),
           ),

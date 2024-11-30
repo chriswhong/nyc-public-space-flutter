@@ -4,8 +4,10 @@ import 'package:image_picker/image_picker.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:provider/provider.dart';
 
 import 'colors.dart';
+import 'user_provider.dart';
 
 class PhotoSubmissionScreen extends StatefulWidget {
   final String spaceId;
@@ -37,6 +39,8 @@ class _PhotoSubmissionScreenState extends State<PhotoSubmissionScreen> {
   }
 
   Future<void> _uploadPhotos() async {
+    final userProvider = Provider.of<UserProvider>(context, listen: false);
+
     if (_selectedImages.isEmpty) return;
 
     setState(() {
@@ -56,17 +60,16 @@ class _PhotoSubmissionScreenState extends State<PhotoSubmissionScreen> {
             .child('spaces_images')
             .child(widget.spaceId)
             .child(filename);
-        final uploadTask = await storageRef.putFile(image);
-        final imageUrl = await uploadTask.ref.getDownloadURL();
+        await storageRef.putFile(image);
 
         // Save metadata to Firestore
         await FirebaseFirestore.instance.collection('images').add({
           'spaceId': widget.spaceId,
           'timestamp': FieldValue.serverTimestamp(),
           'userId': user.uid,
+          'username': userProvider.username,
           'filename': filename,
-          'approved': false,
-          'imageUrl': imageUrl,
+          'status': 'pending'
         });
       }
 
@@ -92,6 +95,7 @@ class _PhotoSubmissionScreenState extends State<PhotoSubmissionScreen> {
 
   @override
   Widget build(BuildContext context) {
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('Submit Photos'),

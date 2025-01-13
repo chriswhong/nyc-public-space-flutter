@@ -17,7 +17,7 @@ class FloatingLocatorButton extends StatelessWidget {
 
     mapboxMap?.flyTo(
         CameraOptions(
-            zoom: 14,
+            zoom: 15,
             center: Point(
                 coordinates: Position(position.longitude, position.latitude))),
         null);

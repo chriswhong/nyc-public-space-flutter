@@ -74,7 +74,7 @@ class _PanelHandlerState extends State<PanelHandler> {
         String status = doc['status'];
         String username = doc['username'];
         Timestamp timestamp = doc['timestamp'];
-        
+
         String thumbnailUrl = await getThumbnailUrl(filename, spaceId);
         String mediumUrl = await getMediumUrl(filename, spaceId);
 
@@ -189,6 +189,7 @@ class _PanelHandlerState extends State<PanelHandler> {
             content: const Text('Which app would you like to use?'),
             actions: <Widget>[
               TextButton(
+                style: AppStyles.buttonStyle,
                 child: const Text('Apple Maps'),
                 onPressed: () async {
                   final uri = getMapLaunchUri(latitude, longitude);
@@ -201,6 +202,7 @@ class _PanelHandlerState extends State<PanelHandler> {
                 },
               ),
               TextButton(
+                style: AppStyles.buttonStyle,
                 child: const Text('Google Maps'),
                 onPressed: () async {
                   final uri =
@@ -331,15 +333,32 @@ class _PanelHandlerState extends State<PanelHandler> {
                     ),
                   ],
                 ),
-                const SizedBox(height: 8),
+                const SizedBox(height: 2),
                 // Row of pills
                 Row(
                   children: [_buildPill(_panelContent!.properties.type)],
                 ),
-                const SizedBox(height: 8),
+                const SizedBox(height: 4),
+                _lightDivider(), // Add the additional widget here
+
                 Expanded(
                   child: SingleChildScrollView(
                     child: Column(children: [
+                      _panelContent != null &&
+                              _panelContent!.properties.description != null &&
+                              _panelContent!
+                                      .properties.description?.isNotEmpty ==
+                                  true
+                          ? Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const SizedBox(height: 4),
+                                Text(_panelContent!.properties.description!),
+                                const SizedBox(height: 4),
+                                _lightDivider(), // Add the additional widget here
+                              ],
+                            )
+                          : const SizedBox.shrink(),
                       if (_isLoading)
                         const SizedBox(
                           height: 160, // Spinner height
@@ -665,39 +684,35 @@ class _PanelHandlerState extends State<PanelHandler> {
                         ),
                       ),
                       _lightDivider(),
-                      _panelContent != null &&
-                              _panelContent!.properties.description != null &&
-                              _panelContent!
-                                      .properties.description?.isNotEmpty ==
-                                  true
-                          ? Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                const SizedBox(height: 4),
-                                Text(_panelContent!.properties.description!),
-                                _lightDivider(), // Add the additional widget here
-                              ],
-                            )
-                          : const SizedBox.shrink(),
+
                       _panelContent != null &&
                               _panelContent!.properties.location != null &&
                               _panelContent!.properties.location?.isNotEmpty ==
                                   true
                           ? Column(
                               children: [
-                                const SizedBox(height: 4),
                                 ListTile(
-                                  leading: const FaIcon(
-                                      FontAwesomeIcons.mapMarkerAlt,
-                                      size: 18),
-
-                                  title: Text(
-                                      _panelContent!.properties.location ??
-                                          'Address not available',
-                                      style: const TextStyle(fontSize: 14)),
-                                  visualDensity: const VisualDensity(
-                                      vertical: -4), // Reduce vertical space
-                                ),
+                                    leading: const FaIcon(
+                                        FontAwesomeIcons.locationDot,
+                                        size: 18),
+                                    title: Text(
+                                        _panelContent!.properties.location ??
+                                            'Address not available',
+                                        style: const TextStyle(fontSize: 14)),
+                                    visualDensity:
+                                        const VisualDensity(vertical: -4),
+                                    onTap: () {
+                                      _openMaps(
+                                        (_panelContent!
+                                                .geometry.coordinates.lat)
+                                            .toDouble(),
+                                        (_panelContent!
+                                                .geometry.coordinates.lng)
+                                            .toDouble(),
+                                        context,
+                                      );
+                                    } // Reduce vertical space
+                                    ),
                                 _lightDivider(),
                               ],
                             )

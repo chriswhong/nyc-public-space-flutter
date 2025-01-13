@@ -6,6 +6,7 @@ import 'package:permission_handler/permission_handler.dart';
 import 'dart:typed_data';
 import 'package:flutter/services.dart';
 import 'package:nyc_public_space_map/public_space_properties.dart';
+import 'package:geolocator/geolocator.dart' as geo;
 
 class MapHandler extends StatefulWidget {
   final PublicSpaceFeature? selectedFeature; // Pass selectedFeature from parent
@@ -124,6 +125,18 @@ class _MapHandlerState extends State<MapHandler> {
     mapboxMap.location.updateSettings(
         LocationComponentSettings(enabled: true, pulsingEnabled: true));
 
+    // fly map to user location
+    var position = await geo.Geolocator.getCurrentPosition(
+      desiredAccuracy: geo.LocationAccuracy.high,
+    );
+
+    mapboxMap.flyTo(
+        CameraOptions(
+            zoom: 15,
+            center: Point(
+                coordinates: Position(position.longitude, position.latitude))),
+        null);
+
     // call onMapCreated callback to pass the map instance upward
     widget.onMapCreated(mapboxMap);
 
@@ -166,7 +179,7 @@ class _MapHandlerState extends State<MapHandler> {
             PublicSpaceFeature.fromJson(jsonDecode(geojsonFeatureString));
 
         String firestoreId = geojsonFeature.properties.firestoreId;
-      
+
         print('Clicked feature: $firestoreId');
 
         // Call parent callback to update the selectedFeature in parent state
@@ -176,7 +189,7 @@ class _MapHandlerState extends State<MapHandler> {
         double screenHeight = MediaQuery.of(buildContext).size.height;
         double yPercent = context.touchPosition.y / screenHeight;
 
-        if (yPercent > .60) {
+        if (yPercent > .50) {
           mapboxMap.flyTo(CameraOptions(center: geojsonFeature.geometry),
               MapAnimationOptions());
         }
@@ -189,8 +202,8 @@ class _MapHandlerState extends State<MapHandler> {
     return MapWidget(
       styleUri: 'mapbox://styles/chriswhongmapbox/clzu4xoh900oz01qsgnxq8sf1',
       cameraOptions: CameraOptions(
-        center: Point(coordinates: Position(-73.96, 40.75183)),
-        zoom: 13,
+        center: Point(coordinates: Position(-74.00299, 40.70966)),
+        zoom: 12,
       ),
       onMapCreated: _onMapCreated,
       onTapListener: (MapContentGestureContext gestureContext) =>

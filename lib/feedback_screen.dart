@@ -126,6 +126,7 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
                                   prompt(),
                                   const SizedBox(height: 36),
                                   TextField(
+                                    textCapitalization: TextCapitalization.sentences,
                                     controller: _controller,
                                     maxLines: 4,
                                     decoration: const InputDecoration(

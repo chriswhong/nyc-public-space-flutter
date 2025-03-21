@@ -7,6 +7,7 @@ class PublicSpaceProperties {
   final String? name;
   final String? location;
   final Uri? url;
+  final List<Uri>? urls;
   final String? description;
 
   // constructor to initialize the properties
@@ -17,6 +18,7 @@ class PublicSpaceProperties {
       required this.type,
       required this.location,
       required this.url,
+      required this.urls,
       required this.description});
 
   // optional: Add a toString method for easier debugging
@@ -67,8 +69,15 @@ class PublicSpaceFeature {
         name: json['properties']['name'],
         type: json['properties']['type'],
         location: json['properties']['location'],
-        url: json['properties']['url'] != null &&  json['properties']['url'].isNotEmpty
+        url: json['properties']['url'] != null &&
+                json['properties']['url'].isNotEmpty
             ? Uri.parse(json['properties']['url'])
+            : null,
+        urls: json['urls'] != null
+            ? List<String>.from(json['urls'])
+                .map((u) => Uri.tryParse(u))
+                .whereType<Uri>()
+                .toList()
             : null,
         description: json['properties']['description'], // Parse the URL
       ),

@@ -11,8 +11,10 @@ import './public_space_properties.dart';
 import './colors.dart';
 import './submit_image.dart';
 import './feedback_screen.dart';
+import './editor_screen.dart';
 import './sign_in_screen.dart';
 import './image_viewer.dart';
+import 'circle_icon_button_with_label.dart';
 
 String extractDomainFromUri(Uri? uri) {
   // Define a regular expression to match the domain part of the URL
@@ -517,140 +519,83 @@ class _PanelHandlerState extends State<PanelHandler> {
                           mainAxisAlignment: MainAxisAlignment
                               .spaceEvenly, // Evenly space the buttons
                           children: [
-                            // First button for "Get Directions"
-                            Column(
-                              children: [
-                                Container(
-                                  decoration: BoxDecoration(
-                                    color: Colors
-                                        .grey[300], // Light gray background
-                                    shape: BoxShape.circle, // Circular shape
-                                  ),
-                                  child: IconButton(
-                                    icon: FaIcon(
-                                      FontAwesomeIcons
-                                          .diamondTurnRight, // Navigation icon
-                                      size: 20, // Icon size
-                                      color: Colors.grey[800], // Dark gray icon
-                                    ),
-                                    onPressed: () {
-                                      _openMaps(
-                                        (_panelContent!
-                                                .geometry.coordinates.lat)
-                                            .toDouble(),
-                                        (_panelContent!
-                                                .geometry.coordinates.lng)
-                                            .toDouble(),
-                                        context,
-                                      );
-                                    },
-                                    tooltip: 'Open in Maps',
-                                  ),
-                                ),
-                                const SizedBox(
-                                    height: 4), // Space between icon and text
-                                const Text(
-                                  'Open in Maps',
-                                  style: TextStyle(
-                                      fontSize: 12), // Small text label
-                                ),
-                              ],
+                            CircleIconButtonWithLabel(
+                              icon: FontAwesomeIcons.diamondTurnRight,
+                              label: 'Open in Maps',
+                              tooltip: 'Open in Maps',
+                              onPressed: () {
+                                _openMaps(
+                                  (_panelContent!.geometry.coordinates.lat)
+                                      .toDouble(),
+                                  (_panelContent!.geometry.coordinates.lng)
+                                      .toDouble(),
+                                  context,
+                                );
+                              },
                             ),
                             const SizedBox(width: 10),
-                            Column(
-                              children: [
-                                Container(
-                                  decoration: BoxDecoration(
-                                    color: Colors
-                                        .grey[300], // Light gray background
-                                    shape: BoxShape.circle, // Circular shape
+                            // CircleIconButtonWithLabel(
+                            //   icon: FontAwesomeIcons.triangleExclamation,
+                            //   label: 'Report a Data Issue',
+                            //   tooltip: 'Report an Issue',
+                            //   onPressed: () {
+                            //     Navigator.push(
+                            //       context,
+                            //       MaterialPageRoute(
+                            //         builder: (context) => FeedbackScreen(
+                            //             selectedFeature:
+                            //                 widget.selectedFeature),
+                            //       ),
+                            //     );
+                            //   },
+                            
+                            CircleIconButtonWithLabel(
+                              icon: FontAwesomeIcons.pencil,
+                              label: 'Edit this Space',
+                              tooltip: 'Edit this Space',
+                              onPressed: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => EditorScreen(
+                                        selectedFeature:
+                                            widget.selectedFeature),
                                   ),
-                                  child: IconButton(
-                                    icon: FaIcon(
-                                      FontAwesomeIcons
-                                          .triangleExclamation, // Navigation icon
-                                      size: 20, // Icon size
-                                      color: Colors.grey[800], // Dark gray icon
-                                    ),
-                                    onPressed: () {
-                                      Navigator.push(
-                                        context,
-                                        MaterialPageRoute(
-                                          builder: (context) => FeedbackScreen(
-                                              selectedFeature:
-                                                  widget.selectedFeature),
-                                        ),
-                                      );
-                                    },
-                                    tooltip: 'Report an Issue',
-                                  ),
-                                ),
-                                const SizedBox(
-                                    height: 4), // Space between icon and text
-                                const Text(
-                                  'Report a Data Issue',
-                                  style: TextStyle(
-                                      fontSize: 12), // Small text label
-                                ),
-                              ],
+                                );
+                              },
                             ),
                             const SizedBox(width: 10),
-                            Column(
-                              children: [
-                                Container(
-                                  decoration: BoxDecoration(
-                                    color: Colors
-                                        .grey[300], // Light gray background
-                                    shape: BoxShape.circle, // Circular shape
-                                  ),
-                                  child: IconButton(
-                                    icon: FaIcon(
-                                      FontAwesomeIcons
-                                          .camera, // Navigation icon
-                                      size: 20, // Icon size
-                                      color: Colors.grey[800], // Dark gray icon
-                                    ),
-                                    onPressed: () async {
-                                      final user =
-                                          FirebaseAuth.instance.currentUser;
+                            CircleIconButtonWithLabel(
+                              icon: FontAwesomeIcons.camera,
+                              label: 'Submit a Photo',
+                              tooltip: 'Submit a Photo',
+                              onPressed: () async {
+                                final user = FirebaseAuth.instance.currentUser;
 
-                                      if (user != null) {
-                                        // If the user is signed in, navigate to the PhotoSubmissionScreen
-                                        Navigator.push(
-                                          context,
-                                          MaterialPageRoute(
-                                            builder: (context) =>
-                                                PhotoSubmissionScreen(
-                                              spaceId: _panelContent!
-                                                  .properties.firestoreId,
-                                              onSubmissionComplete: () {
-                                                fetchImages(); // Callback to refresh the images
-                                              }, // Replace with the space ID
-                                            ),
-                                          ),
-                                        );
-                                      } else {
-                                        // If the user is not signed in, navigate to the SignInScreen
-                                        Navigator.push(
-                                          context,
-                                          MaterialPageRoute(
-                                            builder: (context) =>
-                                                const SignInScreen(), // Replace with your sign-in screen widget
-                                          ),
-                                        );
-                                      }
-                                    },
-                                    tooltip: 'Report an Issue',
-                                  ),
-                                ),
-                                const SizedBox(
-                                    height: 4), // Space between icon and text
-                                const Text(
-                                  'Submit a Photo',
-                                  style: TextStyle(
-                                      fontSize: 12), // Small text label
-                                ),
-                              ],
+                                if (user != null) {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) =>
+                                          PhotoSubmissionScreen(
+                                        spaceId: _panelContent!
+                                            .properties.firestoreId,
+                                        onSubmissionComplete: () {
+                                          fetchImages();
+                                        },
+                                      ),
+                                    ),
+                                  );
+                                } else {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) =>
+                                          const SignInScreen(),
+                                    ),
+                                  );
+                                }
+                              },
                             ),
                             // Second button for "More Info"
                             // if (_panelContent != null && _panelContent!.properties.url != null)

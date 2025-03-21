@@ -81,8 +81,9 @@ class _StaticMapWithEditState extends State<StaticMapWithEdit> {
             ),
             body: DraggableMapboxMarker(
               initialPoint: _currentPoint,
-                  onCancel: () => Navigator.of(context).pop(), // your custom handler
-
+              type: widget.type,
+              onCancel: () =>
+                  Navigator.of(context).pop(), // your custom handler
               onLocationChanged: (point) {
                 Navigator.of(context).pop(point);
               },

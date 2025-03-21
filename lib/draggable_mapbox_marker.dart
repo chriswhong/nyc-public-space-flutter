@@ -2,17 +2,20 @@ import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:mapbox_maps_flutter/mapbox_maps_flutter.dart';
+import './positioned_map_marker.dart';
 
 const double mapHeight = 230;
 
 class DraggableMapboxMarker extends StatefulWidget {
   final Point initialPoint;
+  final String type;
   final void Function() onCancel;
   final void Function(Point) onLocationChanged;
 
   const DraggableMapboxMarker({
     super.key,
     required this.initialPoint,
+    required this.type,
     required this.onCancel,
     required this.onLocationChanged,
   });
@@ -83,16 +86,8 @@ class _DraggableMapboxMarkerState extends State<DraggableMapboxMarker> {
                   });
                 },
               ),
-              Positioned(
-                bottom: mapHeight / 2,
-                child: IgnorePointer(
-                  child: Image.asset(
-                    'assets/misc.png',
-                    width: 40,
-                    height: 40,
-                  ),
-                ),
-              ),
+                     PositionedMapMarker(type: widget.type, mapHeight: mapHeight),
+
                       if (_hasChanged())
           Positioned(
               top: 8,

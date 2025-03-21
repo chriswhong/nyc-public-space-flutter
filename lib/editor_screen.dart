@@ -7,6 +7,7 @@ import 'package:nyc_public_space_map/colors.dart';
 
 import './draggable_mapbox_marker.dart';
 import './static_map_with_edit.dart';
+import './attribute_checkboxes.dart';
 
 class HeadingText extends StatelessWidget {
   final String text;
@@ -43,6 +44,10 @@ class _EditorScreenState extends State<EditorScreen> {
   final TextEditingController _controller = TextEditingController();
   bool _isSubmitting = false;
   bool _isSubmitted = false;
+
+  final Set<String> _selectedFeatures = {};
+  final Set<String> _selectedAmenities = {};
+  final Set<String> _selectedEquipment = {};
 
   final _formKey = GlobalKey<FormState>();
 
@@ -311,6 +316,26 @@ class _EditorScreenState extends State<EditorScreen> {
                                         ],
                                       ),
                                       const SizedBox(height: 32),
+                                      AttributeCheckboxes(
+                                        selectedFeatures: _selectedFeatures,
+                                        selectedAmenities: _selectedAmenities,
+                                        selectedEquipment: _selectedEquipment,
+                                        onChanged: (category, key, isChecked) {
+                                          setState(() {
+                                            final set = {
+                                              'features': _selectedFeatures,
+                                              'amenities': _selectedAmenities,
+                                              'equipment': _selectedEquipment,
+                                            }[category];
+
+                                            if (set != null) {
+                                              isChecked
+                                                  ? set.add(key)
+                                                  : set.remove(key);
+                                            }
+                                          });
+                                        },
+                                      ),
                                       Center(
                                         child: ElevatedButton(
                                           onPressed: _isSubmitting
@@ -318,17 +343,6 @@ class _EditorScreenState extends State<EditorScreen> {
                                               : () {
                                                   if (_formKey.currentState!
                                                       .validate()) {
-                                                    // TODO: Submit form logic here
-                                                    print("Submitting:");
-                                                    print(
-                                                        "Name: ${_nameController.text}");
-                                                    print(
-                                                        "Type: $_selectedType");
-                                                    print(
-                                                        "Description: ${_descriptionController.text}");
-                                                    print(
-                                                        "Location: ${_locationController.text}");
-
                                                     final urls = _urlControllers
                                                         .map((c) =>
                                                             c.text.trim())
@@ -336,8 +350,42 @@ class _EditorScreenState extends State<EditorScreen> {
                                                             text.isNotEmpty)
                                                         .toList();
 
+                                                    final Map<String, dynamic>
+                                                        data = {
+                                                      'name': _nameController
+                                                          .text
+                                                          .trim(),
+                                                      'type': _selectedType,
+                                                      'description':
+                                                          _descriptionController
+                                                              .text
+                                                              .trim(),
+                                                      'location':
+                                                          _locationController
+                                                              .text
+                                                              .trim(),
+                                                      'urls': urls,
+                                                      'features':
+                                                          _selectedFeatures
+                                                              .toList(),
+                                                      'amenities':
+                                                          _selectedAmenities
+                                                              .toList(),
+                                                      'equipment':
+                                                          _selectedEquipment
+                                                              .toList(),
+                                                      'timestamp': DateTime
+                                                              .now()
+                                                          .toIso8601String(), // Optional: for tracking
+                                                    };
+
                                                     print(
-                                                        "Submitted URLs: $urls");
+                                                        "📦 Submitting the following data to Firestore:");
+                                                    data.forEach((key, value) {
+                                                      print("  $key: $value");
+                                                    });
+
+                                                    // TODO: Actually submit `data` to Firestore
 
                                                     setState(() {
                                                       _isSubmitted = true;

@@ -7,19 +7,24 @@ class PublicSpaceProperties {
   final String? name;
   final String? location;
   final Uri? url;
-  final List<Uri>? urls;
   final String? description;
+  final List<String> features;
+  final List<String> amenities;
+  final List<String> equipment;
 
   // constructor to initialize the properties
-  PublicSpaceProperties(
-      {required this.firestoreId,
-      required this.space_id,
-      required this.name,
-      required this.type,
-      required this.location,
-      required this.url,
-      required this.urls,
-      required this.description});
+  PublicSpaceProperties({
+    required this.firestoreId,
+    required this.space_id,
+    required this.name,
+    required this.type,
+    required this.location,
+    required this.url,
+    required this.description,
+    required this.features,
+    required this.amenities,
+    required this.equipment,
+  });
 
   // optional: Add a toString method for easier debugging
   @override
@@ -53,7 +58,10 @@ class PublicSpaceFeature {
         'type': properties.type,
         'location': properties.location,
         'url': properties.url,
-        'description': properties.description
+        'description': properties.description,
+        'features': properties.features,
+        'amenities': properties.amenities,
+        'equipment': properties.equipment,
       },
     };
   }
@@ -73,13 +81,10 @@ class PublicSpaceFeature {
                 json['properties']['url'].isNotEmpty
             ? Uri.parse(json['properties']['url'])
             : null,
-        urls: json['urls'] != null
-            ? List<String>.from(json['urls'])
-                .map((u) => Uri.tryParse(u))
-                .whereType<Uri>()
-                .toList()
-            : null,
         description: json['properties']['description'], // Parse the URL
+        features: List<String>.from(json['properties']['features'] ?? []),
+        amenities: List<String>.from(json['properties']['amenities'] ?? []),
+        equipment: List<String>.from(json['properties']['equipment'] ?? []),
       ),
     );
   }

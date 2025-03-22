@@ -1,13 +1,17 @@
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
 import 'package:mapbox_maps_flutter/mapbox_maps_flutter.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:provider/provider.dart';
+
 
 import 'package:nyc_public_space_map/public_space_properties.dart';
 import 'package:nyc_public_space_map/colors.dart';
 
-import './draggable_mapbox_marker.dart';
 import './static_map_with_edit.dart';
 import './attribute_checkboxes.dart';
+import 'user_provider.dart';
+
 
 class HeadingText extends StatelessWidget {
   final String text;
@@ -54,7 +58,8 @@ class _EditorScreenState extends State<EditorScreen> {
   late TextEditingController _nameController;
   late TextEditingController _descriptionController;
   late TextEditingController _locationController;
-  late List<TextEditingController> _urlControllers;
+  late Point _currentPoint;
+  late TextEditingController _urlController;
 
   final Map<String, String> _typeOptions = {
     'pops': 'Privately Owned Public Space',
@@ -67,6 +72,8 @@ class _EditorScreenState extends State<EditorScreen> {
 
   String? _selectedType;
 
+
+
   @override
   void initState() {
     super.initState();
@@ -78,21 +85,20 @@ class _EditorScreenState extends State<EditorScreen> {
     _locationController = TextEditingController(text: props?.location ?? '');
     _selectedType = props?.type ?? 'misc'; // default fallback
 
-    _urlControllers = [];
+    _urlController = TextEditingController(
+      text: widget.selectedFeature?.properties.url?.toString() ?? '',
+    );
 
-    final existingUrls = props?.urls ??
-        (props?.url != null && props!.url!.toString().isNotEmpty
-            ? [props.url!]
-            : []);
+    _currentPoint = Point(
+      coordinates: Position(
+        widget.selectedFeature?.geometry.coordinates.lng ?? -74.0060,
+        widget.selectedFeature?.geometry.coordinates.lat ?? 40.7128,
+      ),
+    );
 
-    for (var url in existingUrls) {
-      _urlControllers.add(TextEditingController(text: url.toString()));
-    }
-
-// If no existing URLs, add one empty field by default
-    if (_urlControllers.isEmpty) {
-      _urlControllers.add(TextEditingController());
-    }
+    _selectedFeatures.addAll(props?.features ?? []);
+    _selectedAmenities.addAll(props?.amenities ?? []);
+    _selectedEquipment.addAll(props?.equipment ?? []);
   }
 
   @override
@@ -100,59 +106,19 @@ class _EditorScreenState extends State<EditorScreen> {
     _nameController.dispose();
     _descriptionController.dispose();
     _locationController.dispose();
+    _urlController.dispose();
 
-    for (final controller in _urlControllers) {
-      controller.dispose();
-    }
     super.dispose();
   }
 
-  // final String googleFormUrl =
-  //     'https://docs.google.com/forms/u/0/d/e/1FAIpQLSdeRW4c1k16zHkkN3XO25PuRjoGxgOszSNAGV5zcKy6a4Afxw/formResponse';
-  // final String idField = 'entry.495981289';
-  // final String issueField = 'entry.823964625';
-
-  // Future<void> _submitForm(String spaceId, String inputText) async {
-  //   setState(() {
-  //     _isSubmitting = true;
-  //   });
-
-  //   final response = await http.post(
-  //     Uri.parse(googleFormUrl),
-  //     body: {
-  //       idField: spaceId,
-  //       issueField: inputText,
-  //     },
-  //   );
-
-  //   if (response.statusCode == 200 || response.statusCode == 302) {
-  //     setState(() {
-  //       _isSubmitted = true;
-  //     });
-  //   } else {
-  //     ScaffoldMessenger.of(context).showSnackBar(
-  //       const SnackBar(content: Text('Failed to submit. Please try again.')),
-  //     );
-  //   }
-
-  //   setState(() {
-  //     _isSubmitting = false;
-  //   });
-  // }
-
   @override
   Widget build(BuildContext context) {
-    final String spaceName =
-        widget.selectedFeature?.properties.name ?? "this space";
 
-    final String spaceId =
-        widget.selectedFeature?.properties.space_id ?? 'app_feedback';
+    final userProvider = Provider.of<UserProvider>(context, listen: false);
 
     String title = "Edit this Space";
 
-    String submittedMessage = widget.selectedFeature != null
-        ? 'Thanks for reporting! We will look into it and update the record as soon as possible. 😎'
-        : 'Thanks for sharing! We will use your feedback to improve the app! 😎';
+    String submittedMessage = 'Thanks for submitting your changes! We will review them shortly.';
 
     return Scaffold(
         backgroundColor: AppColors.pageBackground,
@@ -242,78 +208,29 @@ class _EditorScreenState extends State<EditorScreen> {
                                         ),
                                         type: _selectedType!,
                                         onLocationChanged: (Point newPoint) {
-                                          print(
-                                              "New LatLng: ${newPoint.coordinates.lat}, ${newPoint.coordinates.lng}");
-                                          // Save to state here if you need to pass it on form submission
+                                          setState(() {
+                                            _currentPoint = newPoint;
+                                          });
                                         },
                                       ),
                                       const SizedBox(height: 16),
                                       HeadingText('Links'),
-                                      Column(
-                                        children: [
-                                          const SizedBox(height: 8),
-                                          ..._urlControllers
-                                              .asMap()
-                                              .entries
-                                              .map((entry) {
-                                            final index = entry.key;
-                                            final controller = entry.value;
-                                            return Column(children: [
-                                              Row(
-                                                children: [
-                                                  Expanded(
-                                                    child: TextFormField(
-                                                      controller: controller,
-                                                      keyboardType:
-                                                          TextInputType.url,
-                                                      validator: (value) {
-                                                        if (value == null ||
-                                                            value
-                                                                .trim()
-                                                                .isEmpty) {
-                                                          return null; // Field is optional
-                                                        }
-
-                                                        final urlPattern =
-                                                            '^(https?:\\/\\/)?([\\w\\-])+\\.([a-zA-Z]{2,63})([\\/\\w\\-.~:?#[\\]@!\$&\'()*+,;=]*)?\$';
-                                                        final urlRegex =
-                                                            RegExp(urlPattern);
-
-                                                        bool isValid =
-                                                            urlRegex.hasMatch(
-                                                                value.trim());
-                                                        return isValid
-                                                            ? null
-                                                            : 'Enter a valid URL';
-                                                      },
-                                                    ),
-                                                  ),
-                                                  IconButton(
-                                                    icon: const Icon(
-                                                        Icons.delete_outline),
-                                                    onPressed: () {
-                                                      setState(() {
-                                                        _urlControllers
-                                                            .removeAt(index);
-                                                      });
-                                                    },
-                                                  ),
-                                                ],
-                                              ),
-                                              SizedBox(height: 8)
-                                            ]);
-                                          }),
-                                          TextButton.icon(
-                                            icon: const Icon(Icons.add),
-                                            label: const Text('Add Link'),
-                                            onPressed: () {
-                                              setState(() {
-                                                _urlControllers.add(
-                                                    TextEditingController());
-                                              });
-                                            },
-                                          ),
-                                        ],
+                                      TextFormField(
+                                        controller: _urlController,
+                                        decoration: const InputDecoration(
+                                            labelText: 'URL'),
+                                        keyboardType: TextInputType.url,
+                                        validator: (value) {
+                                          if (value == null ||
+                                              value.trim().isEmpty)
+                                            return null; // Optional field
+                                          final urlPattern =
+                                              '^(https?:\\/\\/)?([\\w\\-])+\\.([a-zA-Z]{2,63})([\\/\\w\\-.~:?#[\\]@!\$&\'()*+,;=]*)?\$';
+                                          final urlRegex = RegExp(urlPattern);
+                                          return urlRegex.hasMatch(value.trim())
+                                              ? null
+                                              : 'Enter a valid URL';
+                                        },
                                       ),
                                       const SizedBox(height: 32),
                                       AttributeCheckboxes(
@@ -340,52 +257,185 @@ class _EditorScreenState extends State<EditorScreen> {
                                         child: ElevatedButton(
                                           onPressed: _isSubmitting
                                               ? null
-                                              : () {
+                                              : () async {
                                                   if (_formKey.currentState!
                                                       .validate()) {
-                                                    final urls = _urlControllers
-                                                        .map((c) =>
-                                                            c.text.trim())
-                                                        .where((text) =>
-                                                            text.isNotEmpty)
-                                                        .toList();
+                                                    final original = widget
+                                                        .selectedFeature
+                                                        ?.properties;
 
-                                                    final Map<String, dynamic>
-                                                        data = {
-                                                      'name': _nameController
-                                                          .text
-                                                          .trim(),
-                                                      'type': _selectedType,
-                                                      'description':
-                                                          _descriptionController
-                                                              .text
-                                                              .trim(),
-                                                      'location':
-                                                          _locationController
-                                                              .text
-                                                              .trim(),
-                                                      'urls': urls,
-                                                      'features':
-                                                          _selectedFeatures
-                                                              .toList(),
-                                                      'amenities':
-                                                          _selectedAmenities
-                                                              .toList(),
-                                                      'equipment':
-                                                          _selectedEquipment
-                                                              .toList(),
-                                                      'timestamp': DateTime
-                                                              .now()
-                                                          .toIso8601String(), // Optional: for tracking
+                                                    final urlText =
+                                                        _urlController.text
+                                                            .trim();
+                                                    final originalUrl = original
+                                                            ?.url
+                                                            ?.toString() ??
+                                                        '';
+
+                                                    final updatedFields =
+                                                        <String, dynamic>{};
+
+                                                    final originalPoint = widget
+                                                        .selectedFeature
+                                                        ?.geometry;
+
+                                                    if (originalPoint != null) {
+                                                      final newCoords =
+                                                          _currentPoint
+                                                              .coordinates;
+                                                      final originalCoords =
+                                                          originalPoint
+                                                              .coordinates;
+
+                                                      final locationChanged =
+                                                          newCoords.lat !=
+                                                                  originalCoords
+                                                                      .lat ||
+                                                              newCoords.lng !=
+                                                                  originalCoords
+                                                                      .lng;
+
+                                                      if (locationChanged) {
+                                                        final geometryString =
+                                                            '{"type":"Point","coordinates":[${newCoords.lng},${newCoords.lat}]}';
+                                                        updatedFields[
+                                                                'geometry'] =
+                                                            geometryString;
+                                                      }
+                                                    }
+
+                                                    void addIfChanged(
+                                                        String key,
+                                                        dynamic newValue,
+                                                        dynamic originalValue) {
+                                                      if (newValue is List &&
+                                                          originalValue
+                                                              is List) {
+                                                        final newList =
+                                                            List<String>.from(
+                                                                newValue);
+                                                        final originalList =
+                                                            List<String>.from(
+                                                                originalValue);
+
+                                                        newList.sort();
+                                                        originalList.sort();
+
+                                                        if (newList.length !=
+                                                                originalList
+                                                                    .length ||
+                                                            !newList
+                                                                .asMap()
+                                                                .entries
+                                                                .every((e) =>
+                                                                    e.value ==
+                                                                    originalList[
+                                                                        e.key])) {
+                                                          updatedFields[key] =
+                                                              newValue;
+                                                        }
+                                                      } else {
+                                                        if (newValue !=
+                                                            originalValue) {
+                                                          updatedFields[key] =
+                                                              newValue;
+                                                        }
+                                                      }
+                                                    }
+
+                                                    addIfChanged(
+                                                        'name',
+                                                        _nameController.text
+                                                            .trim(),
+                                                        original?.name?.trim());
+                                                    addIfChanged(
+                                                        'type',
+                                                        _selectedType,
+                                                        original?.type);
+                                                    addIfChanged(
+                                                        'description',
+                                                        _descriptionController
+                                                            .text
+                                                            .trim(),
+                                                        original?.description
+                                                            ?.trim());
+
+                                                    addIfChanged(
+                                                        'location',
+                                                        _locationController.text
+                                                            .trim(),
+                                                        original?.location
+                                                            ?.trim());
+
+                                                    addIfChanged(
+                                                        'url',
+                                                        urlText.isNotEmpty
+                                                            ? urlText
+                                                            : null,
+                                                        originalUrl.isNotEmpty
+                                                            ? originalUrl
+                                                            : null);
+
+                                                    addIfChanged(
+                                                        'features',
+                                                        _selectedFeatures
+                                                            .toList(),
+                                                        original?.features ??
+                                                            []);
+                                                    addIfChanged(
+                                                        'amenities',
+                                                        _selectedAmenities
+                                                            .toList(),
+                                                        original?.amenities ??
+                                                            []);
+                                                    addIfChanged(
+                                                        'equipment',
+                                                        _selectedEquipment
+                                                            .toList(),
+                                                        original?.equipment ??
+                                                            []);
+
+                                                    if (updatedFields.isEmpty) {
+                                                      ScaffoldMessenger.of(
+                                                              context)
+                                                          .showSnackBar(
+                                                              const SnackBar(
+                                                                  content: Text(
+                                                                      "No changes detected.")));
+                                                      return;
+                                                    }
+
+                                                    final user = FirebaseAuth
+                                                        .instance.currentUser;
+
+
+                                                    final submission = {
+                                                      'spaceId': widget
+                                                              .selectedFeature
+                                                              ?.properties
+                                                              .firestoreId ??
+                                                          'unknown',
+                                                      'status': 'pending',
+                                                      'timestamp': FieldValue
+                                                          .serverTimestamp(),
+                                                      'userId': user?.uid ??
+                                                          'anonymous',
+                                                      'userName': userProvider.username,
+                                                      'proposedData':
+                                                          updatedFields,
                                                     };
 
                                                     print(
-                                                        "📦 Submitting the following data to Firestore:");
-                                                    data.forEach((key, value) {
-                                                      print("  $key: $value");
-                                                    });
+                                                        "📤 Writing submission to Firestore:");
+                                                    submission.forEach(
+                                                        (key, value) => print(
+                                                            '  $key: $value'));
 
-                                                    // TODO: Actually submit `data` to Firestore
+                                                    await FirebaseFirestore
+                                                        .instance
+                                                        .collection(
+                                                            'public-spaces-edits')
+                                                        .add(submission);
 
                                                     setState(() {
                                                       _isSubmitted = true;
@@ -409,11 +459,5 @@ class _EditorScreenState extends State<EditorScreen> {
             ],
           ),
         ));
-    // return Drawer(
-    //   width: screenWidth, // Set full-width for the drawer
-    //   child: SafeArea(
-    //     child:
-    //   ),
-    // );
   }
 }

@@ -12,12 +12,14 @@ class AttributeDisplay extends StatelessWidget {
   final List<String> details;
   final List<String> amenities;
   final List<String> equipment;
+  final VoidCallback? onEditTap;
 
   const AttributeDisplay({
     Key? key,
     required this.details,
     required this.amenities,
     required this.equipment,
+    this.onEditTap,
   }) : super(key: key);
 
   static const List<AttributeOption> detailOptions = [
@@ -69,53 +71,68 @@ class AttributeDisplay extends StatelessWidget {
         .toList();
   }
 
+  
+  Widget _buildSection({
+    required String title,
+    required List<String> items,
+    required List<AttributeOption> options,
+    required String addLabel,
+  }) {
+    return Padding(
+      padding: const EdgeInsets.only(top: 16.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Text(title, style: const TextStyle(fontWeight: FontWeight.bold)),
+          const SizedBox(height: 8),
+          if (items.isNotEmpty)
+            Wrap(
+              alignment: WrapAlignment.start,
+              crossAxisAlignment: WrapCrossAlignment.start,
+              runAlignment: WrapAlignment.start,
+              children: _buildChips(items, options),
+            )
+          else
+            Align(
+              alignment: Alignment.centerLeft,
+              child: TextButton.icon(
+                style: TextButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  visualDensity: VisualDensity.compact,
+                ),
+                onPressed: onEditTap,
+                icon: const Icon(Icons.add, size: 16),
+                label: Text(addLabel, style: const TextStyle(fontSize: 14)),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
+      crossAxisAlignment: CrossAxisAlignment.stretch, // <-- Important
       children: [
-        if (details.isNotEmpty) ...[
-          const Padding(
-            padding: EdgeInsets.only(top: 16.0, bottom: 8),
-            child:
-                Text('Details', style: TextStyle(fontWeight: FontWeight.bold)),
-          ),
-          Align(
-            alignment: Alignment.centerLeft,
-            child: Wrap(
-              alignment: WrapAlignment.start,
-              children: _buildChips(details, detailOptions),
-            ),
-          ),
-        ],
-        if (amenities.isNotEmpty) ...[
-          const Padding(
-            padding: EdgeInsets.only(top: 16.0, bottom: 8),
-            child: Text('Amenities',
-                style: TextStyle(fontWeight: FontWeight.bold)),
-          ),
-          Align(
-            alignment: Alignment.centerLeft,
-            child: Wrap(
-              alignment: WrapAlignment.start,
-              children: _buildChips(amenities, amenityOptions),
-            ),
-          ),
-        ],
-        if (equipment.isNotEmpty) ...[
-          const Padding(
-            padding: EdgeInsets.only(top: 16.0, bottom: 8),
-            child: Text('Equipment',
-                style: TextStyle(fontWeight: FontWeight.bold)),
-          ),
-          Align(
-            alignment: Alignment.centerLeft,
-            child: Wrap(
-              alignment: WrapAlignment.start,
-              children: _buildChips(equipment, equipmentOptions),
-            ),
-          ),
-        ],
+        _buildSection(
+          title: 'Details',
+          items: details,
+          options: detailOptions,
+          addLabel: 'Add details',
+        ),
+        _buildSection(
+          title: 'Amenities',
+          items: amenities,
+          options: amenityOptions,
+          addLabel: 'Add amenities',
+        ),
+        _buildSection(
+          title: 'Equipment',
+          items: equipment,
+          options: equipmentOptions,
+          addLabel: 'Add equipment',
+        ),
       ],
     );
   }

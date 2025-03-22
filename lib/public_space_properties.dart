@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:mapbox_maps_flutter/mapbox_maps_flutter.dart';
 
 class PublicSpaceProperties {
@@ -8,7 +10,7 @@ class PublicSpaceProperties {
   final String? location;
   final Uri? url;
   final String? description;
-  final List<String> features;
+  final List<String> details;
   final List<String> amenities;
   final List<String> equipment;
 
@@ -21,7 +23,7 @@ class PublicSpaceProperties {
     required this.location,
     required this.url,
     required this.description,
-    required this.features,
+    required this.details,
     required this.amenities,
     required this.equipment,
   });
@@ -59,7 +61,7 @@ class PublicSpaceFeature {
         'location': properties.location,
         'url': properties.url,
         'description': properties.description,
-        'features': properties.features,
+        'details': properties.details,
         'amenities': properties.amenities,
         'equipment': properties.equipment,
       },
@@ -82,9 +84,15 @@ class PublicSpaceFeature {
             ? Uri.parse(json['properties']['url'])
             : null,
         description: json['properties']['description'], // Parse the URL
-        features: List<String>.from(json['properties']['features'] ?? []),
-        amenities: List<String>.from(json['properties']['amenities'] ?? []),
-        equipment: List<String>.from(json['properties']['equipment'] ?? []),
+details: json['properties']['details'] != null
+    ? List<String>.from(jsonDecode(json['properties']['details']))
+    : [],
+amenities: json['properties']['amenities'] != null
+    ? List<String>.from(jsonDecode(json['properties']['amenities']))
+    : [],
+equipment: json['properties']['equipment'] != null
+    ? List<String>.from(jsonDecode(json['properties']['equipment']))
+    : [],
       ),
     );
   }

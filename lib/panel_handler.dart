@@ -15,6 +15,7 @@ import './editor_screen.dart';
 import './sign_in_screen.dart';
 import './image_viewer.dart';
 import 'circle_icon_button_with_label.dart';
+import './attribute_display.dart';
 
 String extractDomainFromUri(Uri? uri) {
   // Define a regular expression to match the domain part of the URL
@@ -548,7 +549,7 @@ class _PanelHandlerState extends State<PanelHandler> {
                             //       ),
                             //     );
                             //   },
-                            
+
                             CircleIconButtonWithLabel(
                               icon: FontAwesomeIcons.pencil,
                               label: 'Edit this Space',
@@ -686,6 +687,11 @@ class _PanelHandlerState extends State<PanelHandler> {
                               ],
                             )
                           : const SizedBox.shrink(),
+                      
+                      AttributeDisplay(
+                          details: _panelContent!.properties.details,
+                          amenities: _panelContent!.properties.amenities,
+                          equipment: _panelContent!.properties.equipment)
                     ]),
                   ),
                 )

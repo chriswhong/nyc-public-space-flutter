@@ -49,7 +49,7 @@ class _EditorScreenState extends State<EditorScreen> {
   bool _isSubmitting = false;
   bool _isSubmitted = false;
 
-  final Set<String> _selectedFeatures = {};
+  final Set<String> _selectedDetails = {};
   final Set<String> _selectedAmenities = {};
   final Set<String> _selectedEquipment = {};
 
@@ -96,7 +96,7 @@ class _EditorScreenState extends State<EditorScreen> {
       ),
     );
 
-    _selectedFeatures.addAll(props?.features ?? []);
+    _selectedDetails.addAll(props?.details ?? []);
     _selectedAmenities.addAll(props?.amenities ?? []);
     _selectedEquipment.addAll(props?.equipment ?? []);
   }
@@ -234,13 +234,13 @@ class _EditorScreenState extends State<EditorScreen> {
                                       ),
                                       const SizedBox(height: 32),
                                       AttributeCheckboxes(
-                                        selectedFeatures: _selectedFeatures,
+                                        selectedDetails: _selectedDetails,
                                         selectedAmenities: _selectedAmenities,
                                         selectedEquipment: _selectedEquipment,
                                         onChanged: (category, key, isChecked) {
                                           setState(() {
                                             final set = {
-                                              'features': _selectedFeatures,
+                                              'details': _selectedDetails,
                                               'amenities': _selectedAmenities,
                                               'equipment': _selectedEquipment,
                                             }[category];
@@ -377,10 +377,10 @@ class _EditorScreenState extends State<EditorScreen> {
                                                             : null);
 
                                                     addIfChanged(
-                                                        'features',
-                                                        _selectedFeatures
+                                                        'details',
+                                                        _selectedDetails
                                                             .toList(),
-                                                        original?.features ??
+                                                        original?.details ??
                                                             []);
                                                     addIfChanged(
                                                         'amenities',

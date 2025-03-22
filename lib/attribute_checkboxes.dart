@@ -12,21 +12,21 @@ class AttributeOption {
 
 
 class AttributeCheckboxes extends StatelessWidget {
-  final Set<String> selectedFeatures;
+  final Set<String> selectedDetails;
   final Set<String> selectedAmenities;
   final Set<String> selectedEquipment;
   final void Function(String category, String key, bool value) onChanged;
 
   const AttributeCheckboxes({
     super.key,
-    required this.selectedFeatures,
+    required this.selectedDetails,
     required this.selectedAmenities,
     required this.selectedEquipment,
     required this.onChanged,
   });
 
 
-  static const List<AttributeOption> featureOptions = [
+  static const List<AttributeOption> detailOptions = [
     AttributeOption('indoor', FontAwesomeIcons.house),
     AttributeOption('accessible', FontAwesomeIcons.wheelchair),
     AttributeOption('trees', FontAwesomeIcons.tree),
@@ -65,10 +65,10 @@ class AttributeCheckboxes extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         _buildGroup(
-          title: 'Features',
-          options: featureOptions,
-          selected: selectedFeatures,
-          category: 'features',
+          title: 'Details',
+          options: detailOptions,
+          selected: selectedDetails,
+          category: 'details',
         ),
         _buildGroup(
           title: 'Amenities',

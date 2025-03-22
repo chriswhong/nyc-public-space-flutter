@@ -175,6 +175,8 @@ class _MapHandlerState extends State<MapHandler> {
         var geojsonFeatureString =
             jsonEncode(features[0]!.queriedFeature.feature);
 
+            print(geojsonFeatureString);
+
         PublicSpaceFeature geojsonFeature =
             PublicSpaceFeature.fromJson(jsonDecode(geojsonFeatureString));
 

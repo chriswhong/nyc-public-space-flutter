@@ -9,7 +9,7 @@ import 'package:nyc_public_space_map/panel/panel_handler.dart';
 import 'package:nyc_public_space_map/image_loader.dart';
 import 'package:nyc_public_space_map/floating_locator_button.dart';
 import 'package:nyc_public_space_map/public_space_properties.dart';
-import 'package:firebase_auth/firebase_auth.dart'; 
+import 'package:firebase_auth/firebase_auth.dart';
 
 class MapScreen extends StatefulWidget {
   final Function(PublicSpaceFeature?) onReportAnIssue;
@@ -29,6 +29,8 @@ class MapScreenState extends State<MapScreen> {
   PublicSpaceFeature? selectedFeature;
 
   User? currentUser; // Firebase User instance
+
+  double lastPanelSnap = 0.5;
 
   @override
   void initState() {
@@ -56,19 +58,25 @@ class MapScreenState extends State<MapScreen> {
     });
   }
 
+  bool isProgrammaticSlide = false;
+
   void _updatePanel() {
     if (_pc.isPanelClosed) {
-      _pc.animatePanelToSnapPoint();
+      isProgrammaticSlide = true;
+      _pc.animatePanelToPosition(lastPanelSnap).whenComplete(() {
+        isProgrammaticSlide = false;
+      });
     }
   }
 
   void _closePanel() {
+    isProgrammaticSlide = true;
     _pc.close();
     setState(() {
       selectedFeature = null;
     });
   }
-  
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -110,9 +118,13 @@ class MapScreenState extends State<MapScreen> {
         _buildBottomInfoPanel(),
         SlidingUpPanel(
           controller: _pc,
-          snapPoint: 0.50,
+          snapPoint: lastPanelSnap,
           panelSnapping: false,
           onPanelSlide: (position) {
+            print('Panel position: $position');
+            if (!isProgrammaticSlide && position < 1) {
+              lastPanelSnap = position;
+            }
             setState(() {
               double newPosition = (maxHeight * position) + 20;
               floatingButtonOffset = newPosition < defaultFloatingButtonOffset
@@ -174,7 +186,6 @@ class MapScreenState extends State<MapScreen> {
                 ],
               ),
             ),
-          
           ],
         ),
       ),

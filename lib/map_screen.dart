@@ -4,7 +4,7 @@ import 'package:sliding_up_panel/sliding_up_panel.dart';
 import 'package:mapbox_maps_flutter/mapbox_maps_flutter.dart';
 
 import 'package:nyc_public_space_map/map_handler.dart';
-import 'package:nyc_public_space_map/panel_handler.dart';
+import 'package:nyc_public_space_map/panel/panel_handler.dart';
 // import 'package:nyc_public_space_map/search_handler.dart';
 import 'package:nyc_public_space_map/image_loader.dart';
 import 'package:nyc_public_space_map/floating_locator_button.dart';

@@ -79,7 +79,6 @@ class _PhotoSubmissionScreenState extends State<PhotoSubmissionScreen> {
             .child(widget.spaceId)
             .child(filename);
         await storageRef.putFile(image);
-        print('here');
 
         // Save metadata to Firestore
         await FirebaseFirestore.instance.collection('images').add({

@@ -555,14 +555,26 @@ class _PanelHandlerState extends State<PanelHandler> {
                               label: 'Edit this Space',
                               tooltip: 'Edit this Space',
                               onPressed: () {
-                                Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (context) => EditorScreen(
-                                        selectedFeature:
-                                            widget.selectedFeature),
-                                  ),
-                                );
+                                final user = FirebaseAuth.instance.currentUser;
+
+                                if (user != null) {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) => EditorScreen(
+                                          selectedFeature:
+                                              widget.selectedFeature),
+                                    ),
+                                  );
+                                } else {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) =>
+                                          const SignInScreen(),
+                                    ),
+                                  );
+                                }
                               },
                             ),
                             const SizedBox(width: 10),
@@ -687,7 +699,7 @@ class _PanelHandlerState extends State<PanelHandler> {
                               ],
                             )
                           : const SizedBox.shrink(),
-                      
+
                       AttributeDisplay(
                           details: _panelContent!.properties.details,
                           amenities: _panelContent!.properties.amenities,

@@ -197,7 +197,6 @@ class MapScreenState extends State<MapScreen> {
           ),
           PanelHandler(
             selectedFeature: selectedFeature,
-            onPanelContentUpdated: _updatePanel,
             onClosePanel: _closePanel,
           ),
         ],

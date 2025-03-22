@@ -34,13 +34,11 @@ String extractDomainFromUri(Uri? uri) {
 class PanelHandler extends StatefulWidget {
   final PublicSpaceFeature? selectedFeature; // Feature passed from parent
   final VoidCallback? onClosePanel; // Callback to close the panel
-  final VoidCallback? onPanelContentUpdated; // Callback to close the panel
 
   const PanelHandler(
       {super.key,
       required this.selectedFeature,
-      this.onClosePanel,
-      this.onPanelContentUpdated});
+      this.onClosePanel});
 
   @override
   _PanelHandlerState createState() => _PanelHandlerState();

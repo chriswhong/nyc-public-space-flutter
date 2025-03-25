@@ -122,7 +122,7 @@ class MapScreenState extends State<MapScreen> {
           panelSnapping: false,
           onPanelSlide: (position) {
             print('Panel position: $position');
-            if (!isProgrammaticSlide && position < 1) {
+            if (!isProgrammaticSlide && position < 1 && position > 0) {
               lastPanelSnap = position;
             }
             setState(() {

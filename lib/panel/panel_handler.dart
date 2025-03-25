@@ -16,6 +16,7 @@ import 'panel_image_gallery.dart';
 import 'panel_action_buttons.dart';
 import 'panel_location_section.dart';
 import 'panel_link_section.dart';
+import '../feedback_screen.dart';
 
 class PanelHandler extends StatefulWidget {
   final PublicSpaceFeature? selectedFeature;
@@ -54,15 +55,26 @@ class _PanelHandlerState extends State<PanelHandler> {
   }
 
   Future<void> fetchImages() async {
+    if (widget.selectedFeature?.properties.firestoreId == null) {
+      setState(() {
+        _isLoading = false;
+      });
+      return;
+    }
+
     try {
+      print('fetchImages');
+      print(widget.selectedFeature?.properties.firestoreId);
+
       final querySnapshot = await FirebaseFirestore.instance
           .collection('images')
           .where('spaceId',
-              isEqualTo: widget.selectedFeature?.properties.firestoreId)
+              isEqualTo: widget.selectedFeature!.properties.firestoreId)
           .where('status', isNotEqualTo: 'rejected')
           .orderBy('timestamp', descending: false)
           .get();
 
+      print(querySnapshot.docs.length);
       List<Map<String, dynamic>> imageListUpdate = [];
       for (var doc in querySnapshot.docs) {
         final filename = doc['filename'];
@@ -80,7 +92,7 @@ class _PanelHandlerState extends State<PanelHandler> {
           'mediumUrl': mediumUrl,
           'status': status,
           'username': username,
-          'timestamp': timestamp
+          'timestamp': timestamp,
         });
       }
 
@@ -173,7 +185,7 @@ class _PanelHandlerState extends State<PanelHandler> {
           top: 10,
           left: 10,
           right: 10,
-          bottom: 10,
+          bottom: 0,
           child: Container(
             padding: const EdgeInsets.all(8.0),
             child: Column(
@@ -196,11 +208,13 @@ class _PanelHandlerState extends State<PanelHandler> {
                             padding: const EdgeInsets.symmetric(vertical: 4.0),
                             child: Text(_panelContent!.properties.description!),
                           ),
+                        const Divider(color: AppColors.gray, thickness: 0.5),
                         PanelImageGallery(
                           imageList: imageList,
                           isLoading: _isLoading,
                           onAddPhoto: _handleAddPhoto,
                         ),
+                        const Divider(color: AppColors.gray, thickness: 0.5),
                         PanelActionButtons(
                           onOpenMaps: _handleOpenMaps,
                           onEdit: _handleEdit,
@@ -219,11 +233,40 @@ class _PanelHandlerState extends State<PanelHandler> {
                         ),
                         const Divider(color: AppColors.gray, thickness: 0.5),
                         AttributeDisplay(
-                          details: _panelContent!.properties.details,
-                          amenities: _panelContent!.properties.amenities,
-                          equipment: _panelContent!.properties.equipment,
-                          onEditTap: _handleEdit
+                            details: _panelContent!.properties.details,
+                            amenities: _panelContent!.properties.amenities,
+                            equipment: _panelContent!.properties.equipment,
+                            onEditTap: _handleEdit),
+                        const Divider(color: AppColors.gray, thickness: 0.5),
+                        SizedBox(height: 10),
+                        ElevatedButton(
+                          onPressed: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => FeedbackScreen(
+                                    selectedFeature: _panelContent),
+                              ),
+                            );
+                          },
+                          style: ElevatedButton.styleFrom(
+                            foregroundColor: Colors.grey[800],
+                            backgroundColor: Colors.grey[300],
+                            padding: EdgeInsets.symmetric(
+                                horizontal: 12, vertical: 8),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(36),
+                            ),
+                            minimumSize:
+                                Size(0, 10), // Ensures the height is small
+                            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                          ),
+                          child: Text(
+                            'Share feedback about this space',
+                            style: TextStyle(fontSize: 12),
+                          ),
                         ),
+                        SizedBox(height: 10),
                       ],
                     ),
                   ),

@@ -1,15 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:font_awesome_flutter/font_awesome_flutter.dart';
-
-class AttributeOption {
-  final String key;
-  final IconData icon;
-
-  const AttributeOption(this.key, this.icon);
-}
-
-
-
+import './attribute_data.dart';
 
 class AttributeCheckboxes extends StatelessWidget {
   final Set<String> selectedDetails;
@@ -25,40 +15,6 @@ class AttributeCheckboxes extends StatelessWidget {
     required this.onChanged,
   });
 
-
-  static const List<AttributeOption> detailOptions = [
-    AttributeOption('indoor', FontAwesomeIcons.house),
-    AttributeOption('accessible', FontAwesomeIcons.wheelchair),
-    AttributeOption('trees', FontAwesomeIcons.tree),
-    AttributeOption('grass', FontAwesomeIcons.seedling),
-    AttributeOption('notable views', FontAwesomeIcons.building),
-  ];
-
-  static const List<AttributeOption> amenityOptions = [
-    AttributeOption('restrooms', FontAwesomeIcons.toilet),
-    AttributeOption('playground', FontAwesomeIcons.child),
-    AttributeOption('drinking_fountain', FontAwesomeIcons.water),
-    AttributeOption('dog_park', FontAwesomeIcons.dog),
-    AttributeOption('seating', FontAwesomeIcons.chair),
-    AttributeOption('tables', FontAwesomeIcons.table),
-    AttributeOption('wifi', FontAwesomeIcons.wifi),
-    AttributeOption('art', FontAwesomeIcons.palette),
-    AttributeOption('parking', FontAwesomeIcons.squareParking),
-    AttributeOption('fountain', FontAwesomeIcons.water),
-    AttributeOption('food_vendor', FontAwesomeIcons.hotdog),
-    AttributeOption('splash_pad', FontAwesomeIcons.water),
-  ];
-
-  static const List<AttributeOption> equipmentOptions = [
-    AttributeOption('basketball', FontAwesomeIcons.basketball),
-    AttributeOption('exercise', FontAwesomeIcons.dumbbell),
-    AttributeOption('handball', FontAwesomeIcons.baseball),
-    AttributeOption('baseball', FontAwesomeIcons.baseballBatBall),
-    AttributeOption('track', FontAwesomeIcons.personRunning),
-    AttributeOption('pool', FontAwesomeIcons.waterLadder),
-    AttributeOption('field', FontAwesomeIcons.futbol)
-  ];
-
   @override
   Widget build(BuildContext context) {
     return Column(
@@ -66,19 +22,19 @@ class AttributeCheckboxes extends StatelessWidget {
       children: [
         _buildGroup(
           title: 'Details',
-          options: detailOptions,
+          options: AttributeData.detailOptions,
           selected: selectedDetails,
           category: 'details',
         ),
         _buildGroup(
           title: 'Amenities',
-          options: amenityOptions,
+          options: AttributeData.amenityOptions,
           selected: selectedAmenities,
           category: 'amenities',
         ),
         _buildGroup(
           title: 'Equipment',
-          options: equipmentOptions,
+          options: AttributeData.equipmentOptions,
           selected: selectedEquipment,
           category: 'equipment',
         ),

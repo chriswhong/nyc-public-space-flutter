@@ -214,7 +214,7 @@ class _EditorScreenState extends State<EditorScreen> {
                                       controller: _descriptionController,
                                       decoration: const InputDecoration(
                                           labelText: 'Description'),
-                                      maxLines: 3,
+                                      maxLines: 5,
                                     ),
                                     const SizedBox(height: 16),
                                     TextFormField(

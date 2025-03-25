@@ -23,14 +23,13 @@ class MapScreen extends StatefulWidget {
 class MapScreenState extends State<MapScreen> {
   static const double defaultFloatingButtonOffset = 95;
   final PanelController _pc = PanelController();
-  double floatingButtonOffset = defaultFloatingButtonOffset;
 
   MapboxMap? mapboxMap;
   PublicSpaceFeature? selectedFeature;
 
   User? currentUser; // Firebase User instance
 
-  double lastPanelSnap = 0.5;
+  double snapPoint = 0.99;
 
   @override
   void initState() {
@@ -62,10 +61,7 @@ class MapScreenState extends State<MapScreen> {
 
   void _updatePanel() {
     if (_pc.isPanelClosed) {
-      isProgrammaticSlide = true;
-      _pc.animatePanelToPosition(lastPanelSnap).whenComplete(() {
-        isProgrammaticSlide = false;
-      });
+      _pc.animatePanelToPosition(snapPoint);
     }
   }
 
@@ -116,29 +112,19 @@ class MapScreenState extends State<MapScreen> {
           miscImage: ImageLoader.instance.miscImage,
         ),
         _buildBottomInfoPanel(),
+                _buildFloatingLocatorButton(),
+
         SlidingUpPanel(
           controller: _pc,
-          snapPoint: lastPanelSnap,
+          isDraggable: false,
+          snapPoint: snapPoint,
           panelSnapping: false,
-          onPanelSlide: (position) {
-            print('Panel position: $position');
-            if (!isProgrammaticSlide && position < 1 && position > 0) {
-              lastPanelSnap = position;
-            }
-            setState(() {
-              double newPosition = (maxHeight * position) + 20;
-              floatingButtonOffset = newPosition < defaultFloatingButtonOffset
-                  ? defaultFloatingButtonOffset
-                  : newPosition;
-            });
-          },
           panel: _buildSlidingPanelContent(),
           body: Container(),
           borderRadius: const BorderRadius.vertical(top: Radius.circular(18.0)),
           minHeight: 0,
           maxHeight: maxHeight,
         ),
-        _buildFloatingLocatorButton(),
       ],
     );
   }
@@ -217,7 +203,7 @@ class MapScreenState extends State<MapScreen> {
 
   Widget _buildFloatingLocatorButton() {
     return Positioned(
-      bottom: floatingButtonOffset,
+      bottom: defaultFloatingButtonOffset,
       right: 16,
       child: FloatingLocatorButton(mapboxMap: mapboxMap),
     );

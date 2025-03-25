@@ -4,12 +4,12 @@ import 'package:sliding_up_panel/sliding_up_panel.dart';
 import 'package:mapbox_maps_flutter/mapbox_maps_flutter.dart';
 
 import 'package:nyc_public_space_map/map_handler.dart';
-import 'package:nyc_public_space_map/panel_handler.dart';
+import 'package:nyc_public_space_map/panel/panel_handler.dart';
 // import 'package:nyc_public_space_map/search_handler.dart';
 import 'package:nyc_public_space_map/image_loader.dart';
 import 'package:nyc_public_space_map/floating_locator_button.dart';
 import 'package:nyc_public_space_map/public_space_properties.dart';
-import 'package:firebase_auth/firebase_auth.dart'; 
+import 'package:firebase_auth/firebase_auth.dart';
 
 class MapScreen extends StatefulWidget {
   final Function(PublicSpaceFeature?) onReportAnIssue;
@@ -23,12 +23,13 @@ class MapScreen extends StatefulWidget {
 class MapScreenState extends State<MapScreen> {
   static const double defaultFloatingButtonOffset = 95;
   final PanelController _pc = PanelController();
-  double floatingButtonOffset = defaultFloatingButtonOffset;
 
   MapboxMap? mapboxMap;
   PublicSpaceFeature? selectedFeature;
 
   User? currentUser; // Firebase User instance
+
+  double snapPoint = 0.99;
 
   @override
   void initState() {
@@ -56,19 +57,22 @@ class MapScreenState extends State<MapScreen> {
     });
   }
 
+  bool isProgrammaticSlide = false;
+
   void _updatePanel() {
     if (_pc.isPanelClosed) {
-      _pc.animatePanelToSnapPoint();
+      _pc.animatePanelToPosition(snapPoint);
     }
   }
 
   void _closePanel() {
+    isProgrammaticSlide = true;
     _pc.close();
     setState(() {
       selectedFeature = null;
     });
   }
-  
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -108,25 +112,19 @@ class MapScreenState extends State<MapScreen> {
           miscImage: ImageLoader.instance.miscImage,
         ),
         _buildBottomInfoPanel(),
+                _buildFloatingLocatorButton(),
+
         SlidingUpPanel(
           controller: _pc,
-          snapPoint: 0.50,
+          isDraggable: false,
+          snapPoint: snapPoint,
           panelSnapping: false,
-          onPanelSlide: (position) {
-            setState(() {
-              double newPosition = (maxHeight * position) + 20;
-              floatingButtonOffset = newPosition < defaultFloatingButtonOffset
-                  ? defaultFloatingButtonOffset
-                  : newPosition;
-            });
-          },
           panel: _buildSlidingPanelContent(),
           body: Container(),
           borderRadius: const BorderRadius.vertical(top: Radius.circular(18.0)),
           minHeight: 0,
           maxHeight: maxHeight,
         ),
-        _buildFloatingLocatorButton(),
       ],
     );
   }
@@ -174,7 +172,6 @@ class MapScreenState extends State<MapScreen> {
                 ],
               ),
             ),
-          
           ],
         ),
       ),
@@ -197,7 +194,6 @@ class MapScreenState extends State<MapScreen> {
           ),
           PanelHandler(
             selectedFeature: selectedFeature,
-            onPanelContentUpdated: _updatePanel,
             onClosePanel: _closePanel,
           ),
         ],
@@ -207,7 +203,7 @@ class MapScreenState extends State<MapScreen> {
 
   Widget _buildFloatingLocatorButton() {
     return Positioned(
-      bottom: floatingButtonOffset,
+      bottom: defaultFloatingButtonOffset,
       right: 16,
       child: FloatingLocatorButton(mapboxMap: mapboxMap),
     );

@@ -59,9 +59,7 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
     final String spaceId =
         widget.selectedFeature?.properties.space_id ?? 'app_feedback';
 
-    String title = widget.selectedFeature != null
-        ? 'Report an Issue'
-        : 'Share your Feedback';
+    String title = 'Share your Feedback';
 
     String submittedMessage = widget.selectedFeature != null
         ? 'Thanks for reporting! We will look into it and update the record as soon as possible. 😎'
@@ -83,7 +81,7 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
       return Text.rich(
         TextSpan(
           text:
-              'Describe the issue you\'re seeing with our information about ', // Regular text
+              'What do you want to share about our profile for ', // Regular text
           children: [
             TextSpan(
               text: spaceName, // The space name
@@ -91,7 +89,7 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
                   fontWeight: FontWeight.bold), // Bold style for spaceName
             ),
             const TextSpan(
-              text: ':', // Regular colon
+              text: '?', // Regular colon
             ),
           ],
         ),
@@ -126,6 +124,7 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
                                   prompt(),
                                   const SizedBox(height: 36),
                                   TextField(
+                                    textCapitalization: TextCapitalization.sentences,
                                     controller: _controller,
                                     maxLines: 4,
                                     decoration: const InputDecoration(

@@ -29,12 +29,26 @@ class _PhotoSubmissionScreenState extends State<PhotoSubmissionScreen> {
 
   Future<void> _pickImages(ImageSource source) async {
     final picker = ImagePicker();
-    final pickedFiles = await picker.pickMultiImage();
+    List<XFile>? pickedFiles;
 
-    if (pickedFiles.isNotEmpty) {
+    if (source == ImageSource.gallery) {
+      pickedFiles = await picker.pickMultiImage();
+    } else if (source == ImageSource.camera) {
+      final pickedFile = await picker.pickImage(source: ImageSource.camera);
+      if (pickedFile != null) {
+        pickedFiles = [pickedFile];
+      }
+    }
+
+    if (pickedFiles != null && pickedFiles.isNotEmpty) {
       setState(() {
-        _selectedImages = pickedFiles.map((file) => File(file.path)).toList();
+        _selectedImages.addAll(pickedFiles!.map((file) => File(file.path)));
       });
+    } else {
+      // Optionally handle the case where no files were picked
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('No images were selected.')),
+      );
     }
   }
 
@@ -54,6 +68,10 @@ class _PhotoSubmissionScreenState extends State<PhotoSubmissionScreen> {
       }
 
       for (var image in _selectedImages) {
+        // Check file size
+        final file = File(image.path);
+        final fileSize = await file.length(); // File size in bytes
+        print('File size: $fileSize bytes');
         final filename = '${DateTime.now().millisecondsSinceEpoch}.jpg';
         final storageRef = FirebaseStorage.instance
             .ref()
@@ -95,7 +113,6 @@ class _PhotoSubmissionScreenState extends State<PhotoSubmissionScreen> {
 
   @override
   Widget build(BuildContext context) {
-
     return Scaffold(
       appBar: AppBar(
         title: const Text('Submit Photos'),
@@ -129,8 +146,15 @@ class _PhotoSubmissionScreenState extends State<PhotoSubmissionScreen> {
                   ElevatedButton.icon(
                     icon: const Icon(Icons.photo_library),
                     style: AppStyles.buttonStyle,
-                    label: const Text('Choose Images'),
+                    label: const Text('Choose from Gallery'),
                     onPressed: () => _pickImages(ImageSource.gallery),
+                  ),
+                  const SizedBox(height: 10),
+                  ElevatedButton.icon(
+                    icon: const Icon(Icons.camera_alt),
+                    style: AppStyles.buttonStyle,
+                    label: const Text('Take a Photo'),
+                    onPressed: () => _pickImages(ImageSource.camera),
                   ),
                   const SizedBox(height: 20),
                   ElevatedButton(

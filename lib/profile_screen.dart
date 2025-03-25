@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:url_launcher/url_launcher.dart'; // Import the url_launcher package
+import 'dart:io';
 
 import 'user_provider.dart';
 import 'sign_in_screen.dart';
@@ -71,65 +72,84 @@ class ProfileScreen extends StatelessWidget {
       ]);
     }
 
-    return ProfileButtonGroup(buttons: [
-      ProfileButton(
-        textWidget: RichText(
-          text: TextSpan(
+    return Column(
+      children: [
+        // Non-interactive display of the signed-in message
+        Padding(
+          padding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 16.0),
+          child: Row(
             children: [
-              const TextSpan(
-                text: 'Signed in as ',
-                style:
-                    TextStyle(color: Colors.black, fontSize: 16), // Normal text
+              Icon(
+                FontAwesomeIcons.user,
+                size: 24,
+                color: Colors.black,
               ),
-              TextSpan(
-                text: userProvider.username,
-                style: const TextStyle(
-                  fontWeight: FontWeight.bold,
-                  color: Colors.black,
-                  fontSize: 16,
-                ), // Bold username
+              const SizedBox(width: 12), // Spacing between the icon and text
+              RichText(
+                text: TextSpan(
+                  children: [
+                    const TextSpan(
+                      text: 'Signed in as ',
+                      style: TextStyle(
+                        color: Colors.black,
+                        fontSize: 16,
+                      ), // Normal text
+                    ),
+                    TextSpan(
+                      text: userProvider.username,
+                      style: const TextStyle(
+                        fontWeight: FontWeight.bold,
+                        color: Colors.black,
+                        fontSize: 16,
+                      ), // Bold username
+                    ),
+                  ],
+                ),
               ),
             ],
           ),
         ),
-        icon: FontAwesomeIcons.user,
-        onTap: () => {},
-        showChevron: false,
-      ),
-      ProfileButton(
-        text: 'Sign out',
-        icon: FontAwesomeIcons.arrowRightFromBracket,
-        onTap: () async {
-          final shouldSignOut = await showDialog<bool>(
-            context: context,
-            builder: (BuildContext context) {
-              return AlertDialog(
-                title: const Text('Confirm Sign Out'),
-                content: const Text('Are you sure you want to sign out?'),
-                backgroundColor: AppColors.pageBackground,
-                actions: [
-                  TextButton(
-                    style: AppStyles.buttonStyle,
-                    onPressed: () => Navigator.of(context).pop(false), // Cancel
-                    child: const Text('Cancel'),
-                  ),
-                  TextButton(
-                    style: AppStyles.buttonStyle,
-                    onPressed: () => Navigator.of(context).pop(true), // Confirm
-                    child: const Text('Sign Out'),
-                  ),
-                ],
+        const SizedBox(height: 16),
+        // Sign-out button
+        ProfileButtonGroup(buttons: [
+          ProfileButton(
+            text: 'Sign out',
+            icon: FontAwesomeIcons.arrowRightFromBracket,
+            onTap: () async {
+              final shouldSignOut = await showDialog<bool>(
+                context: context,
+                builder: (BuildContext context) {
+                  return AlertDialog(
+                    title: const Text('Confirm Sign Out'),
+                    content: const Text('Are you sure you want to sign out?'),
+                    backgroundColor: AppColors.pageBackground,
+                    actions: [
+                      TextButton(
+                        style: AppStyles.buttonStyle,
+                        onPressed: () =>
+                            Navigator.of(context).pop(false), // Cancel
+                        child: const Text('Cancel'),
+                      ),
+                      TextButton(
+                        style: AppStyles.buttonStyle,
+                        onPressed: () =>
+                            Navigator.of(context).pop(true), // Confirm
+                        child: const Text('Sign Out'),
+                      ),
+                    ],
+                  );
+                },
               );
-            },
-          );
 
-          if (shouldSignOut == true) {
-            await userProvider.signOut();
-          }
-        },
-        showChevron: false, // No chevron for this button
-      ),
-    ]);
+              if (shouldSignOut == true) {
+                await userProvider.signOut();
+              }
+            },
+            showChevron: false, // No chevron for this button
+          ),
+        ])
+      ],
+    );
   }
 
   Widget _buildSignedInContent(
@@ -170,7 +190,27 @@ class ProfileScreen extends StatelessWidget {
             ProfileButton(
                 text: 'Rate the app',
                 icon: FontAwesomeIcons.star,
-                onTap: () => {}),
+                onTap: () async {
+                  String appStoreUrl =
+                      "https://apps.apple.com/app/id6737332320";
+                  String playStoreUrl =
+                      "https://play.google.com/store/apps/details?id=com.nycpublicspace";
+                  String? url;
+
+                  // Determine the platform
+                  if (Platform.isIOS) {
+                    url = appStoreUrl;
+                  } else if (Platform.isAndroid) {
+                    url = playStoreUrl;
+                  }
+
+                  // Attempt to launch the URL
+                  if (url != null && await canLaunch(url)) {
+                    await launch(url);
+                  } else {
+                    debugPrint("Could not launch URL: $url");
+                  }
+                }),
             ProfileButton(
                 text: 'Send Feedback',
                 icon: FontAwesomeIcons.envelope,
@@ -185,7 +225,27 @@ class ProfileScreen extends StatelessWidget {
             ProfileButton(
                 text: 'Share the app',
                 icon: FontAwesomeIcons.shareFromSquare,
-                onTap: () => {}),
+                onTap: () async {
+                  String appStoreUrl =
+                      "https://apps.apple.com/app/id6737332320";
+                  String playStoreUrl =
+                      "https://play.google.com/store/apps/details?id=com.nycpublicspace";
+                  String? url;
+
+                  // Determine the platform
+                  if (Platform.isIOS) {
+                    url = appStoreUrl;
+                  } else if (Platform.isAndroid) {
+                    url = playStoreUrl;
+                  }
+
+                  // Attempt to launch the URL
+                  if (url != null && await canLaunch(url)) {
+                    await launch(url);
+                  } else {
+                    debugPrint("Could not launch URL: $url");
+                  }
+                }),
           ]),
           const SizedBox(height: 20),
           ProfileButtonGroup(buttons: [
@@ -194,12 +254,15 @@ class ProfileScreen extends StatelessWidget {
                 icon: FontAwesomeIcons.star,
                 onTap: () => {
                       launchUrl(Uri.parse(
-                          'https://sites.google.com/view/nyc-public-space-privacy/home'))
+                          'https://sites.google.com/view/nyc-public-space/privacy'))
                     }),
             ProfileButton(
                 text: 'Terms of Service',
                 icon: FontAwesomeIcons.envelope,
-                onTap: () => {})
+                onTap: () => {
+                      launchUrl(Uri.parse(
+                          'https://sites.google.com/view/nyc-public-space/tos'))
+                    }),
           ]),
 
           // // Button with margin
@@ -315,7 +378,7 @@ class ProfileButton extends StatelessWidget {
     required this.onTap,
     this.showChevron = true,
     super.key,
-  })  : assert(text != null || textWidget != null,
+  }) : assert(text != null || textWidget != null,
             'Either text or textWidget must be provided');
 
   @override

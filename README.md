@@ -23,8 +23,7 @@ flutter run --release --dart-define ACCESS_TOKEN=pk.12345
 ## Android Release
 
 - increment version in pubspec.yaml
-- flutter clean
-- flutter build appbundle --release --dart-define ACCESS_TOKEN=pk.12345
+- sh scripts/build_android.sh
 
 Login to Google Play Console
 Closed Testing > Create new release
@@ -35,8 +34,7 @@ Drag and drop app bundle (build/app/outputs/bundle/release/app-release.aab)
 ## iOS Release
 
 - increment version in pubspec.yaml
-- flutter clean
-- flutter build ios --release --dart-define ACCESS_TOKEN=pk.12345
+- sh scripts/build_ios.sh
 
 Open Xcode:
 
@@ -52,3 +50,8 @@ Validate and Upload:
     Team: Ensure the correct team is selected.
     Validation: Resolve any errors or warnings.
     Upload: Complete the upload process.
+
+Log in to App Store Connect
+Use the + icon to make a new version
+Add the build
+Add info and submit for release

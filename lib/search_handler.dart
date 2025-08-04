@@ -5,12 +5,16 @@ import 'dart:convert';
 import 'package:uuid/uuid.dart';
 import 'package:mapbox_maps_flutter/mapbox_maps_flutter.dart';
 
+Widget preview() {
+    return SearchInput();
+}
+
 class SearchInput extends StatefulWidget {
   // map instance
   final MapboxMap? mapboxMap;
 
   // constructor
-  const SearchInput({super.key, required this.mapboxMap});
+  const SearchInput({super.key, this.mapboxMap});
 
   @override
   _SearchInputState createState() => _SearchInputState();

@@ -6,6 +6,7 @@ import 'package:mapbox_maps_flutter/mapbox_maps_flutter.dart';
 import 'package:nyc_public_space_map/map_handler.dart';
 import 'package:nyc_public_space_map/panel/panel_handler.dart';
 // import 'package:nyc_public_space_map/search_handler.dart';
+import 'search_widget.dart';
 import 'package:nyc_public_space_map/image_loader.dart';
 import 'package:nyc_public_space_map/floating_locator_button.dart';
 import 'package:nyc_public_space_map/public_space_properties.dart';
@@ -30,6 +31,44 @@ class MapScreenState extends State<MapScreen> {
   User? currentUser; // Firebase User instance
 
   double snapPoint = 0.99;
+
+  Feature? markerFeature;
+
+  void _setMarkerFeature(Feature? newMarkerFeature) {
+    setState(() {
+      markerFeature = newMarkerFeature;
+    });
+  }
+
+  void _onLocalResultSelected(PublicSpaceFeature? geojsonFeature) {
+    if (geojsonFeature != null) {
+      // fly map to the selected feature
+      final geometry = geojsonFeature.geometry;
+      if (geometry != null) {
+        // Calculate bottom padding so the point is vertically centered between top of panel and top of screen
+        final double screenHeight = MediaQuery.of(context).size.height;
+        final double panelHeight = screenHeight * 0.6;
+        final double mapVisibleHeight = screenHeight - panelHeight;
+        final double bottomPadding = panelHeight - (mapVisibleHeight / 2) + 50;
+
+        mapboxMap?.flyTo(
+          CameraOptions(
+            zoom: 15,
+            center: Point.fromJson(geometry.toJson()),
+            padding: MbxEdgeInsets(
+              top: 0,
+              right: 0,
+              bottom: bottomPadding,
+              left: 0,
+            ),
+          ),
+          MapAnimationOptions(),
+        );
+      }
+
+      _onFeatureSelected(geojsonFeature);
+    }
+  }
 
   @override
   void initState() {
@@ -58,11 +97,15 @@ class MapScreenState extends State<MapScreen> {
   }
 
   bool isProgrammaticSlide = false;
+  bool _showSearch = true; // <-- Add this
 
   void _updatePanel() {
     if (_pc.isPanelClosed) {
       _pc.animatePanelToPosition(snapPoint);
     }
+    setState(() {
+      _showSearch = false; // Hide search when panel opens
+    });
   }
 
   void _closePanel() {
@@ -70,6 +113,7 @@ class MapScreenState extends State<MapScreen> {
     _pc.close();
     setState(() {
       selectedFeature = null;
+      _showSearch = true; // Show search when panel closes
     });
   }
 
@@ -96,8 +140,7 @@ class MapScreenState extends State<MapScreen> {
   }
 
   Widget buildMapContent() {
-    double maxHeight = 600;
-
+    final double maxHeight = MediaQuery.of(context).size.height * 0.60;
     return Stack(
       children: <Widget>[
         MapHandler(
@@ -110,10 +153,16 @@ class MapScreenState extends State<MapScreen> {
           plazaImage: ImageLoader.instance.plazaImage,
           stpImage: ImageLoader.instance.stpImage,
           miscImage: ImageLoader.instance.miscImage,
+          markerFeature: markerFeature,
         ),
         _buildBottomInfoPanel(),
-                _buildFloatingLocatorButton(),
-
+        _buildFloatingLocatorButton(),
+        if (_showSearch)
+          SearchWidget(
+            onRetrieve: (feature) => _setMarkerFeature(feature),
+            onLocalResultSelected: (feature) => _onLocalResultSelected(feature),
+          ),
+        // Add the sliding panel
         SlidingUpPanel(
           controller: _pc,
           isDraggable: false,

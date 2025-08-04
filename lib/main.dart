@@ -16,6 +16,7 @@ import 'profile_screen.dart';
 import 'public_space_properties.dart';
 import 'user_provider.dart';
 import 'username_input_screen.dart';
+import 'geojson_provider.dart';
 
 Future<void> initDynamicLinks(BuildContext context) async {
   print('Initializing dynamic links...');
@@ -106,12 +107,23 @@ void main() {
     firestore.FirebaseFirestore.instance.settings =
         const firestore.Settings(persistenceEnabled: false);
     runApp(
-      ChangeNotifierProvider(
-        create: (context) {
-          final userProvider = UserProvider();
-          userProvider.initializeAuth(context); // Initialize auth
-          return userProvider;
-        },
+      MultiProvider(
+        providers: [
+          ChangeNotifierProvider(
+            create: (context) {
+              final userProvider = UserProvider();
+              userProvider.initializeAuth(context); // Initialize auth
+              return userProvider;
+            },
+          ),
+          ChangeNotifierProvider(
+            create: (context) {
+              final geoJsonProvider = GeoJsonProvider();
+              geoJsonProvider.fetchGeoJson(); // Fetch on startup
+              return geoJsonProvider;
+            },
+          ),
+        ],
         child: const MyApp(),
       ),
     );

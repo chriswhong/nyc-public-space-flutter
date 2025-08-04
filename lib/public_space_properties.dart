@@ -33,6 +33,21 @@ class PublicSpaceProperties {
   String toString() {
     return 'PublicSpaceProperties(name: $name, type: $type)';
   }
+
+  Map<String, dynamic> toMap() {
+    return {
+      'firestoreId': firestoreId,
+      'space_id': space_id,
+      'name': name,
+      'type': type,
+      'location': location,
+      'url': url?.toString(),
+      'description': description,
+      'details': details,
+      'amenities': amenities,
+      'equipment': equipment
+    };
+  }
 }
 
 // GeoJSON Feature class
@@ -65,6 +80,14 @@ class PublicSpaceFeature {
         'amenities': properties.amenities,
         'equipment': properties.equipment,
       },
+    };
+  }
+
+  Map<String, dynamic> toMap() {
+    return {
+      'type': type,
+      'geometry': geometry.toJson(),
+      'properties': properties.toMap(),
     };
   }
 

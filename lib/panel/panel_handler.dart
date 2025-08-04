@@ -63,8 +63,6 @@ class _PanelHandlerState extends State<PanelHandler> {
     }
 
     try {
-      print('fetchImages');
-      print(widget.selectedFeature?.properties.firestoreId);
 
       final querySnapshot = await FirebaseFirestore.instance
           .collection('images')
@@ -74,7 +72,6 @@ class _PanelHandlerState extends State<PanelHandler> {
           .orderBy('timestamp', descending: false)
           .get();
 
-      print(querySnapshot.docs.length);
       List<Map<String, dynamic>> imageListUpdate = [];
       for (var doc in querySnapshot.docs) {
         final filename = doc['filename'];

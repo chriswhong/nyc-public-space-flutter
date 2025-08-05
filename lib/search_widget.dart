@@ -305,86 +305,83 @@ class _SearchWidgetState extends State<SearchWidget> {
           child: IgnorePointer(
             ignoring: !isExpanded,
             child: Container(
-                color: Colors.white,
+                color: Colors.white, // Remove blue debug background
                 width: double.infinity,
                 height: MediaQuery.of(context).size.height,
                 child: Stack(
                   children: [
                     if (combinedResults.isNotEmpty)
-                      Flexible(
-                        child: Transform.translate(
-                          offset: const Offset(0, 90),
-                          child: Container(
-                            margin: const EdgeInsets.only(
-                                top: 50, right: 1, left: 1),
-                            padding: const EdgeInsets.only(
-                              top: 6,
-                            ),
-                            decoration: const BoxDecoration(
-                              color: Colors.white,
-                              borderRadius: BorderRadius.only(
-                                bottomLeft: Radius.circular(8.0),
-                                bottomRight: Radius.circular(8.0),
-                              ),
-                            ),
-                            child: SearchResultsList(
-                              results: combinedResults,
-                              selectedIndex: _selectedIndex,
-                              onTap: (index) async {
-                                setState(() {
-                                  _selectedIndex = index;
-                                });
-                                final result = combinedResults[index];
-                                if (result['type'] == 'local') {
-                                  final data = result['data'];
-                                  final name = getLocalName(data);
-                                  final mapboxId = data['properties']?['firestoreId']?.toString()
-                                    ?? getLocalMapboxId(data)
-                                    ?? name;
-                                  await _saveRecentSearch(name, mapboxId);
-                                  _controller.text = name; // Set the text in search input
-                                  _lastSearchResult = name; // Save the search result text
-                                  _lastMarkerFeature = null; // Clear any previous mapbox marker
-                                  toggleSearch();
-                                  final properties = data['properties'];
-                                  properties['details'] = jsonEncode(properties['details'] ?? []);
-                                  properties['amenities'] = jsonEncode(properties['amenities'] ?? []);
-                                  properties['equipment'] = jsonEncode(properties['equipment'] ?? []);
-                                  widget.onLocalResultSelected(
-                                    PublicSpaceFeature.fromJson({
-                                      'type': 'misc',
-                                      'geometry': data['geometry'],
-                                      'properties': properties,
-                                    }),
-                                  );
-                                } else {
-                                  final data = result['data'];
-                                  final mapboxId = getRemoteMapboxId(data);
-                                  final name = getRemoteName(data);
-                                  await _saveRecentSearch(name, mapboxId);
-                                  toggleSearch();
-                                  _searchBoxRetrieve(mapboxId);
-                                }
-                              },
-                              getName: (result) => result['type'] == 'local'
-                                  ? getLocalName(result['data'])
-                                  : getRemoteName(result['data']),
-                              getAddress: (result) => result['type'] == 'local'
-                                  ? getLocalAddress(result['data'])
-                                  : getRemoteAddress(result['data']),
-                              getMapboxId: (result) => result['type'] == 'local'
-                                  ? getLocalMapboxId(result['data'])
-                                  : getRemoteMapboxId(result['data']),
-                              leadingBuilder: (result) {
-                                if (result['type'] == 'local') {
-                                  return localMarkerIcon(result['data']);
-                                } else {
-                                  // Mapbox results: show a generic icon
-                                  return const Icon(Icons.location_on, color: Colors.grey, size: 24);
-                                }
-                              },
-                            ),
+                      Container(
+                        margin: EdgeInsets.only(top: 130, left: 1, right: 1), // Increase top margin from 100 to 115
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.only(
+                            bottomLeft: Radius.circular(8),
+                            bottomRight: Radius.circular(8),
                           ),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black12,
+                              blurRadius: 6,
+                              offset: Offset(0, 2),
+                            ),
+                          ],
+                        ),
+                        child: SearchResultsList(
+                          results: combinedResults,
+                          selectedIndex: _selectedIndex,
+                          onTap: (index) async {
+                            setState(() {
+                              _selectedIndex = index;
+                            });
+                            final result = combinedResults[index];
+                            if (result['type'] == 'local') {
+                              final data = result['data'];
+                              final name = getLocalName(data);
+                              final mapboxId = data['properties']?['firestoreId']?.toString()
+                                ?? getLocalMapboxId(data)
+                                ?? name;
+                              await _saveRecentSearch(name, mapboxId);
+                              _controller.text = name;
+                              _lastSearchResult = name;
+                              _lastMarkerFeature = null;
+                              toggleSearch();
+                              final properties = data['properties'];
+                              properties['details'] = jsonEncode(properties['details'] ?? []);
+                              properties['amenities'] = jsonEncode(properties['amenities'] ?? []);
+                              properties['equipment'] = jsonEncode(properties['equipment'] ?? []);
+                              widget.onLocalResultSelected(
+                                PublicSpaceFeature.fromJson({
+                                  'type': 'misc',
+                                  'geometry': data['geometry'],
+                                  'properties': properties,
+                                }),
+                              );
+                            } else {
+                              final data = result['data'];
+                              final mapboxId = getRemoteMapboxId(data);
+                              final name = getRemoteName(data);
+                              await _saveRecentSearch(name, mapboxId);
+                              toggleSearch();
+                              _searchBoxRetrieve(mapboxId);
+                            }
+                          },
+                          getName: (result) => result['type'] == 'local'
+                              ? getLocalName(result['data'])
+                              : getRemoteName(result['data']),
+                          getAddress: (result) => result['type'] == 'local'
+                              ? getLocalAddress(result['data'])
+                              : getRemoteAddress(result['data']),
+                          getMapboxId: (result) => result['type'] == 'local'
+                              ? getLocalMapboxId(result['data'])
+                              : getRemoteMapboxId(result['data']),
+                          leadingBuilder: (result) {
+                            if (result['type'] == 'local') {
+                              return localMarkerIcon(result['data']);
+                            } else {
+                              return const Icon(Icons.location_on, color: Colors.grey, size: 24);
+                            }
+                          },
                         ),
                       )
                     else

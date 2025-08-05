@@ -157,11 +157,6 @@ class MapScreenState extends State<MapScreen> {
         ),
         _buildBottomInfoPanel(),
         _buildFloatingLocatorButton(),
-        if (_showSearch)
-          SearchWidget(
-            onRetrieve: (feature) => _setMarkerFeature(feature),
-            onLocalResultSelected: (feature) => _onLocalResultSelected(feature),
-          ),
         // Add the sliding panel
         SlidingUpPanel(
           controller: _pc,
@@ -174,6 +169,11 @@ class MapScreenState extends State<MapScreen> {
           minHeight: 0,
           maxHeight: maxHeight,
         ),
+        if (_showSearch) // Move SearchWidget to the end so it's on top
+          SearchWidget(
+            onRetrieve: (feature) => _setMarkerFeature(feature),
+            onLocalResultSelected: (feature) => _onLocalResultSelected(feature),
+          ),
       ],
     );
   }

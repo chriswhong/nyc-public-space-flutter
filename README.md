@@ -33,6 +33,8 @@ Drag and drop app bundle (build/app/outputs/bundle/release/app-release.aab)
 
 ## iOS Release
 
+**Important**: before releasing, do a local release to a real device to test (see above) 
+
 - increment version in pubspec.yaml
 - sh scripts/build_ios.sh
 

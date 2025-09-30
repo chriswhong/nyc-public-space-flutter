@@ -1,0 +1,13 @@
+{
+    "configurations": [
+        {
+            "name": "Flutter",
+            "request": "launch",
+            "type": "dart",
+            "program": "lib/main.dart",
+            "env": {
+                "ACCESS_TOKEN": "${env:ACCESS_TOKEN}"
+            }
+        }
+    ]
+}

@@ -2,6 +2,18 @@
 
 The repo contains the source code for the NYC Public Space App, a consolidated map of public spaces in New York City. 
 
+NYC Public Space App Links:
+- [iOS App Store](https://apps.apple.com/us/app/nyc-public-space/id6737332320)
+- [Android Play Store](https://play.google.com/store/apps/details?id=com.nycpublicspace&hl=en_US)
+- [Web Version (https://nycpublicspace.org/)](https://nycpublicspace.org/)
+
+  
+<img width="236" height="512" alt="public-space" src="https://github.com/user-attachments/assets/da129045-cf8b-4c6f-9433-2267416d1779" />
+
+## Related Repos
+
+**[`chriswhong/nyc-public-space-data`](https://github.com/chriswhong/nyc-public-space-data)** - Data exports from the app database and data processing scripts.
+
 ## Development
 
 **Install dependencies**

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import './attribute_data.dart';
 
 class AttributeCheckboxes extends StatelessWidget {
@@ -66,7 +67,7 @@ class AttributeCheckboxes extends StatelessWidget {
           },
           title: Row(
             children: [
-              Icon(option.icon, size: 20),
+              FaIcon(option.icon, size: 20),
               const SizedBox(width: 18),
               Text(option.key.replaceAll('_', ' ').toUpperCase()),
             ],

@@ -5,9 +5,12 @@ import 'package:mapbox_maps_flutter/mapbox_maps_flutter.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_dynamic_links/firebase_dynamic_links.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:cloud_firestore/cloud_firestore.dart' as firestore;
+
+import 'admin_moderation_screen.dart';
 
 import 'colors.dart';
 import 'map_screen.dart';
@@ -17,6 +20,65 @@ import 'public_space_properties.dart';
 import 'user_provider.dart';
 import 'username_input_screen.dart';
 import 'geojson_provider.dart';
+
+// Must be a top-level function for background message handling
+@pragma('vm:entry-point')
+Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
+  // Background messages are displayed automatically by FCM; no extra work needed here.
+  debugPrint('Background FCM message: ${message.messageId}');
+}
+
+Future<void> initFCM(BuildContext context) async {
+  FirebaseMessaging messaging = FirebaseMessaging.instance;
+
+  // Request permission (required on iOS, harmless on Android)
+  await messaging.requestPermission(
+    alert: true,
+    badge: true,
+    sound: true,
+  );
+
+  // Handle foreground messages as a snackbar
+  FirebaseMessaging.onMessage.listen((RemoteMessage message) {
+    final notification = message.notification;
+    if (notification != null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('${notification.title}: ${notification.body}'),
+          action: SnackBarAction(
+            label: 'Review',
+            onPressed: () {
+              navigatorKey.currentState?.push(
+                MaterialPageRoute(
+                  builder: (_) => const AdminModerationScreen(),
+                ),
+              );
+            },
+          ),
+          duration: const Duration(seconds: 6),
+        ),
+      );
+    }
+  });
+
+  // Handle notification tap when app is in background (not terminated)
+  FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) {
+    navigatorKey.currentState?.push(
+      MaterialPageRoute(builder: (_) => const AdminModerationScreen()),
+    );
+  });
+
+  // Handle notification tap when app was terminated
+  final initialMessage = await FirebaseMessaging.instance.getInitialMessage();
+  if (initialMessage != null) {
+    // Delay to let the app finish building before navigating
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      navigatorKey.currentState?.push(
+        MaterialPageRoute(builder: (_) => const AdminModerationScreen()),
+      );
+    });
+  }
+}
 
 Future<void> initDynamicLinks(BuildContext context) async {
   print('Initializing dynamic links...');
@@ -104,6 +166,7 @@ void main() {
     // debugPaintSizeEnabled = true; // For debugging purposes
 
     await Firebase.initializeApp();
+    FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
     firestore.FirebaseFirestore.instance.settings =
         const firestore.Settings(persistenceEnabled: false);
     runApp(
@@ -195,6 +258,8 @@ class _HomeScreenState extends State<HomeScreen> {
     super.initState();
     // Initialize dynamic links handling
     initDynamicLinks(context);
+    // Initialize FCM push notifications
+    initFCM(context);
 
     // Initialize the list of pages with the feedback tap handler
     _pages = <Widget>[
@@ -258,7 +323,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 icon: Padding(
                   padding: EdgeInsets.only(
                       top: 8.0, bottom: 4.0), // Add padding above the icon
-                  child: Icon(FontAwesomeIcons.map),
+                  child: FaIcon(FontAwesomeIcons.map),
                 ),
                 label: 'Map',
               ),
@@ -266,7 +331,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 icon: Padding(
                   padding: EdgeInsets.only(
                       top: 8.0, bottom: 4.0), // Add padding above the icon
-                  child: Icon(FontAwesomeIcons.infoCircle),
+                  child: FaIcon(FontAwesomeIcons.circleInfo),
                 ),
                 label: 'About',
               ),
@@ -274,7 +339,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 icon: Padding(
                   padding: EdgeInsets.only(
                       top: 8.0, bottom: 4.0), // Add padding above the icon
-                  child: Icon(FontAwesomeIcons.user),
+                  child: FaIcon(FontAwesomeIcons.user),
                 ),
                 label: 'Profile',
               ),

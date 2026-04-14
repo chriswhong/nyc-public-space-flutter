@@ -8,6 +8,7 @@ import 'user_provider.dart';
 import 'sign_in_screen.dart';
 import 'colors.dart';
 import 'feedback_screen.dart';
+import 'admin_moderation_screen.dart';
 
 class ProfileScreen extends StatelessWidget {
   const ProfileScreen({super.key});
@@ -79,7 +80,7 @@ class ProfileScreen extends StatelessWidget {
           padding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 16.0),
           child: Row(
             children: [
-              Icon(
+              FaIcon(
                 FontAwesomeIcons.user,
                 size: 24,
                 color: Colors.black,
@@ -185,6 +186,23 @@ class ProfileScreen extends StatelessWidget {
           //   ),
           // ),
           _buildUserButtonGroup(context, userProvider),
+          if (userProvider.isEditor) ...[
+            const SizedBox(height: 20),
+            ProfileButtonGroup(buttons: [
+              ProfileButton(
+                text: 'Moderate Content',
+                icon: FontAwesomeIcons.shieldHalved,
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const AdminModerationScreen(),
+                    ),
+                  );
+                },
+              ),
+            ]),
+          ],
           const SizedBox(height: 20),
           ProfileButtonGroup(buttons: [
             ProfileButton(
@@ -367,7 +385,7 @@ class ProfileButtonGroup extends StatelessWidget {
 class ProfileButton extends StatelessWidget {
   final String? text; // Optional plain text
   final Widget? textWidget; // Optional custom widget for more complex layouts
-  final IconData icon;
+  final FaIconData icon;
   final VoidCallback onTap;
   final bool showChevron;
 

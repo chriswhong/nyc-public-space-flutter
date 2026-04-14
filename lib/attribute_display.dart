@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
 import 'attribute_data.dart'; // Import the shared data
 
@@ -25,7 +26,7 @@ class AttributeDisplay extends StatelessWidget {
         .map((option) => Padding(
               padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 0),
               child: Chip(
-                avatar: Icon(option.icon, size: 14, color: Colors.grey[700]),
+                avatar: FaIcon(option.icon, size: 14, color: Colors.grey[700]),
                 label: Text(option.key.replaceAll('_', ' ').toUpperCase()),
                 labelStyle: TextStyle(fontSize: 11, color: Colors.grey[700]),
                 backgroundColor: Colors.white,

@@ -86,7 +86,7 @@ class _ImageViewerState extends State<ImageViewer> {
                   children: [
                     Row(
                       children: [
-                        const Icon(
+                        const FaIcon(
                           FontAwesomeIcons.user,
                           color: Colors.white,
                           size: 14,

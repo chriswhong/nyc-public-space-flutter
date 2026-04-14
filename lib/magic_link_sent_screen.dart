@@ -17,7 +17,7 @@ class MagicLinkSentScreen extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.center,
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            const Icon(FontAwesomeIcons.envelope, size: 48,),
+            const FaIcon(FontAwesomeIcons.envelope, size: 48),
             const SizedBox(height: 16),
             const Text(
               'Magic Link Sent!',

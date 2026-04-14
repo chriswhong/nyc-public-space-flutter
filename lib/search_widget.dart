@@ -469,11 +469,11 @@ class _SearchWidgetState extends State<SearchWidget> {
                     children: [
                       GestureDetector(
                         onTap: toggleSearch,
-                        child: Icon(
-                          size: 18,
+                        child: FaIcon(
                           isExpanded
                               ? FontAwesomeIcons.chevronLeft
-                              : FontAwesomeIcons.search,
+                              : FontAwesomeIcons.magnifyingGlass,
+                          size: 18,
                           color: Colors.black,
                         ),
                       ),
@@ -522,9 +522,9 @@ class _SearchWidgetState extends State<SearchWidget> {
                           }
                         },
                         child: _controller.value.text.isNotEmpty
-                            ? Icon(
+                            ? FaIcon(
+                                FontAwesomeIcons.xmark,
                                 size: 18,
-                                FontAwesomeIcons.close,
                                 color: Colors.black,
                               )
                             : SizedBox.shrink(),

@@ -43,7 +43,7 @@ class PanelImageGallery extends StatelessWidget {
             ),
             const SizedBox(height: 10),
             ElevatedButton.icon(
-              icon: const Icon(FontAwesomeIcons.camera),
+              icon: const FaIcon(FontAwesomeIcons.camera),
               label: const Text('Add the first photo'),
               style: AppStyles.buttonStyle,
               onPressed: onAddPhoto,

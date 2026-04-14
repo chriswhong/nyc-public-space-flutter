@@ -3,7 +3,7 @@ import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
 class AttributeOption {
   final String key;
-  final IconData icon;
+  final FaIconData icon;
 
   const AttributeOption(this.key, this.icon);
 }

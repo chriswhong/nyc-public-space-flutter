@@ -11,7 +11,7 @@ import 'package:geolocator/geolocator.dart' as geo;
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
 Future<Uint8List> getFontAwesomeIconAsBytes({
-  IconData icon = FontAwesomeIcons.mapMarkerAlt,
+  FaIconData icon = FontAwesomeIcons.mapMarkerAlt,
   double size = 64,
   Color color = Colors.red,
 }) async {

@@ -5,15 +5,17 @@ import 'package:nyc_public_space_map/colors.dart';
 import 'package:sliding_up_panel/sliding_up_panel.dart';
 import 'package:mapbox_maps_flutter/mapbox_maps_flutter.dart';
 import 'package:geolocator/geolocator.dart' as geo;
+import 'package:provider/provider.dart';
 
 import 'package:nyc_public_space_map/map_handler.dart';
 import 'package:nyc_public_space_map/panel/panel_handler.dart';
-// import 'package:nyc_public_space_map/search_handler.dart';
 import 'search_widget.dart';
 import 'package:nyc_public_space_map/image_loader.dart';
 import 'package:nyc_public_space_map/public_space_properties.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'widgets/map_controls.dart';
+import 'favorites_provider.dart';
+import 'geojson_provider.dart';
 
 class MapScreen extends StatefulWidget {
   final Function(PublicSpaceFeature?) onReportAnIssue;
@@ -227,6 +229,50 @@ class MapScreenState extends State<MapScreen> {
     _pc.animatePanelToPosition(_snapPoint40.clamp(0.0, 1.0));
   }
 
+  Future<void> flyToFavorite(FavoriteItem item) async {
+    if (mapboxMap == null) return;
+
+    // Look up full feature so the panel can open
+    final geoJsonProvider =
+        Provider.of<GeoJsonProvider>(context, listen: false);
+    PublicSpaceFeature? feature;
+    for (final f in geoJsonProvider.features) {
+      if (f.properties.firestoreId == item.firestoreId) {
+        feature = f;
+        break;
+      }
+    }
+
+    // Open the panel first so the padding used for flyTo matches the actual
+    // panel height that will be visible when the camera lands.
+    if (feature != null) {
+      _onFeatureSelected(feature);
+    }
+
+    // Fly with _isAnimating = true so the move listener doesn't collapse the panel.
+    final mq = MediaQuery.of(context);
+    _isAnimating = true;
+    try {
+      await mapboxMap!.flyTo(
+        CameraOptions(
+          center: feature != null
+              ? feature.geometry
+              : Point(coordinates: Position(item.lng, item.lat)),
+          zoom: 16,
+          padding: MbxEdgeInsets(
+            top: mq.viewPadding.top + 64,
+            right: 0,
+            bottom: mq.size.height * 0.40,
+            left: 0,
+          ),
+        ),
+        MapAnimationOptions(duration: 800),
+      );
+    } finally {
+      if (mounted) _isAnimating = false;
+    }
+  }
+
   void _closePanel() {
     setState(() {
       selectedFeature = null;
@@ -289,6 +335,7 @@ class MapScreenState extends State<MapScreen> {
           miscImage: ImageLoader.instance.miscImage,
           markerFeature: markerFeature,
           onCameraChangeListener: _onCameraChanged,
+          favorites: Provider.of<FavoritesProvider>(context).favorites,
         ),
         _buildBottomInfoPanel(),
         // Scrim — fades in when panel is fully expanded

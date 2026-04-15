@@ -9,6 +9,7 @@ import 'package:flutter/services.dart';
 import 'package:nyc_public_space_map/public_space_properties.dart';
 import 'package:geolocator/geolocator.dart' as geo;
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'favorites_provider.dart';
 
 Future<Uint8List> getFontAwesomeIconAsBytes({
   FaIconData icon = FontAwesomeIcons.mapMarkerAlt,
@@ -58,6 +59,7 @@ class MapHandler extends StatefulWidget {
   final Uint8List miscImage;
   final Feature? markerFeature;
   final void Function(CameraChangedEventData)? onCameraChangeListener;
+  final List<FavoriteItem> favorites;
 
   const MapHandler(
       {super.key,
@@ -71,7 +73,8 @@ class MapHandler extends StatefulWidget {
       required this.stpImage,
       required this.miscImage,
       required this.markerFeature,
-      this.onCameraChangeListener});
+      this.onCameraChangeListener,
+      this.favorites = const []});
 
   @override
   _MapHandlerState createState() => _MapHandlerState();
@@ -80,15 +83,18 @@ class MapHandler extends StatefulWidget {
 class _MapHandlerState extends State<MapHandler> {
   late MapboxMap mapboxMap;
   PointAnnotationManager? pointAnnotationManager;
-
   PointAnnotationManager? markerPointAnnotationManager;
+  PointAnnotationManager? heartAnnotationManager;
+  PointAnnotationManager? heartSelectedAnnotationManager;
+
   Uint8List? _iconBytes;
+  Uint8List? _heartBadgeBytes;
 
   @override
   void initState() {
     super.initState();
-
     _loadFontAwesomeIcon();
+    _loadHeartBadge();
   }
 
   Future<void> _loadFontAwesomeIcon() async {
@@ -97,10 +103,95 @@ class _MapHandlerState extends State<MapHandler> {
       size: 64,
       color: Colors.red,
     );
-
     setState(() {
       _iconBytes = bytes;
     });
+  }
+
+  Future<void> _loadHeartBadge() async {
+    const double size = 48;
+    const double iconSize = 26;
+
+    final recorder = ui.PictureRecorder();
+    final canvas = Canvas(recorder);
+
+    // Filled circle background
+    canvas.drawCircle(
+      Offset(size / 2, size / 2),
+      size / 2,
+      Paint()..color = const Color(0xFFE53935),
+    );
+    // White border for contrast
+    canvas.drawCircle(
+      Offset(size / 2, size / 2),
+      size / 2 - 1.5,
+      Paint()
+        ..color = Colors.white
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 3,
+    );
+
+    // White heart icon centered in the circle
+    final textPainter = TextPainter(textDirection: TextDirection.ltr);
+    textPainter.text = TextSpan(
+      text: String.fromCharCode(FontAwesomeIcons.solidHeart.codePoint),
+      style: TextStyle(
+        fontSize: iconSize,
+        fontFamily: FontAwesomeIcons.solidHeart.fontFamily,
+        package: FontAwesomeIcons.solidHeart.fontPackage,
+        color: Colors.white,
+      ),
+    );
+    textPainter.layout();
+    textPainter.paint(
+      canvas,
+      Offset((size - textPainter.width) / 2, (size - textPainter.height) / 2),
+    );
+
+    final picture = recorder.endRecording();
+    final image = await picture.toImage(size.toInt(), size.toInt());
+    final bytes = await image.toByteData(format: ui.ImageByteFormat.png);
+
+    _heartBadgeBytes = bytes!.buffer.asUint8List();
+    // Re-draw badges now that the image is ready (favorites may already be set)
+    _updateHeartAnnotations();
+  }
+
+  // Normal-size heart badges for all favorited features except the selected one.
+  Future<void> _updateHeartAnnotations() async {
+    if (heartAnnotationManager == null || _heartBadgeBytes == null) return;
+    await heartAnnotationManager!.deleteAll();
+
+    final selectedId = widget.selectedFeature?.properties.firestoreId;
+    for (final item in widget.favorites) {
+      if (item.firestoreId == selectedId) continue; // handled by selected manager
+      await heartAnnotationManager!.create(PointAnnotationOptions(
+        geometry: Point(coordinates: Position(item.lng, item.lat)),
+        image: _heartBadgeBytes,
+        iconSize: 1.0,
+        iconAnchor: IconAnchor.BOTTOM,
+        iconOffset: [10.0, -23.0],
+      ));
+    }
+  }
+
+  // Scaled heart badge for the selected feature (matches 1.5× enlarged marker).
+  Future<void> _updateSelectedHeartAnnotation() async {
+    if (heartSelectedAnnotationManager == null || _heartBadgeBytes == null) return;
+    await heartSelectedAnnotationManager!.deleteAll();
+
+    final selected = widget.selectedFeature;
+    if (selected == null) return;
+    final isFav = widget.favorites.any((f) => f.firestoreId == selected.properties.firestoreId);
+    if (!isFav) return;
+
+    await heartSelectedAnnotationManager!.create(PointAnnotationOptions(
+      geometry: selected.geometry,
+      image: _heartBadgeBytes,
+      iconSize: 1.5,
+      iconAnchor: IconAnchor.BOTTOM,
+      iconOffset: [15.0, -35.0],
+    ));
   }
 
   // Detect changes in selectedFeature and update the map accordingly
@@ -110,6 +201,15 @@ class _MapHandlerState extends State<MapHandler> {
 
     if (widget.selectedFeature != oldWidget.selectedFeature) {
       _updateAnnotations(widget.selectedFeature);
+      _updateHeartAnnotations();       // re-exclude/include the newly selected id
+      _updateSelectedHeartAnnotation(); // show/hide scaled badge on selected marker
+    }
+
+    final oldIds = oldWidget.favorites.map((f) => f.firestoreId).toSet();
+    final newIds = widget.favorites.map((f) => f.firestoreId).toSet();
+    if (!oldIds.containsAll(newIds) || !newIds.containsAll(oldIds)) {
+      _updateHeartAnnotations();
+      _updateSelectedHeartAnnotation();
     }
 
     if (jsonEncode(widget.markerFeature?.toJson()) !=
@@ -236,12 +336,23 @@ class _MapHandlerState extends State<MapHandler> {
     // call onMapCreated callback to pass the map instance upward
     widget.onMapCreated(mapboxMap);
 
-    // Initialize PointAnnotationManager
+    // Initialize PointAnnotationManagers (order matters for z-layering)
     pointAnnotationManager =
         await mapboxMap.annotations.createPointAnnotationManager();
 
-    markerPointAnnotationManager = 
+    markerPointAnnotationManager =
         await mapboxMap.annotations.createPointAnnotationManager();
+
+    // Normal heart badges (non-selected favorites)
+    heartAnnotationManager =
+        await mapboxMap.annotations.createPointAnnotationManager();
+
+    // Scaled heart badge for the selected feature — created last so it's on top
+    heartSelectedAnnotationManager =
+        await mapboxMap.annotations.createPointAnnotationManager();
+
+    _updateHeartAnnotations();
+    _updateSelectedHeartAnnotation();
   }
 
   _onMapTapListener(

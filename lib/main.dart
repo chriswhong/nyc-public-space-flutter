@@ -19,6 +19,8 @@ import 'public_space_properties.dart';
 import 'user_provider.dart';
 import 'username_input_screen.dart';
 import 'geojson_provider.dart';
+import 'favorites_provider.dart';
+import 'favorites_screen.dart';
 
 Future<void> initDynamicLinks(BuildContext context) async {
   print('Initializing dynamic links...');
@@ -125,6 +127,13 @@ void main() {
               return geoJsonProvider;
             },
           ),
+          ChangeNotifierProvider(
+            create: (_) {
+              final favoritesProvider = FavoritesProvider();
+              favoritesProvider.load();
+              return favoritesProvider;
+            },
+          ),
         ],
         child: const MyApp(),
       ),
@@ -203,6 +212,7 @@ class _HomeScreenState extends State<HomeScreen> {
     // Initialize the list of pages with the feedback tap handler
     _pages = <Widget>[
       MapScreen(key: mapScreenKey, onReportAnIssue: _handleReportAnIssue),
+      FavoritesScreen(onFavoriteTap: _handleFavoriteTap),
       const AboutScreen(),
       ActivityFeedScreen(onSpaceSelected: _selectSpaceOnMap),
       const ProfileScreen(),
@@ -225,6 +235,14 @@ class _HomeScreenState extends State<HomeScreen> {
     _scaffoldKey.currentState?.openDrawer();
     setState(() {
       _selectedFeature = selectedFeature;
+    });
+  }
+
+  void _handleFavoriteTap(FavoriteItem item) {
+    setState(() => _selectedIndex = 0);
+    // Wait one frame for the map tab to be active before flying
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      mapScreenKey.currentState?.flyToFavorite(item);
     });
   }
 
@@ -259,21 +277,24 @@ class _HomeScreenState extends State<HomeScreen> {
           index: _selectedIndex, // Display the selected tab
           children: _pages, // Keep all pages mounted
         ),
-        bottomNavigationBar: Container(
+        bottomNavigationBar: Consumer<FavoritesProvider>(
+          builder: (context, favProvider, _) {
+            final favCount = favProvider.favorites.length;
+            return Container(
           decoration: BoxDecoration(
-            color: Colors.white, // Background color of the BottomNavigationBar
+            color: Colors.white,
             border: Border(
               top: BorderSide(
-                color: Colors.grey.shade300, // Subtle gray border
-                width: 0.5, // Thickness of the border
+                color: Colors.grey.shade300,
+                width: 0.5,
               ),
             ),
           ),
           child: BottomNavigationBar(
-            backgroundColor: Colors.white,
             type: BottomNavigationBarType.fixed,
-            items: const <BottomNavigationBarItem>[
-              BottomNavigationBarItem(
+            backgroundColor: Colors.white,
+            items: <BottomNavigationBarItem>[
+              const BottomNavigationBarItem(
                 icon: Padding(
                   padding: EdgeInsets.only(top: 8.0, bottom: 4.0),
                   child: FaIcon(FontAwesomeIcons.map),
@@ -282,12 +303,24 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
               BottomNavigationBarItem(
                 icon: Padding(
+                  padding: const EdgeInsets.only(top: 8.0, bottom: 4.0),
+                  child: Badge(
+                    isLabelVisible: favCount > 0,
+                    backgroundColor: AppColors.dark,
+                    label: Text('$favCount'),
+                    child: const FaIcon(FontAwesomeIcons.heart),
+                  ),
+                ),
+                label: 'Favorites',
+              ),
+              const BottomNavigationBarItem(
+                icon: Padding(
                   padding: EdgeInsets.only(top: 8.0, bottom: 4.0),
                   child: FaIcon(FontAwesomeIcons.circleInfo),
                 ),
                 label: 'About',
               ),
-              BottomNavigationBarItem(
+              const BottomNavigationBarItem(
                 icon: Padding(
                   padding: EdgeInsets.only(top: 8.0, bottom: 4.0),
                   child: FaIcon(FontAwesomeIcons.clockRotateLeft),
@@ -308,9 +341,12 @@ class _HomeScreenState extends State<HomeScreen> {
                 const TextStyle(fontSize: 10), // Adjust font size
             unselectedItemColor: AppColors.gray,
             unselectedLabelStyle: const TextStyle(fontSize: 10),
-            iconSize: 20, // Set the desired size for the icons
+            iconSize: 20,
             onTap: _onItemTapped,
           ),
-        ));
+        );
+          },
+        ),
+    );
   }
 }

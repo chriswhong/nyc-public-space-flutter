@@ -7,11 +7,15 @@ class PanelActionButtons extends StatelessWidget {
   final VoidCallback onOpenMaps;
   final VoidCallback onEdit;
   final VoidCallback onSubmitPhoto;
+  final VoidCallback onToggleFavorite;
+  final bool isFavorited;
 
   const PanelActionButtons({
     required this.onOpenMaps,
     required this.onEdit,
     required this.onSubmitPhoto,
+    required this.onToggleFavorite,
+    required this.isFavorited,
     super.key,
   });
 
@@ -19,7 +23,7 @@ class PanelActionButtons extends StatelessWidget {
   Widget build(BuildContext context) {
     return Column(
       children: [
-        SizedBox(height: 10),
+        const SizedBox(height: 10),
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
           children: [
@@ -41,10 +45,50 @@ class PanelActionButtons extends StatelessWidget {
               tooltip: 'Submit a Photo',
               onPressed: onSubmitPhoto,
             ),
+            _FavoriteButton(
+              isFavorited: isFavorited,
+              onPressed: onToggleFavorite,
+            ),
           ],
         ),
-        
-        SizedBox(height: 10),
+        const SizedBox(height: 10),
+      ],
+    );
+  }
+}
+
+class _FavoriteButton extends StatelessWidget {
+  final bool isFavorited;
+  final VoidCallback onPressed;
+
+  const _FavoriteButton({required this.isFavorited, required this.onPressed});
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        Container(
+          decoration: BoxDecoration(
+            color: isFavorited ? Colors.red.shade50 : Colors.grey[300],
+            shape: BoxShape.circle,
+          ),
+          child: IconButton(
+            icon: FaIcon(
+              isFavorited
+                  ? FontAwesomeIcons.solidHeart
+                  : FontAwesomeIcons.heart,
+              size: 20,
+              color: isFavorited ? Colors.red.shade400 : Colors.grey[800],
+            ),
+            onPressed: onPressed,
+            tooltip: isFavorited ? 'Remove from favorites' : 'Add to favorites',
+          ),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          isFavorited ? 'Favorited' : 'Favorite',
+          style: const TextStyle(fontSize: 12),
+        ),
       ],
     );
   }

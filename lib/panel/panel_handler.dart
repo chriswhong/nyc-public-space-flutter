@@ -5,12 +5,15 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:url_launcher/url_launcher.dart'; // Import the url_launcher package
 
+import 'package:provider/provider.dart';
+
 import '../public_space_properties.dart';
 import '../submit_image.dart';
 import '../editor_screen.dart';
 import '../sign_in_screen.dart';
 import '../attribute_display.dart';
 import '../colors.dart';
+import '../favorites_provider.dart';
 import 'panel_header.dart';
 import 'panel_image_gallery.dart';
 import 'panel_action_buttons.dart';
@@ -221,10 +224,18 @@ class _PanelHandlerState extends State<PanelHandler> {
                           onAddPhoto: _handleAddPhoto,
                         ),
                         const Divider(color: AppColors.gray, thickness: 0.5),
-                        PanelActionButtons(
-                          onOpenMaps: _handleOpenMaps,
-                          onEdit: _handleEdit,
-                          onSubmitPhoto: _handleAddPhoto,
+                        Consumer<FavoritesProvider>(
+                          builder: (context, favProvider, _) {
+                            return PanelActionButtons(
+                              onOpenMaps: _handleOpenMaps,
+                              onEdit: _handleEdit,
+                              onSubmitPhoto: _handleAddPhoto,
+                              isFavorited: favProvider.isFavorite(
+                                  _panelContent!.properties.firestoreId),
+                              onToggleFavorite: () =>
+                                  favProvider.toggle(_panelContent!),
+                            );
+                          },
                         ),
                         const Divider(color: AppColors.gray, thickness: 0.5),
                         PanelLocationSection(

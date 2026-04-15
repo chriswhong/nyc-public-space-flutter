@@ -21,9 +21,14 @@ import '../feedback_screen.dart';
 class PanelHandler extends StatefulWidget {
   final PublicSpaceFeature? selectedFeature;
   final VoidCallback? onClosePanel;
+  final bool isExpanded;
 
-  const PanelHandler(
-      {super.key, required this.selectedFeature, this.onClosePanel});
+  const PanelHandler({
+    super.key,
+    required this.selectedFeature,
+    this.onClosePanel,
+    this.isExpanded = false,
+  });
 
   @override
   State<PanelHandler> createState() => _PanelHandlerState();
@@ -197,6 +202,9 @@ class _PanelHandlerState extends State<PanelHandler> {
                 const Divider(color: AppColors.gray, thickness: 0.5),
                 Expanded(
                   child: SingleChildScrollView(
+                    physics: widget.isExpanded
+                        ? null
+                        : const NeverScrollableScrollPhysics(),
                     child: Column(
                       children: [
                         if (_panelContent!.properties.description?.isNotEmpty ==

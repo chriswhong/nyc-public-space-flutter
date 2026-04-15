@@ -1370,7 +1370,7 @@ PODS:
   - path_provider_foundation (0.0.1):
     - Flutter
     - FlutterMacOS
-  - permission_handler_apple (9.1.1):
+  - permission_handler_apple (9.3.0):
     - Flutter
   - RecaptchaInterop (100.0.0)
   - shared_preferences_foundation (0.0.1):
@@ -1485,7 +1485,7 @@ SPEC CHECKSUMS:
   MapboxMaps: fc1b2ab98563d0157ba01f6e4a2fd8a8af556d92
   nanopb: fad817b59e0457d11a5dfbde799381cd727c1275
   path_provider_foundation: bb55f6dbba17d0dccd6737fe6f7f34fbd0376880
-  permission_handler_apple: 3787117e48f80715ff04a3830ca039283d6a4f29
+  permission_handler_apple: 4ed2196e43d0651e8ff7ca3483a069d469701f2d
   RecaptchaInterop: 7d1a4a01a6b2cb1610a47ef3f85f0c411434cb21
   shared_preferences_foundation: 9e1978ff2562383bd5676f64ec4e9aa8fa06a6f7
   Turf: aa2ede4298009639d10db36aba1a7ebaad072a5e

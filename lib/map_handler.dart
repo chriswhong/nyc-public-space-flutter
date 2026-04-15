@@ -57,6 +57,7 @@ class MapHandler extends StatefulWidget {
   final Uint8List stpImage;
   final Uint8List miscImage;
   final Feature? markerFeature;
+  final void Function(CameraChangedEventData)? onCameraChangeListener;
 
   const MapHandler(
       {super.key,
@@ -69,7 +70,8 @@ class MapHandler extends StatefulWidget {
       required this.plazaImage,
       required this.stpImage,
       required this.miscImage,
-      required this.markerFeature});
+      required this.markerFeature,
+      this.onCameraChangeListener});
 
   @override
   _MapHandlerState createState() => _MapHandlerState();
@@ -244,6 +246,11 @@ class _MapHandlerState extends State<MapHandler> {
 
   _onMapTapListener(
       BuildContext buildContext, MapContentGestureContext context) async {
+    // Capture MediaQuery values before the async gap
+    final mq = MediaQuery.of(buildContext);
+    final double topInset = mq.viewPadding.top + 64;
+    final double bottomInset = mq.size.height * 0.40;
+
     mapboxMap
         .queryRenderedFeatures(
             RenderedQueryGeometry(
@@ -281,32 +288,20 @@ class _MapHandlerState extends State<MapHandler> {
         // Call parent callback to update the selectedFeature in parent state
         widget.onFeatureSelected(geojsonFeature);
 
-        // animate map if screen coordinate was in bottom 20% of screen
-        double screenHeight = MediaQuery.of(buildContext).size.height;
-        double yPercent = context.touchPosition.y / screenHeight;
-
-
-  
-        if (yPercent > 0.25) {
-          // Calculate bottom padding so the point is vertically centered between top of panel and top of screen
-          final double screenHeight = MediaQuery.of(buildContext).size.height;
-          final double panelHeight = screenHeight * 0.6;
-          final double mapVisibleHeight = screenHeight - panelHeight;
-          final double bottomPadding = panelHeight - (mapVisibleHeight / 2) + 50;
-
-          mapboxMap.flyTo(
-            CameraOptions(
-              center: geojsonFeature.geometry,
-              padding: MbxEdgeInsets(
-                top: 0,
-                right: 0,
-                bottom: bottomPadding,
-                left: 0,
-              ),
+        // Center the point in the visible area between the search bar and
+        // the panel at its default 40% open height.
+        mapboxMap.flyTo(
+          CameraOptions(
+            center: geojsonFeature.geometry,
+            padding: MbxEdgeInsets(
+              top: topInset,
+              right: 0,
+              bottom: bottomInset,
+              left: 0,
             ),
-            MapAnimationOptions(),
-          );
-        }
+          ),
+          MapAnimationOptions(),
+        );
       }
     });
   }
@@ -320,6 +315,7 @@ class _MapHandlerState extends State<MapHandler> {
         zoom: 12,
       ),
       onMapCreated: _onMapCreated,
+      onCameraChangeListener: widget.onCameraChangeListener,
       onTapListener: (MapContentGestureContext gestureContext) =>
           _onMapTapListener(context, gestureContext), // Pass context here,
     );

@@ -1,16 +1,19 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:nyc_public_space_map/colors.dart';
 import 'package:sliding_up_panel/sliding_up_panel.dart';
 import 'package:mapbox_maps_flutter/mapbox_maps_flutter.dart';
+import 'package:geolocator/geolocator.dart' as geo;
 
 import 'package:nyc_public_space_map/map_handler.dart';
 import 'package:nyc_public_space_map/panel/panel_handler.dart';
 // import 'package:nyc_public_space_map/search_handler.dart';
 import 'search_widget.dart';
 import 'package:nyc_public_space_map/image_loader.dart';
-import 'package:nyc_public_space_map/floating_locator_button.dart';
 import 'package:nyc_public_space_map/public_space_properties.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'widgets/map_controls.dart';
 
 class MapScreen extends StatefulWidget {
   final Function(PublicSpaceFeature?) onReportAnIssue;
@@ -22,7 +25,6 @@ class MapScreen extends StatefulWidget {
 }
 
 class MapScreenState extends State<MapScreen> {
-  static const double defaultFloatingButtonOffset = 95;
   final PanelController _pc = PanelController();
 
   MapboxMap? mapboxMap;
@@ -30,9 +32,19 @@ class MapScreenState extends State<MapScreen> {
 
   User? currentUser; // Firebase User instance
 
-  double snapPoint = 0.99;
-
   Feature? markerFeature;
+
+  // Panel state
+  bool _panelVisible = false;  // controls whether SlidingUpPanel is in the tree
+  bool _panelExpanded = false; // true when panel is near max (for scrim)
+  double _maxPanelHeight = 600.0; // cached from LayoutBuilder, updated each build
+
+  // Map controls state
+  bool _tracking = false;
+  bool _pitchButtonActive = false;
+  DateTime _pitchSettleUntil = DateTime.fromMillisecondsSinceEpoch(0);
+  bool _isAnimating = false;
+  StreamSubscription<geo.Position>? _locationSubscription;
 
   void _setMarkerFeature(Feature? newMarkerFeature) {
     setState(() {
@@ -42,23 +54,22 @@ class MapScreenState extends State<MapScreen> {
 
   void _onLocalResultSelected(PublicSpaceFeature? geojsonFeature) {
     if (geojsonFeature != null) {
-      // fly map to the selected feature
+      // fly map to the selected feature, centered in the visible area between
+      // the search bar and the panel at its default 40% open height.
       final geometry = geojsonFeature.geometry;
       if (geometry != null) {
-        // Calculate bottom padding so the point is vertically centered between top of panel and top of screen
-        final double screenHeight = MediaQuery.of(context).size.height;
-        final double panelHeight = screenHeight * 0.6;
-        final double mapVisibleHeight = screenHeight - panelHeight;
-        final double bottomPadding = panelHeight - (mapVisibleHeight / 2) + 50;
+        final mq = MediaQuery.of(context);
+        final double topInset = mq.viewPadding.top + 64; // safe area + search bar
+        final double bottomInset = mq.size.height * 0.40; // panel at 40%
 
         mapboxMap?.flyTo(
           CameraOptions(
             zoom: 15,
             center: Point.fromJson(geometry.toJson()),
             padding: MbxEdgeInsets(
-              top: 0,
+              top: topInset,
               right: 0,
-              bottom: bottomPadding,
+              bottom: bottomInset,
               left: 0,
             ),
           ),
@@ -74,7 +85,13 @@ class MapScreenState extends State<MapScreen> {
   void initState() {
     super.initState();
     ImageLoader.instance.loadImages();
-    _checkCurrentUser(); // Check the user's login status
+    _checkCurrentUser();
+  }
+
+  @override
+  void dispose() {
+    _locationSubscription?.cancel();
+    super.dispose();
   }
 
   Future<void> _checkCurrentUser() async {
@@ -87,33 +104,127 @@ class MapScreenState extends State<MapScreen> {
     setState(() {
       mapboxMap = mapInstance;
     });
+    mapInstance.setOnMapMoveListener((_) {
+      if (_tracking && !_isAnimating && mounted) {
+        setState(() => _tracking = false);
+        _locationSubscription?.cancel();
+        _locationSubscription = null;
+      }
+      // Shrink panel to peek on any map gesture
+      if (!_isAnimating && mounted && _panelVisible) {
+        try {
+          _pc.close(); // animates to minHeight (peek = 106px)
+        } catch (_) {}
+      }
+    });
   }
 
-  void _onFeatureSelected(geojsonFeature) {
-    _updatePanel();
+  void _toggleTracking() async {
+    final newTracking = !_tracking;
+    setState(() => _tracking = newTracking);
+
+    if (newTracking) {
+      try {
+        final position = await geo.Geolocator.getCurrentPosition(
+          desiredAccuracy: geo.LocationAccuracy.high,
+        );
+        if (mounted) {
+          _isAnimating = true;
+          await mapboxMap?.flyTo(
+            CameraOptions(
+              zoom: 15,
+              center: Point(
+                  coordinates: Position(position.longitude, position.latitude)),
+            ),
+            MapAnimationOptions(duration: 500),
+          );
+          if (mounted) _isAnimating = false;
+        }
+        _locationSubscription = geo.Geolocator.getPositionStream(
+          locationSettings:
+              const geo.LocationSettings(accuracy: geo.LocationAccuracy.high),
+        ).listen((pos) {
+          if (_tracking) {
+            _isAnimating = true;
+            mapboxMap
+                ?.flyTo(
+              CameraOptions(
+                center: Point(
+                    coordinates: Position(pos.longitude, pos.latitude)),
+              ),
+              MapAnimationOptions(duration: 500),
+            )
+                .then((_) {
+              if (mounted) _isAnimating = false;
+            });
+          }
+        });
+      } catch (_) {
+        if (mounted) setState(() => _tracking = false);
+      }
+    } else {
+      _locationSubscription?.cancel();
+      _locationSubscription = null;
+    }
+  }
+
+  void _onCameraChanged(CameraChangedEventData _) {
+    if (!_pitchButtonActive || _isAnimating || !mounted) return;
+    if (DateTime.now().isBefore(_pitchSettleUntil)) return;
+    mapboxMap?.getCameraState().then((state) {
+      if (!mounted || _isAnimating || !_pitchButtonActive) return;
+      if (DateTime.now().isBefore(_pitchSettleUntil)) return;
+      if ((state.pitch - 45.0).abs() > 2.0) {
+        setState(() => _pitchButtonActive = false);
+      }
+    });
+  }
+
+  Future<void> _togglePitch() async {
+    if (mapboxMap == null) return;
+    final newActive = !_pitchButtonActive;
+    if (newActive) {
+      _pitchSettleUntil = DateTime.now().add(const Duration(milliseconds: 800));
+    }
+    setState(() => _pitchButtonActive = newActive);
+    _isAnimating = true;
+    try {
+      await mapboxMap!.flyTo(
+        CameraOptions(pitch: newActive ? 45.0 : 0.0),
+        MapAnimationOptions(duration: 500),
+      );
+    } finally {
+      if (mounted) _isAnimating = false;
+    }
+  }
+
+  void _onFeatureSelected(dynamic geojsonFeature) {
+    final wasVisible = _panelVisible;
     setState(() {
       selectedFeature = geojsonFeature;
+      _panelVisible = true;
     });
+    if (!wasVisible) {
+      // Panel just added to the tree — wait one frame for it to attach
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) _animatePanelToDefault();
+      });
+    } else {
+      _animatePanelToDefault();
+    }
   }
 
-  bool isProgrammaticSlide = false;
-  bool _showSearch = true; // <-- Add this
-
-  void _updatePanel() {
-    if (_pc.isPanelClosed) {
-      _pc.animatePanelToPosition(snapPoint);
-    }
-    setState(() {
-      _showSearch = false; // Hide search when panel opens
-    });
+  void _animatePanelToDefault() {
+    final screenHeight = MediaQuery.of(context).size.height;
+    final defaultPos = ((screenHeight * 0.40) - 106) / (_maxPanelHeight - 106);
+    _pc.animatePanelToPosition(defaultPos.clamp(0.0, 1.0));
   }
 
   void _closePanel() {
-    isProgrammaticSlide = true;
-    _pc.close();
     setState(() {
       selectedFeature = null;
-      _showSearch = true; // Show search when panel closes
+      _panelVisible = false;
+      _panelExpanded = false;
     });
   }
 
@@ -140,7 +251,24 @@ class MapScreenState extends State<MapScreen> {
   }
 
   Widget buildMapContent() {
-    final double maxHeight = MediaQuery.of(context).size.height * 0.60;
+    return LayoutBuilder(builder: (context, constraints) {
+      return _buildMapStack(context, constraints);
+    });
+  }
+
+  Widget _buildMapStack(BuildContext context, BoxConstraints constraints) {
+    final mq = MediaQuery.of(context);
+    // Use actual available height (excludes bottom nav bar) and physical top
+    // inset (viewPadding.top is never consumed by Scaffold, unlike padding.top)
+    final double availableHeight = constraints.maxHeight;
+    final double maxHeight = (availableHeight - mq.viewPadding.top - 8)
+        .clamp(availableHeight * 0.85, availableHeight * 0.97);
+    _maxPanelHeight = maxHeight; // cache for _animatePanelToDefault
+
+    // Intermediate snap at 40% of screen height (relative to min/max range)
+    final double snapPoint40 =
+        ((mq.size.height * 0.40) - 106) / (maxHeight - 106);
+
     return Stack(
       children: <Widget>[
         MapHandler(
@@ -154,29 +282,65 @@ class MapScreenState extends State<MapScreen> {
           stpImage: ImageLoader.instance.stpImage,
           miscImage: ImageLoader.instance.miscImage,
           markerFeature: markerFeature,
+          onCameraChangeListener: _onCameraChanged,
         ),
         _buildBottomInfoPanel(),
-        _buildFloatingLocatorButton(),
-        // Add the sliding panel
-        SlidingUpPanel(
-          controller: _pc,
-          isDraggable: false,
-          snapPoint: snapPoint,
-          panelSnapping: false,
-          panel: _buildSlidingPanelContent(),
-          body: Container(),
-          borderRadius: const BorderRadius.vertical(top: Radius.circular(18.0)),
-          minHeight: 0,
-          maxHeight: maxHeight,
+        // Scrim — fades in when panel is fully expanded
+        if (_panelVisible)
+          Positioned.fill(
+            child: AnimatedOpacity(
+              opacity: _panelExpanded ? 0.45 : 0.0,
+              duration: const Duration(milliseconds: 200),
+              child: const IgnorePointer(
+                child: ColoredBox(color: Colors.black),
+              ),
+            ),
+          ),
+        // Map control buttons — midway on right side
+        Positioned(
+          right: 12,
+          top: 0,
+          bottom: 0,
+          child: Center(
+            child: SafeArea(
+              child: MapControls(
+                tracking: _tracking,
+                pitchActive: _pitchButtonActive,
+                onToggleTracking: _toggleTracking,
+                onTogglePitch: _togglePitch,
+              ),
+            ),
+          ),
         ),
-        if (_showSearch) // Move SearchWidget to the end so it's on top
+        // Sliding panel — only in the tree when a feature is selected.
+        // minHeight:106 prevents dragging below peek; X is the only dismiss.
+        if (_panelVisible)
+          SlidingUpPanel(
+            controller: _pc,
+            isDraggable: true,
+            snapPoint: snapPoint40,
+            panelSnapping: true,
+            minHeight: 106,
+            maxHeight: maxHeight,
+            onPanelSlide: (pos) {
+              final expanded = pos > 0.85;
+              if (expanded != _panelExpanded && mounted) {
+                setState(() => _panelExpanded = expanded);
+              }
+            },
+            panel: _buildSlidingPanelContent(),
+            body: Container(),
+            borderRadius:
+                const BorderRadius.vertical(top: Radius.circular(18.0)),
+          ),
+        if (!_panelExpanded)
           SearchWidget(
             onRetrieve: (feature) => _setMarkerFeature(feature),
             onLocalResultSelected: (feature) => _onLocalResultSelected(feature),
           ),
       ],
     );
-  }
+  } // end _buildMapStack
 
   Widget _buildBottomInfoPanel() {
     return Align(
@@ -244,17 +408,11 @@ class MapScreenState extends State<MapScreen> {
           PanelHandler(
             selectedFeature: selectedFeature,
             onClosePanel: _closePanel,
+            isExpanded: _panelExpanded,
           ),
         ],
       ),
     );
   }
 
-  Widget _buildFloatingLocatorButton() {
-    return Positioned(
-      bottom: defaultFloatingButtonOffset,
-      right: 16,
-      child: FloatingLocatorButton(mapboxMap: mapboxMap),
-    );
-  }
 }

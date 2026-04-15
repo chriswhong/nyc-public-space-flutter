@@ -31,31 +31,25 @@ ACCESS_TOKEN=pk.your_mapbox_access_token_here
    - Add `google-services.json` to `android/app/`
    - Add `GoogleService-Info.plist` to `ios/Runner/`
 
-### Running the App
 
-- Choose a device in the bottom right of VS Code (make sure the emulator/simulator are running)
-- Use the `Run and Debug` panel in VS Code
-- Press the green play button ("Start Debugging")
 
-### VS Code Setup
+## Run on simulator/emulator
 
-The project includes launch configuration. Set your `ACCESS_TOKEN` environment variable:
-```bash
-export ACCESS_TOKEN=pk.your_token_here
-```
+`source .env && flutter run --dart-define=ACCESS_TOKEN=$ACCESS_TOKEN`
 
-### Production build to a real iOS device
+## Production build to my device
 
-This step is helpful for testing the build before releasing.
+`source .env && flutter run --release --dart-define=ACCESS_TOKEN=$ACCESS_TOKEN`
 
-- connect device via USB
-- choose device in VS Code (bottom-right blue bar)
-- flutter run --release --dart-define ACCESS_TOKEN=pk.12345
+You may need to add `-d <device_id>` if you have multiple devices connected. You can find the device id by running `flutter devices`.
+
+`source .env && flutter run --release --dart-define=ACCESS_TOKEN=$ACCESS_TOKEN -d 00008140-00061DE80106801C`
 
 ## Releasing
 
 ### Android Release
 
+- Add entry to CHANGELOG.md
 - increment version in `pubspec.yaml`
 - `sh scripts/build_android.sh`
 
@@ -67,6 +61,7 @@ Login to Google Play Console
 
 **Important**: before releasing, do a local release to a real device to test (see above) 
 
+- Add entry to CHANGELOG.md
 - increment version in `pubspec.yaml`
 - `sh scripts/build_ios.sh`
 

@@ -1,3 +1,7 @@
+## 1.7.1
+
+- Remove notifications
+
 ## 1.7.0
 
 - Admin moderation screens for reviewing pending image uploads and edits

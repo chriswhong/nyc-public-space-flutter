@@ -1166,9 +1166,6 @@ PODS:
   - Firebase/Firestore (11.4.0):
     - Firebase/CoreOnly
     - FirebaseFirestore (~> 11.4.0)
-  - Firebase/Messaging (11.4.0):
-    - Firebase/CoreOnly
-    - FirebaseMessaging (~> 11.4.0)
   - Firebase/Storage (11.4.0):
     - Firebase/CoreOnly
     - FirebaseStorage (~> 11.4.0)
@@ -1181,10 +1178,6 @@ PODS:
     - Flutter
   - firebase_dynamic_links (6.0.10):
     - Firebase/DynamicLinks (= 11.4.0)
-    - firebase_core
-    - Flutter
-  - firebase_messaging (15.1.5):
-    - Firebase/Messaging (= 11.4.0)
     - firebase_core
     - Flutter
   - firebase_storage (12.3.6):
@@ -1232,20 +1225,6 @@ PODS:
     - gRPC-Core (~> 1.65.0)
     - leveldb-library (~> 1.22)
     - nanopb (~> 3.30910.0)
-  - FirebaseInstallations (11.4.0):
-    - FirebaseCore (~> 11.0)
-    - GoogleUtilities/Environment (~> 8.0)
-    - GoogleUtilities/UserDefaults (~> 8.0)
-    - PromisesObjC (~> 2.4)
-  - FirebaseMessaging (11.4.0):
-    - FirebaseCore (~> 11.0)
-    - FirebaseInstallations (~> 11.0)
-    - GoogleDataTransport (~> 10.0)
-    - GoogleUtilities/AppDelegateSwizzler (~> 8.0)
-    - GoogleUtilities/Environment (~> 8.0)
-    - GoogleUtilities/Reachability (~> 8.0)
-    - GoogleUtilities/UserDefaults (~> 8.0)
-    - nanopb (~> 3.30910.0)
   - FirebaseSharedSwift (11.5.0)
   - FirebaseStorage (11.4.0):
     - FirebaseAppCheckInterop (~> 11.0)
@@ -1257,9 +1236,6 @@ PODS:
   - Flutter (1.0.0)
   - geolocator_apple (1.2.0):
     - Flutter
-  - GoogleDataTransport (10.1.0):
-    - nanopb (~> 3.30910.0)
-    - PromisesObjC (~> 2.4)
   - GoogleUtilities/AppDelegateSwizzler (8.0.2):
     - GoogleUtilities/Environment
     - GoogleUtilities/Logger
@@ -1279,9 +1255,6 @@ PODS:
     - GoogleUtilities/Privacy
   - GoogleUtilities/Privacy (8.0.2)
   - GoogleUtilities/Reachability (8.0.2):
-    - GoogleUtilities/Logger
-    - GoogleUtilities/Privacy
-  - GoogleUtilities/UserDefaults (8.0.2):
     - GoogleUtilities/Logger
     - GoogleUtilities/Privacy
   - "gRPC-C++ (1.65.5)":
@@ -1399,7 +1372,6 @@ PODS:
     - FlutterMacOS
   - permission_handler_apple (9.1.1):
     - Flutter
-  - PromisesObjC (2.4.0)
   - RecaptchaInterop (100.0.0)
   - shared_preferences_foundation (0.0.1):
     - Flutter
@@ -1413,7 +1385,6 @@ DEPENDENCIES:
   - firebase_auth (from `.symlinks/plugins/firebase_auth/ios`)
   - firebase_core (from `.symlinks/plugins/firebase_core/ios`)
   - firebase_dynamic_links (from `.symlinks/plugins/firebase_dynamic_links/ios`)
-  - firebase_messaging (from `.symlinks/plugins/firebase_messaging/ios`)
   - firebase_storage (from `.symlinks/plugins/firebase_storage/ios`)
   - Flutter (from `Flutter`)
   - geolocator_apple (from `.symlinks/plugins/geolocator_apple/ios`)
@@ -1438,11 +1409,8 @@ SPEC REPOS:
     - FirebaseDynamicLinks
     - FirebaseFirestore
     - FirebaseFirestoreInternal
-    - FirebaseInstallations
-    - FirebaseMessaging
     - FirebaseSharedSwift
     - FirebaseStorage
-    - GoogleDataTransport
     - GoogleUtilities
     - "gRPC-C++"
     - gRPC-Core
@@ -1452,7 +1420,6 @@ SPEC REPOS:
     - MapboxCoreMaps
     - MapboxMaps
     - nanopb
-    - PromisesObjC
     - RecaptchaInterop
     - Turf
 
@@ -1465,8 +1432,6 @@ EXTERNAL SOURCES:
     :path: ".symlinks/plugins/firebase_core/ios"
   firebase_dynamic_links:
     :path: ".symlinks/plugins/firebase_dynamic_links/ios"
-  firebase_messaging:
-    :path: ".symlinks/plugins/firebase_messaging/ios"
   firebase_storage:
     :path: ".symlinks/plugins/firebase_storage/ios"
   Flutter:
@@ -1489,13 +1454,12 @@ EXTERNAL SOURCES:
 SPEC CHECKSUMS:
   abseil: d121da9ef7e2ff4cab7666e76c5a3e0915ae08c3
   BoringSSL-GRPC: ca6a8e5d04812fce8ffd6437810c2d46f925eaeb
-  cloud_firestore: 8794ea2885e367f0a2096338964ddfd49739b2c7
+  cloud_firestore: f5f37d55cffb850b85f46ce9ac852ca60e9545d4
   Firebase: cf1b19f21410b029b6786a54e9764a0cacad3c99
-  firebase_auth: 42718683069d35d73af7a986b55b194589039e5e
-  firebase_core: 9efc3ecf689cdbc90f13f4dc58108c83ea46b266
-  firebase_dynamic_links: 9035278f22b422f47d7825ecc225602a22b3c188
-  firebase_messaging: 6bf60adb4b33a848d135e16bc363fb4924f98fba
-  firebase_storage: 942caaa628c22c941bff8af058347cc5c38a70bf
+  firebase_auth: 5e5e0292aaa2dfd306102095f182176700014b51
+  firebase_core: 84a16d041be8bc166b6e00350f89849e06daf9d1
+  firebase_dynamic_links: 92808fc2e4bc18abbced51d298b8888d467a2049
+  firebase_storage: ba775022ffa934f38f3aae7151082ad74b42f0b6
   FirebaseAppCheckInterop: d265d9f4484e7ec1c591086408840fdd383d1213
   FirebaseAuth: c359af98bd703cbf4293eec107a40de08ede6ce6
   FirebaseAuthInterop: 1219bee9b23e6ebe84c256a0d95adab53d11c331
@@ -1505,31 +1469,27 @@ SPEC CHECKSUMS:
   FirebaseDynamicLinks: 192110d77418357fe994f2823a7df7db3ccb15bf
   FirebaseFirestore: 2ccdf893fd7e175aa8ec58faa06338b346d27db8
   FirebaseFirestoreInternal: 004452c4669d5df8869c9f8f7a24ee0009852d5b
-  FirebaseInstallations: 6ef4a1c7eb2a61ee1f74727d7f6ce2e72acf1414
-  FirebaseMessaging: f8a160d99c2c2e5babbbcc90c4a3e15db036aee2
   FirebaseSharedSwift: 302ac5967857ad7e7388b15382d705b8c8d892aa
   FirebaseStorage: 1bf8f80ac3bb02c72844b7350e95e10be7113ef0
   Flutter: cabc95a1d2626b1b06e7179b784ebcf0c0cde467
-  geolocator_apple: 6cbaf322953988e009e5ecb481f07efece75c450
-  GoogleDataTransport: aae35b7ea0c09004c3797d53c8c41f66f219d6a7
+  geolocator_apple: d981750b9f47dbdb02427e1476d9a04397beb8d9
   GoogleUtilities: 26a3abef001b6533cf678d3eb38fd3f614b7872d
   "gRPC-C++": 2fa52b3141e7789a28a737f251e0c45b4cb20a87
   gRPC-Core: a27c294d6149e1c39a7d173527119cfbc3375ce4
   GTMSessionFetcher: 923b710231ad3d6f3f0495ac1ced35421e07d9a6
-  image_picker_ios: c560581cceedb403a6ff17f2f816d7fea1421fc1
+  image_picker_ios: 7fe1ff8e34c1790d6fff70a32484959f563a928a
   leveldb-library: cc8b8f8e013647a295ad3f8cd2ddf49a6f19be19
-  mapbox_maps_flutter: 943324063065b4ef15e146be95ed87f5bae1a6ba
+  mapbox_maps_flutter: a6f69b96ffb8f5b8404e7fceab49555fc5330704
   MapboxCommon: 6008e74b1312a093dec291497a036fc8b47f344f
   MapboxCoreMaps: bd097795c5ae4f002181769e7151474a33ce878a
   MapboxMaps: fc1b2ab98563d0157ba01f6e4a2fd8a8af556d92
   nanopb: fad817b59e0457d11a5dfbde799381cd727c1275
-  path_provider_foundation: 0b743cbb62d8e47eab856f09262bb8c1ddcfe6ba
-  permission_handler_apple: e76247795d700c14ea09e3a2d8855d41ee80a2e6
-  PromisesObjC: f5707f49cb48b9636751c5b2e7d227e43fba9f47
+  path_provider_foundation: bb55f6dbba17d0dccd6737fe6f7f34fbd0376880
+  permission_handler_apple: 3787117e48f80715ff04a3830ca039283d6a4f29
   RecaptchaInterop: 7d1a4a01a6b2cb1610a47ef3f85f0c411434cb21
-  shared_preferences_foundation: fcdcbc04712aee1108ac7fda236f363274528f78
+  shared_preferences_foundation: 9e1978ff2562383bd5676f64ec4e9aa8fa06a6f7
   Turf: aa2ede4298009639d10db36aba1a7ebaad072a5e
-  url_launcher_ios: 5334b05cef931de560670eeae103fd3e431ac3fe
+  url_launcher_ios: 694010445543906933d732453a59da0a173ae33d
 
 PODFILE CHECKSUM: a57f30d18f102dd3ce366b1d62a55ecbef2158e5
 

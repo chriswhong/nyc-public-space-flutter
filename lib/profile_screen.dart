@@ -148,6 +148,57 @@ class ProfileScreen extends StatelessWidget {
             },
             showChevron: false, // No chevron for this button
           ),
+          ProfileButton(
+            text: 'Delete Account',
+            icon: FontAwesomeIcons.trash,
+            color: Colors.red,
+            showChevron: false,
+            onTap: () async {
+              final confirmed = await showDialog<bool>(
+                context: context,
+                builder: (BuildContext context) {
+                  return AlertDialog(
+                    title: const Text('Delete Account'),
+                    content: const Text(
+                      'This will permanently delete your account and all associated data. This action cannot be undone.',
+                    ),
+                    backgroundColor: AppColors.pageBackground,
+                    actions: [
+                      TextButton(
+                        style: AppStyles.buttonStyle,
+                        onPressed: () => Navigator.of(context).pop(false),
+                        child: const Text('Cancel'),
+                      ),
+                      TextButton(
+                        onPressed: () => Navigator.of(context).pop(true),
+                        child: const Text(
+                          'Delete Account',
+                          style: TextStyle(color: Colors.red),
+                        ),
+                      ),
+                    ],
+                  );
+                },
+              );
+
+              if (confirmed == true) {
+                try {
+                  await userProvider.deleteAccount();
+                } catch (e) {
+                  debugPrint('deleteAccount error: $e');
+                  if (context.mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text(
+                          'Unable to delete account. Please sign out, sign in again, and retry.',
+                        ),
+                      ),
+                    );
+                  }
+                }
+              }
+            },
+          ),
         ])
       ],
     );
@@ -388,6 +439,7 @@ class ProfileButton extends StatelessWidget {
   final FaIconData icon;
   final VoidCallback onTap;
   final bool showChevron;
+  final Color? color;
 
   const ProfileButton({
     this.text,
@@ -395,12 +447,14 @@ class ProfileButton extends StatelessWidget {
     required this.icon,
     required this.onTap,
     this.showChevron = true,
+    this.color,
     super.key,
   }) : assert(text != null || textWidget != null,
             'Either text or textWidget must be provided');
 
   @override
   Widget build(BuildContext context) {
+    final effectiveColor = color ?? Colors.black;
     return Material(
       color: Colors.transparent,
       child: InkWell(
@@ -413,15 +467,17 @@ class ProfileButton extends StatelessWidget {
             children: [
               Row(
                 children: [
-                  FaIcon(icon, size: 20),
+                  FaIcon(icon, size: 20, color: effectiveColor),
                   const SizedBox(width: 16),
                   // Use textWidget if provided, otherwise display plain text
                   textWidget ??
-                      Text(text!, style: const TextStyle(fontSize: 16)),
+                      Text(text!,
+                          style: TextStyle(fontSize: 16, color: effectiveColor)),
                 ],
               ),
               if (showChevron)
-                const FaIcon(FontAwesomeIcons.chevronRight, size: 16),
+                FaIcon(FontAwesomeIcons.chevronRight,
+                    size: 16, color: effectiveColor),
             ],
           ),
         ),

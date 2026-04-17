@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:cloud_functions/cloud_functions.dart';
 import 'main.dart';
 
 class UserProvider with ChangeNotifier {
@@ -61,6 +62,17 @@ class UserProvider with ChangeNotifier {
 
   Future<void> signOut() async {
     await FirebaseAuth.instance.signOut();
+    _isAuthenticated = false;
+    _username = null;
+    _isEditor = false;
+    notifyListeners();
+  }
+
+  Future<void> deleteAccount() async {
+    final callable =
+        FirebaseFunctions.instance.httpsCallable('deleteAccount');
+    await callable.call();
+
     _isAuthenticated = false;
     _username = null;
     _isEditor = false;

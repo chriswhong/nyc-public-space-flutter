@@ -1,3 +1,11 @@
+## 1.7.2
+
+- Add account deletion feature (App Store Guideline 5.1.1(v) compliance)
+
+## 1.7.1
+
+- Remove notifications
+
 ## 1.7.0
 
 - Admin moderation screens for reviewing pending image uploads and edits

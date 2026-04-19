@@ -346,10 +346,10 @@ packages:
     dependency: transitive
     description:
       name: flutter_plugin_android_lifecycle
-      sha256: "9ee02950848f61c4129af3d6ec84a1cfc0e47931abc746b03e7a3bc3e8ff6eda"
+      sha256: "38d1c268de9097ff59cf0e844ac38759fc78f76836d37edad06fa21e182055a0"
       url: "https://pub.dev"
     source: hosted
-    version: "2.0.22"
+    version: "2.0.34"
   flutter_svg:
     dependency: "direct main"
     description:
@@ -604,10 +604,10 @@ packages:
     dependency: "direct main"
     description:
       name: mapbox_maps_flutter
-      sha256: bf4107e6bd24932ef9d96d4fc896534ee90fcae19846bbae075bb1b032f8e36e
+      sha256: "77c1ef9f0064c1603f61ea5ad590225b4bbb7b7f5a51b0bfa84a60639e83659d"
       url: "https://pub.dev"
     source: hosted
-    version: "2.2.1"
+    version: "2.21.1"
   matcher:
     dependency: transitive
     description:

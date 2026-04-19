@@ -253,11 +253,8 @@ class _MapHandlerState extends State<MapHandler> {
 
     mapboxMap
         .queryRenderedFeatures(
-            RenderedQueryGeometry(
-                value: json.encode(ScreenCoordinate(
-                        x: context.touchPosition.x, y: context.touchPosition.y)
-                    .encode()),
-                type: Type.SCREEN_COORDINATE),
+            RenderedQueryGeometry.fromScreenCoordinate(ScreenCoordinate(
+                x: context.touchPosition.x, y: context.touchPosition.y)),
             RenderedQueryOptions(layerIds: [
               'park-centroids',
               'park-marker',

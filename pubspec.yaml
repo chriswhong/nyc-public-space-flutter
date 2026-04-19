@@ -31,7 +31,7 @@ dependencies:
   flutter:
     sdk: flutter
   sliding_up_panel: ^2.0.0+1
-  mapbox_maps_flutter: ^2.2.1
+  mapbox_maps_flutter: 2.21.1
   permission_handler: ^11.0.0
   font_awesome_flutter: ^11.0.0
   geolocator: ^9.0.0

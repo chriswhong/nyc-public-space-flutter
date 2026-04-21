@@ -54,29 +54,7 @@ class MapScreenState extends State<MapScreen> {
 
   void _onLocalResultSelected(PublicSpaceFeature? geojsonFeature) {
     if (geojsonFeature != null) {
-      // fly map to the selected feature, centered in the visible area between
-      // the search bar and the panel at its default 40% open height.
-      final geometry = geojsonFeature.geometry;
-      if (geometry != null) {
-        final mq = MediaQuery.of(context);
-        final double topInset = mq.viewPadding.top + 64; // safe area + search bar
-        final double bottomInset = mq.size.height * 0.40; // panel at 40%
-
-        mapboxMap?.flyTo(
-          CameraOptions(
-            zoom: 15,
-            center: Point.fromJson(geometry.toJson()),
-            padding: MbxEdgeInsets(
-              top: topInset,
-              right: 0,
-              bottom: bottomInset,
-              left: 0,
-            ),
-          ),
-          MapAnimationOptions(),
-        );
-      }
-
+      _flyToFeature(geojsonFeature);
       _onFeatureSelected(geojsonFeature);
     }
   }
@@ -196,6 +174,37 @@ class MapScreenState extends State<MapScreen> {
     } finally {
       if (mounted) _isAnimating = false;
     }
+  }
+
+  /// Called externally (e.g. from the activity feed) to select a space,
+  /// fly the map to it, and open the panel.
+  ///
+  /// Opens the panel immediately, then defers flyTo to a post-frame callback
+  /// so it fires only after the map tab is visible to the native renderer.
+  void selectFeature(PublicSpaceFeature feature) {
+    _onFeatureSelected(feature);
+    Future.delayed(const Duration(milliseconds: 400), () {
+      if (mounted) _flyToFeature(feature);
+    });
+  }
+
+  void _flyToFeature(PublicSpaceFeature feature) {
+    final mq = MediaQuery.of(context);
+    final double topInset = mq.viewPadding.top + 64;
+    final double bottomInset = mq.size.height * 0.40;
+    mapboxMap?.flyTo(
+      CameraOptions(
+        zoom: 15,
+        center: Point.fromJson(feature.geometry.toJson()),
+        padding: MbxEdgeInsets(
+          top: topInset,
+          right: 0,
+          bottom: bottomInset,
+          left: 0,
+        ),
+      ),
+      MapAnimationOptions(),
+    );
   }
 
   void _onFeatureSelected(dynamic geojsonFeature) {

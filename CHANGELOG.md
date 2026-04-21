@@ -1,3 +1,7 @@
+## 1.7.3
+
+- Pin mapbox_maps_flutter to 2.21.1 to fix iOS build
+
 ## 1.7.2
 
 - Add account deletion feature (App Store Guideline 5.1.1(v) compliance)

@@ -17,6 +17,7 @@ import 'panel_action_buttons.dart';
 import 'panel_location_section.dart';
 import 'panel_link_section.dart';
 import '../feedback_screen.dart';
+import 'panel_activity_section.dart';
 
 class PanelHandler extends StatefulWidget {
   final PublicSpaceFeature? selectedFeature;
@@ -73,7 +74,7 @@ class _PanelHandlerState extends State<PanelHandler> {
           .collection('images')
           .where('spaceId',
               isEqualTo: widget.selectedFeature!.properties.firestoreId)
-          .where('status', isNotEqualTo: 'rejected')
+          .where('status', isEqualTo: 'approved')
           .orderBy('timestamp', descending: false)
           .get();
 
@@ -242,6 +243,29 @@ class _PanelHandlerState extends State<PanelHandler> {
                             amenities: _panelContent!.properties.amenities,
                             equipment: _panelContent!.properties.equipment,
                             onEditTap: _handleEdit),
+                        const Divider(color: AppColors.gray, thickness: 0.5),
+                        Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 8.0),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Text(
+                                'Recent Contributions',
+                                style: TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 14,
+                                ),
+                              ),
+                              const SizedBox(height: 8),
+                              PanelActivitySection(
+                                spaceId:
+                                    _panelContent!.properties.firestoreId,
+                                spaceName:
+                                    _panelContent!.properties.name ?? '',
+                              ),
+                            ],
+                          ),
+                        ),
                         const Divider(color: AppColors.gray, thickness: 0.5),
                         SizedBox(height: 10),
                         ElevatedButton(

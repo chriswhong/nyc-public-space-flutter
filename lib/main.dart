@@ -14,6 +14,7 @@ import 'colors.dart';
 import 'map_screen.dart';
 import 'about_screen.dart';
 import 'profile_screen.dart';
+import 'activity_feed_screen.dart';
 import 'public_space_properties.dart';
 import 'user_provider.dart';
 import 'username_input_screen.dart';
@@ -175,6 +176,7 @@ class MyApp extends StatelessWidget {
 }
 
 final GlobalKey<_HomeScreenState> homeScreenKey = GlobalKey<_HomeScreenState>();
+final GlobalKey<MapScreenState> mapScreenKey = GlobalKey<MapScreenState>();
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -200,8 +202,9 @@ class _HomeScreenState extends State<HomeScreen> {
 
     // Initialize the list of pages with the feedback tap handler
     _pages = <Widget>[
-      MapScreen(onReportAnIssue: _handleReportAnIssue),
+      MapScreen(key: mapScreenKey, onReportAnIssue: _handleReportAnIssue),
       const AboutScreen(),
+      ActivityFeedScreen(onSpaceSelected: _selectSpaceOnMap),
       const ProfileScreen(),
     ];
   }
@@ -228,8 +231,21 @@ class _HomeScreenState extends State<HomeScreen> {
   void switchToMapTab() {
     print('switching to map tab');
     setState(() {
-      _selectedIndex = 0; // Index of the Profile tab
+      _selectedIndex = 0;
     });
+  }
+
+  void _selectSpaceOnMap(String spaceId) {
+    final features =
+        Provider.of<GeoJsonProvider>(context, listen: false).features;
+    try {
+      final feature =
+          features.firstWhere((f) => f.properties.firestoreId == spaceId);
+      // Call selectFeature before switching tabs so flyTo fires while the
+      // map controller is already warm (IndexedStack keeps it mounted).
+      mapScreenKey.currentState?.selectFeature(feature);
+    } catch (_) {}
+    setState(() => _selectedIndex = 0);
   }
 
   @override
@@ -255,27 +271,32 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
           child: BottomNavigationBar(
             backgroundColor: Colors.white,
+            type: BottomNavigationBarType.fixed,
             items: const <BottomNavigationBarItem>[
               BottomNavigationBarItem(
                 icon: Padding(
-                  padding: EdgeInsets.only(
-                      top: 8.0, bottom: 4.0), // Add padding above the icon
+                  padding: EdgeInsets.only(top: 8.0, bottom: 4.0),
                   child: FaIcon(FontAwesomeIcons.map),
                 ),
                 label: 'Map',
               ),
               BottomNavigationBarItem(
                 icon: Padding(
-                  padding: EdgeInsets.only(
-                      top: 8.0, bottom: 4.0), // Add padding above the icon
+                  padding: EdgeInsets.only(top: 8.0, bottom: 4.0),
                   child: FaIcon(FontAwesomeIcons.circleInfo),
                 ),
                 label: 'About',
               ),
               BottomNavigationBarItem(
                 icon: Padding(
-                  padding: EdgeInsets.only(
-                      top: 8.0, bottom: 4.0), // Add padding above the icon
+                  padding: EdgeInsets.only(top: 8.0, bottom: 4.0),
+                  child: FaIcon(FontAwesomeIcons.clockRotateLeft),
+                ),
+                label: 'Activity',
+              ),
+              BottomNavigationBarItem(
+                icon: Padding(
+                  padding: EdgeInsets.only(top: 8.0, bottom: 4.0),
                   child: FaIcon(FontAwesomeIcons.user),
                 ),
                 label: 'Profile',

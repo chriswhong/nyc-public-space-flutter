@@ -37,7 +37,7 @@ class MapScreenState extends State<MapScreen> {
   // Panel state
   bool _panelVisible = false;  // controls whether SlidingUpPanel is in the tree
   bool _panelExpanded = false; // true when panel is near max (for scrim)
-  double _maxPanelHeight = 600.0; // cached from LayoutBuilder, updated each build
+  double _snapPoint40 = 0.35; // cached snap position, updated each build
 
   // Map controls state
   bool _tracking = false;
@@ -224,9 +224,7 @@ class MapScreenState extends State<MapScreen> {
   }
 
   void _animatePanelToDefault() {
-    final screenHeight = MediaQuery.of(context).size.height;
-    final defaultPos = ((screenHeight * 0.40) - 106) / (_maxPanelHeight - 106);
-    _pc.animatePanelToPosition(defaultPos.clamp(0.0, 1.0));
+    _pc.animatePanelToPosition(_snapPoint40.clamp(0.0, 1.0));
   }
 
   void _closePanel() {
@@ -272,11 +270,10 @@ class MapScreenState extends State<MapScreen> {
     final double availableHeight = constraints.maxHeight;
     final double maxHeight = (availableHeight - mq.viewPadding.top - 8)
         .clamp(availableHeight * 0.85, availableHeight * 0.97);
-    _maxPanelHeight = maxHeight; // cache for _animatePanelToDefault
-
     // Intermediate snap at 40% of screen height (relative to min/max range)
     final double snapPoint40 =
         ((mq.size.height * 0.40) - 106) / (maxHeight - 106);
+    _snapPoint40 = snapPoint40; // cache so _animatePanelToDefault uses same value
 
     return Stack(
       children: <Widget>[

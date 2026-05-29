@@ -130,7 +130,7 @@ void main() {
           ChangeNotifierProvider(
             create: (_) {
               final favoritesProvider = FavoritesProvider();
-              favoritesProvider.load();
+              favoritesProvider.initialize();
               return favoritesProvider;
             },
           ),
@@ -240,10 +240,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
   void _handleFavoriteTap(FavoriteItem item) {
     setState(() => _selectedIndex = 0);
-    // Wait one frame for the map tab to be active before flying
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      mapScreenKey.currentState?.flyToFavorite(item);
-    });
+    mapScreenKey.currentState?.flyToFavorite(item);
   }
 
   void switchToMapTab() {

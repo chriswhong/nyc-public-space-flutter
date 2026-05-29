@@ -1,6 +1,6 @@
-import 'dart:convert';
 import 'package:flutter/material.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'public_space_properties.dart';
 
 class FavoriteItem {
@@ -17,6 +17,15 @@ class FavoriteItem {
     required this.lat,
     required this.lng,
   });
+
+  String? get borough {
+    if (lat >= 40.4774 && lat <= 40.6501 && lng >= -74.2591 && lng <= -74.0341) return 'Staten Island';
+    if (lat >= 40.6999 && lat <= 40.8816 && lng >= -74.0479 && lng <= -73.9067) return 'Manhattan';
+    if (lat >= 40.7855 && lat <= 40.9176 && lng >= -73.9339 && lng <= -73.7654) return 'Bronx';
+    if (lat >= 40.5707 && lat <= 40.7395 && lng >= -74.0421 && lng <= -73.8333) return 'Brooklyn';
+    if (lat >= 40.5431 && lat <= 40.8007 && lng >= -73.9625 && lng <= -73.7004) return 'Queens';
+    return null;
+  }
 
   factory FavoriteItem.fromFeature(PublicSpaceFeature feature) {
     return FavoriteItem(
@@ -46,7 +55,6 @@ class FavoriteItem {
 }
 
 class FavoritesProvider extends ChangeNotifier {
-  static const _prefsKey = 'favorites_v1';
   List<FavoriteItem> _favorites = [];
 
   List<FavoriteItem> get favorites => List.unmodifiable(_favorites);
@@ -56,40 +64,54 @@ class FavoritesProvider extends ChangeNotifier {
   bool isFavorite(String firestoreId) =>
       _favorites.any((f) => f.firestoreId == firestoreId);
 
-  Future<void> load() async {
-    final prefs = await SharedPreferences.getInstance();
-    final jsonStr = prefs.getString(_prefsKey);
-    if (jsonStr != null) {
-      final list = jsonDecode(jsonStr) as List;
-      _favorites = list
-          .map((e) => FavoriteItem.fromJson(e as Map<String, dynamic>))
-          .toList();
-      notifyListeners();
-    }
+  CollectionReference<Map<String, dynamic>>? _favoritesCollection(String uid) =>
+      FirebaseFirestore.instance
+          .collection('users')
+          .doc(uid)
+          .collection('favorites');
+
+  void initialize() {
+    FirebaseAuth.instance.authStateChanges().listen((user) async {
+      if (user != null) {
+        await _load(user.uid);
+      } else {
+        _favorites = [];
+        notifyListeners();
+      }
+    });
+  }
+
+  Future<void> _load(String uid) async {
+    final snapshot = await _favoritesCollection(uid)!.get();
+    _favorites = snapshot.docs
+        .map((doc) => FavoriteItem.fromJson(doc.data()))
+        .toList();
+    notifyListeners();
   }
 
   Future<void> toggle(PublicSpaceFeature feature) async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) return;
+
     final id = feature.properties.firestoreId;
     if (isFavorite(id)) {
       _favorites.removeWhere((f) => f.firestoreId == id);
+      notifyListeners();
+      await _favoritesCollection(user.uid)!.doc(id).delete();
     } else {
-      _favorites.add(FavoriteItem.fromFeature(feature));
+      final item = FavoriteItem.fromFeature(feature);
+      _favorites.add(item);
+      notifyListeners();
+      await _favoritesCollection(user.uid)!.doc(id).set(item.toJson());
     }
-    notifyListeners();
-    await _persist();
   }
 
   Future<void> remove(String firestoreId) async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) return;
+
     _favorites.removeWhere((f) => f.firestoreId == firestoreId);
     notifyListeners();
-    await _persist();
-  }
-
-  Future<void> _persist() async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setString(
-      _prefsKey,
-      jsonEncode(_favorites.map((f) => f.toJson()).toList()),
-    );
+    await _favoritesCollection(user.uid)!.doc(firestoreId).delete();
   }
 }

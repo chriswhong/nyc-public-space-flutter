@@ -195,14 +195,10 @@ class _FavoriteListItem extends StatelessWidget {
           style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 15),
         ),
         subtitle: Text(
-          typeLabel,
+          item.borough != null ? '$typeLabel · ${item.borough}' : typeLabel,
           style: TextStyle(fontSize: 12, color: Colors.grey[600]),
         ),
-        trailing: const FaIcon(
-          FontAwesomeIcons.locationArrow,
-          size: 14,
-          color: AppColors.gray,
-        ),
+        trailing: null,
       ),
     );
   }

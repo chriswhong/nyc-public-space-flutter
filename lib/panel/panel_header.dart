@@ -4,10 +4,16 @@ import '../colors.dart';
 class PanelHeader extends StatelessWidget {
   final String name;
   final String type;
+  final bool isFavorite;
+  final VoidCallback onFavoriteTap;
+  final int favoriteCount;
 
   const PanelHeader({
     required this.name,
     required this.type,
+    required this.isFavorite,
+    required this.onFavoriteTap,
+    required this.favoriteCount,
     super.key,
   });
 
@@ -75,6 +81,26 @@ class PanelHeader extends StatelessWidget {
           typeLabel,
           style: const TextStyle(fontSize: 12),
         ),
+        const SizedBox(width: 8),
+        GestureDetector(
+          onTap: onFavoriteTap,
+          child: Icon(
+            isFavorite ? Icons.favorite : Icons.favorite_border,
+            size: 22,
+            color: isFavorite ? Colors.pink[300] : Colors.grey[400],
+          ),
+        ),
+        if (favoriteCount > 0) ...[
+          const SizedBox(width: 4),
+          Text(
+            '$favoriteCount',
+            style: TextStyle(
+              fontSize: 15,
+              fontWeight: FontWeight.bold,
+              color: isFavorite ? Colors.pink[300] : Colors.grey[400],
+            ),
+          ),
+        ],
       ],
     );
   }

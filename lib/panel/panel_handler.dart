@@ -42,12 +42,23 @@ class _PanelHandlerState extends State<PanelHandler> {
   late PublicSpaceFeature? _panelContent;
   List<Map<String, dynamic>> imageList = [];
   bool _isLoading = true;
+  int _favoriteCount = 0;
+
+  // Fields fetched from Firestore (not in slim GeoJSON)
+  String? _fetchedDescription;
+  String? _fetchedLocation;
+  Uri? _fetchedUrl;
+  List<String> _fetchedDetails = [];
+  List<String> _fetchedAmenities = [];
+  List<String> _fetchedEquipment = [];
 
   @override
   void initState() {
     super.initState();
     _panelContent = widget.selectedFeature;
     fetchImages();
+    fetchFavoriteCount();
+    fetchSpaceDetails();
   }
 
   @override
@@ -58,8 +69,17 @@ class _PanelHandlerState extends State<PanelHandler> {
         _panelContent = widget.selectedFeature;
         _isLoading = true;
         imageList = [];
+        _favoriteCount = 0;
+        _fetchedDescription = null;
+        _fetchedLocation = null;
+        _fetchedUrl = null;
+        _fetchedDetails = [];
+        _fetchedAmenities = [];
+        _fetchedEquipment = [];
       });
       fetchImages();
+      fetchFavoriteCount();
+      fetchSpaceDetails();
     }
   }
 
@@ -112,6 +132,57 @@ class _PanelHandlerState extends State<PanelHandler> {
         _isLoading = false;
       });
     }
+  }
+
+  Future<void> fetchFavoriteCount() async {
+    final id = widget.selectedFeature?.properties.firestoreId;
+    if (id == null) return;
+    try {
+      final snapshot = await FirebaseFirestore.instance
+          .collectionGroup('favorites')
+          .where('firestoreId', isEqualTo: id)
+          .count()
+          .get();
+      if (mounted) {
+        setState(() {
+          _favoriteCount = snapshot.count ?? 0;
+        });
+      }
+    } catch (e) {
+      print('fetchFavoriteCount error: $e');
+    }
+  }
+
+  Future<void> fetchSpaceDetails() async {
+    final id = widget.selectedFeature?.properties.firestoreId;
+    if (id == null) return;
+    try {
+      final doc = await FirebaseFirestore.instance
+          .collection('public-spaces-main')
+          .doc(id)
+          .get();
+      if (!mounted || !doc.exists) return;
+      final data = doc.data()!;
+      setState(() {
+        _fetchedDescription = data['description'] as String?;
+        _fetchedLocation = data['location'] as String?;
+        final rawUrl = data['url'] as String?;
+        _fetchedUrl = (rawUrl != null && rawUrl.isNotEmpty)
+            ? Uri.tryParse(rawUrl)
+            : null;
+        _fetchedDetails = _toStringList(data['details']);
+        _fetchedAmenities = _toStringList(data['amenities']);
+        _fetchedEquipment = _toStringList(data['equipment']);
+      });
+    } catch (e) {
+      print('fetchSpaceDetails error: $e');
+    }
+  }
+
+  List<String> _toStringList(dynamic value) {
+    if (value == null) return [];
+    if (value is List) return List<String>.from(value);
+    return [];
   }
 
   Future<String> _getDownloadUrl(
@@ -198,9 +269,29 @@ class _PanelHandlerState extends State<PanelHandler> {
               children: [
                 Align(
                   alignment: Alignment.centerLeft,
-                  child: PanelHeader(
-                    name: _panelContent!.properties.name ?? '',
-                    type: _panelContent!.properties.type,
+                  child: Consumer<FavoritesProvider>(
+                    builder: (context, favProvider, _) {
+                      final isFav = favProvider
+                          .isFavorite(_panelContent!.properties.firestoreId);
+                      return PanelHeader(
+                        name: _panelContent!.properties.name ?? '',
+                        type: _panelContent!.properties.type,
+                        isFavorite: isFav,
+                        favoriteCount: _favoriteCount,
+                        onFavoriteTap: () {
+                          final user = FirebaseAuth.instance.currentUser;
+                          if (user == null) {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                  builder: (context) => const SignInScreen()),
+                            );
+                          } else {
+                            favProvider.toggle(_panelContent!);
+                          }
+                        },
+                      );
+                    },
                   ),
                 ),
                 const Divider(color: AppColors.gray, thickness: 0.5),
@@ -211,11 +302,11 @@ class _PanelHandlerState extends State<PanelHandler> {
                         : const NeverScrollableScrollPhysics(),
                     child: Column(
                       children: [
-                        if (_panelContent!.properties.description?.isNotEmpty ==
+                        if ((_fetchedDescription ?? _panelContent!.properties.description)?.isNotEmpty ==
                             true)
                           Padding(
                             padding: const EdgeInsets.symmetric(vertical: 4.0),
-                            child: Text(_panelContent!.properties.description!),
+                            child: Text(_fetchedDescription ?? _panelContent!.properties.description!),
                           ),
                         const Divider(color: AppColors.gray, thickness: 0.5),
                         PanelImageGallery(
@@ -224,35 +315,27 @@ class _PanelHandlerState extends State<PanelHandler> {
                           onAddPhoto: _handleAddPhoto,
                         ),
                         const Divider(color: AppColors.gray, thickness: 0.5),
-                        Consumer<FavoritesProvider>(
-                          builder: (context, favProvider, _) {
-                            return PanelActionButtons(
-                              onOpenMaps: _handleOpenMaps,
-                              onEdit: _handleEdit,
-                              onSubmitPhoto: _handleAddPhoto,
-                              isFavorited: favProvider.isFavorite(
-                                  _panelContent!.properties.firestoreId),
-                              onToggleFavorite: () =>
-                                  favProvider.toggle(_panelContent!),
-                            );
-                          },
+                        PanelActionButtons(
+                          onOpenMaps: _handleOpenMaps,
+                          onEdit: _handleEdit,
+                          onSubmitPhoto: _handleAddPhoto,
                         ),
                         const Divider(color: AppColors.gray, thickness: 0.5),
                         PanelLocationSection(
-                          location: _panelContent!.properties.location,
+                          location: _fetchedLocation ?? _panelContent!.properties.location,
                           onTap: _handleOpenMaps,
                         ),
                         const Divider(color: AppColors.gray, thickness: 0.5),
                         PanelLinkSection(
-                          url: _panelContent!.properties.url,
+                          url: _fetchedUrl ?? _panelContent!.properties.url,
                           onTap: () =>
-                              launchUrl(_panelContent!.properties.url!),
+                              launchUrl((_fetchedUrl ?? _panelContent!.properties.url)!),
                         ),
                         const Divider(color: AppColors.gray, thickness: 0.5),
                         AttributeDisplay(
-                            details: _panelContent!.properties.details,
-                            amenities: _panelContent!.properties.amenities,
-                            equipment: _panelContent!.properties.equipment,
+                            details: _fetchedDetails.isNotEmpty ? _fetchedDetails : _panelContent!.properties.details,
+                            amenities: _fetchedAmenities.isNotEmpty ? _fetchedAmenities : _panelContent!.properties.amenities,
+                            equipment: _fetchedEquipment.isNotEmpty ? _fetchedEquipment : _panelContent!.properties.equipment,
                             onEditTap: _handleEdit),
                         const Divider(color: AppColors.gray, thickness: 0.5),
                         Padding(
@@ -316,7 +399,7 @@ class _PanelHandlerState extends State<PanelHandler> {
           ),
         ),
         Positioned(
-          right: 10,
+          right: 4,
           top: 10,
           child: IconButton(
             icon: const Icon(Icons.close, color: AppColors.dark),

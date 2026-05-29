@@ -4,7 +4,7 @@ import 'package:mapbox_maps_flutter/mapbox_maps_flutter.dart';
 
 class PublicSpaceProperties {
   final String firestoreId;
-  final String space_id;
+  final String? space_id;
   final String type;
   final String? name;
   final String? location;
@@ -17,7 +17,7 @@ class PublicSpaceProperties {
   // constructor to initialize the properties
   PublicSpaceProperties({
     required this.firestoreId,
-    required this.space_id,
+    this.space_id,
     required this.name,
     required this.type,
     required this.location,
@@ -106,15 +106,21 @@ class PublicSpaceFeature {
                 json['properties']['url'].isNotEmpty
             ? Uri.parse(json['properties']['url'])
             : null,
-        description: json['properties']['description'], // Parse the URL
+        description: json['properties']['description'],
 details: json['properties']['details'] != null
-    ? List<String>.from(jsonDecode(json['properties']['details']))
+    ? (json['properties']['details'] is String
+        ? List<String>.from(jsonDecode(json['properties']['details']))
+        : List<String>.from(json['properties']['details']))
     : [],
 amenities: json['properties']['amenities'] != null
-    ? List<String>.from(jsonDecode(json['properties']['amenities']))
+    ? (json['properties']['amenities'] is String
+        ? List<String>.from(jsonDecode(json['properties']['amenities']))
+        : List<String>.from(json['properties']['amenities']))
     : [],
 equipment: json['properties']['equipment'] != null
-    ? List<String>.from(jsonDecode(json['properties']['equipment']))
+    ? (json['properties']['equipment'] is String
+        ? List<String>.from(jsonDecode(json['properties']['equipment']))
+        : List<String>.from(json['properties']['equipment']))
     : [],
       ),
     );

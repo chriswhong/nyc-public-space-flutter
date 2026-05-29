@@ -230,8 +230,6 @@ class MapScreenState extends State<MapScreen> {
   }
 
   Future<void> flyToFavorite(FavoriteItem item) async {
-    if (mapboxMap == null) return;
-
     // Look up full feature so the panel can open
     final geoJsonProvider =
         Provider.of<GeoJsonProvider>(context, listen: false);
@@ -243,13 +241,15 @@ class MapScreenState extends State<MapScreen> {
       }
     }
 
-    // Open the panel first so the padding used for flyTo matches the actual
-    // panel height that will be visible when the camera lands.
     if (feature != null) {
       _onFeatureSelected(feature);
     }
 
-    // Fly with _isAnimating = true so the move listener doesn't collapse the panel.
+    // Defer flyTo so the native map renderer is ready after the tab switch,
+    // same pattern as selectFeature.
+    await Future.delayed(const Duration(milliseconds: 400));
+    if (!mounted || mapboxMap == null) return;
+
     final mq = MediaQuery.of(context);
     _isAnimating = true;
     try {
@@ -336,6 +336,7 @@ class MapScreenState extends State<MapScreen> {
           markerFeature: markerFeature,
           onCameraChangeListener: _onCameraChanged,
           favorites: Provider.of<FavoritesProvider>(context).favorites,
+          features: Provider.of<GeoJsonProvider>(context).features,
         ),
         _buildBottomInfoPanel(),
         // Scrim — fades in when panel is fully expanded

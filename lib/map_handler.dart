@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
@@ -9,6 +10,7 @@ import 'package:flutter/services.dart';
 import 'package:nyc_public_space_map/public_space_properties.dart';
 import 'package:geolocator/geolocator.dart' as geo;
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'favorites_provider.dart';
 
 Future<Uint8List> getFontAwesomeIconAsBytes({
   FaIconData icon = FontAwesomeIcons.mapMarkerAlt,
@@ -58,6 +60,8 @@ class MapHandler extends StatefulWidget {
   final Uint8List miscImage;
   final Feature? markerFeature;
   final void Function(CameraChangedEventData)? onCameraChangeListener;
+  final List<FavoriteItem> favorites;
+  final List<PublicSpaceFeature> features;
 
   const MapHandler(
       {super.key,
@@ -71,7 +75,9 @@ class MapHandler extends StatefulWidget {
       required this.stpImage,
       required this.miscImage,
       required this.markerFeature,
-      this.onCameraChangeListener});
+      this.onCameraChangeListener,
+      this.favorites = const [],
+      this.features = const []});
 
   @override
   _MapHandlerState createState() => _MapHandlerState();
@@ -79,16 +85,50 @@ class MapHandler extends StatefulWidget {
 
 class _MapHandlerState extends State<MapHandler> {
   late MapboxMap mapboxMap;
-  PointAnnotationManager? pointAnnotationManager;
-
   PointAnnotationManager? markerPointAnnotationManager;
+  PointAnnotationManager? heartAnnotationManager;
+  PointAnnotationManager? heartSelectedAnnotationManager;
+
   Uint8List? _iconBytes;
+  Uint8List? _heartBadgeBytes;
+
+  double _heartOpacity = 0.0; // hidden until zoom >= 13
+  Timer? _zoomDebounceTimer;
+  bool _sourceAdded = false;
 
   @override
   void initState() {
     super.initState();
-
     _loadFontAwesomeIcon();
+    _loadHeartBadge();
+  }
+
+  @override
+  void dispose() {
+    _zoomDebounceTimer?.cancel();
+    super.dispose();
+  }
+
+  void _handleCameraChange(CameraChangedEventData event) {
+    widget.onCameraChangeListener?.call(event);
+
+    _zoomDebounceTimer?.cancel();
+    _zoomDebounceTimer = Timer(const Duration(milliseconds: 50), () async {
+      if (!mounted) return;
+      final state = await mapboxMap.getCameraState();
+      if (!mounted) return;
+      final zoom = state.zoom;
+      final newOpacity = zoom < 13.1
+          ? 0.0
+          : zoom > 13.2
+              ? 1.0
+              : (zoom - 13.0) / 0.1;
+      if ((newOpacity - _heartOpacity).abs() > 0.02) {
+        _heartOpacity = newOpacity;
+        await _updateHeartAnnotations();
+        await _updateSelectedHeartAnnotation();
+      }
+    });
   }
 
   Future<void> _loadFontAwesomeIcon() async {
@@ -97,10 +137,97 @@ class _MapHandlerState extends State<MapHandler> {
       size: 64,
       color: Colors.red,
     );
-
     setState(() {
       _iconBytes = bytes;
     });
+  }
+
+  Future<void> _loadHeartBadge() async {
+    const double size = 48;
+    const double iconSize = 26;
+
+    final recorder = ui.PictureRecorder();
+    final canvas = Canvas(recorder);
+
+    // Filled circle background
+    canvas.drawCircle(
+      Offset(size / 2, size / 2),
+      size / 2,
+      Paint()..color = const Color(0xFFE53935),
+    );
+    // White border for contrast
+    canvas.drawCircle(
+      Offset(size / 2, size / 2),
+      size / 2 - 1.5,
+      Paint()
+        ..color = Colors.white
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 3,
+    );
+
+    // White heart icon centered in the circle
+    final textPainter = TextPainter(textDirection: TextDirection.ltr);
+    textPainter.text = TextSpan(
+      text: String.fromCharCode(FontAwesomeIcons.solidHeart.codePoint),
+      style: TextStyle(
+        fontSize: iconSize,
+        fontFamily: FontAwesomeIcons.solidHeart.fontFamily,
+        package: FontAwesomeIcons.solidHeart.fontPackage,
+        color: Colors.white,
+      ),
+    );
+    textPainter.layout();
+    textPainter.paint(
+      canvas,
+      Offset((size - textPainter.width) / 2, (size - textPainter.height) / 2),
+    );
+
+    final picture = recorder.endRecording();
+    final image = await picture.toImage(size.toInt(), size.toInt());
+    final bytes = await image.toByteData(format: ui.ImageByteFormat.png);
+
+    _heartBadgeBytes = bytes!.buffer.asUint8List();
+    // Re-draw badges now that the image is ready (favorites may already be set)
+    _updateHeartAnnotations();
+  }
+
+  // Normal-size heart badges for all favorited features except the selected one.
+  Future<void> _updateHeartAnnotations() async {
+    if (heartAnnotationManager == null || _heartBadgeBytes == null) return;
+    await heartAnnotationManager!.deleteAll();
+
+    final selectedId = widget.selectedFeature?.properties.firestoreId;
+    for (final item in widget.favorites) {
+      if (item.firestoreId == selectedId) continue; // handled by selected manager
+      await heartAnnotationManager!.create(PointAnnotationOptions(
+        geometry: Point(coordinates: Position(item.lng, item.lat)),
+        image: _heartBadgeBytes,
+        iconSize: 1.0,
+        iconAnchor: IconAnchor.BOTTOM,
+        iconOffset: [10.0, -23.0],
+        iconOpacity: _heartOpacity,
+      ));
+    }
+  }
+
+  // Scaled heart badge for the selected feature (matches 1.5× enlarged marker).
+  Future<void> _updateSelectedHeartAnnotation() async {
+    if (heartSelectedAnnotationManager == null || _heartBadgeBytes == null) return;
+    await heartSelectedAnnotationManager!.deleteAll();
+
+    final selected = widget.selectedFeature;
+    if (selected == null) return;
+    final isFav = widget.favorites.any((f) => f.firestoreId == selected.properties.firestoreId);
+    if (!isFav) return;
+
+    await heartSelectedAnnotationManager!.create(PointAnnotationOptions(
+      geometry: selected.geometry,
+      image: _heartBadgeBytes,
+      iconSize: 1.5,
+      iconAnchor: IconAnchor.BOTTOM,
+      iconOffset: [9.0, -24.0],
+      iconOpacity: 1.0,
+    ));
   }
 
   // Detect changes in selectedFeature and update the map accordingly
@@ -109,7 +236,26 @@ class _MapHandlerState extends State<MapHandler> {
     super.didUpdateWidget(oldWidget);
 
     if (widget.selectedFeature != oldWidget.selectedFeature) {
-      _updateAnnotations(widget.selectedFeature);
+      _updateSelectedLayer(widget.selectedFeature?.properties.firestoreId);
+      _updateHeartAnnotations();
+      _updateSelectedHeartAnnotation();
+    }
+
+    final oldFeatureCount = oldWidget.features.length;
+    final newFeatureCount = widget.features.length;
+    if (oldFeatureCount != newFeatureCount && widget.features.isNotEmpty) {
+      if (!_sourceAdded) {
+        _addSpaceSourceAndLayers(widget.features);
+      } else {
+        _updateSpaceSourceData(widget.features);
+      }
+    }
+
+    final oldIds = oldWidget.favorites.map((f) => f.firestoreId).toSet();
+    final newIds = widget.favorites.map((f) => f.firestoreId).toSet();
+    if (!oldIds.containsAll(newIds) || !newIds.containsAll(oldIds)) {
+      _updateHeartAnnotations();
+      _updateSelectedHeartAnnotation();
     }
 
     if (jsonEncode(widget.markerFeature?.toJson()) !=
@@ -150,44 +296,188 @@ class _MapHandlerState extends State<MapHandler> {
     }
   }
 
-  // Method to add annotation for the active feature
-  void _updateAnnotations(PublicSpaceFeature? feature) async {
-    // Clear any existing annotations
-    pointAnnotationManager?.deleteAll();
-    if (feature == null) {
-      return; // Exit early if feature is null
-    }
+  void _updateSelectedLayer(String? firestoreId) {
+    if (!_sourceAdded) return;
+    final filter = firestoreId != null
+        ? ['==', ['get', 'firestoreId'], firestoreId]
+        : ['==', ['get', 'firestoreId'], ''];
+    mapboxMap.style.setStyleLayerProperty(
+      'spaces-selected',
+      'filter',
+      jsonEncode(filter),
+    );
+  }
 
-    // Ensure pointAnnotationManager is ready
-    if (pointAnnotationManager != null) {
-      // Select image based on the feature type
-      Uint8List selectedImage;
-      if (feature.properties.type == 'park') {
-        selectedImage = widget.parkImage;
-      } else if (feature.properties.type == 'wpaa') {
-        selectedImage = widget.wpaaImage;
-      } else if (feature.properties.type == 'pops') {
-        selectedImage = widget.popsImage;
-      } else if (feature.properties.type == 'plaza') {
-        selectedImage = widget.plazaImage;
-      } else if (feature.properties.type == 'stp') {
-        selectedImage = widget.stpImage;
-      } else {
-        selectedImage = widget.miscImage; // Fallback to an empty image
+  Future<void> _addStyleImages() async {
+    final images = {
+      'park':  widget.parkImage,
+      'wpaa':  widget.wpaaImage,
+      'pops':  widget.popsImage,
+      'plaza': widget.plazaImage,
+      'stp':   widget.stpImage,
+      'misc':  widget.miscImage,
+    };
+
+    for (final entry in images.entries) {
+      try {
+        final codec = await ui.instantiateImageCodec(entry.value);
+        final frame = await codec.getNextFrame();
+        final image = frame.image;
+        final byteData = await image.toByteData(format: ui.ImageByteFormat.rawRgba);
+        if (byteData == null) {
+          print('addStyleImage: null byteData for ${entry.key}');
+          continue;
+        }
+        print('addStyleImage ${entry.key}: ${image.width}x${image.height}, ${byteData.lengthInBytes} bytes');
+        await mapboxMap.style.addStyleImage(
+          entry.key,
+          1.0,
+          MbxImage(
+            width: image.width,
+            height: image.height,
+            data: byteData.buffer.asUint8List(),
+          ),
+          false, [], [], null,
+        );
+      } catch (e) {
+        print('addStyleImage error for ${entry.key}: $e');
       }
-
-      // Create annotation options
-      PointAnnotationOptions annotationOptions = PointAnnotationOptions(
-        geometry: feature
-            .geometry, // Assuming the feature has a geometry of type Point
-        iconSize: 1.5,
-        image: selectedImage,
-        iconAnchor: IconAnchor.BOTTOM,
-      );
-
-      // Add annotation to the map
-      pointAnnotationManager?.create(annotationOptions);
     }
+  }
+
+  Map<String, dynamic> _buildFeatureCollection(List<PublicSpaceFeature> features) {
+    return {
+      'type': 'FeatureCollection',
+      'features': features.map((f) {
+        final json = f.toJson();
+        json['id'] = f.properties.firestoreId; // required for feature state
+        return json;
+      }).toList(),
+    };
+  }
+
+  Future<void> _addSpaceSourceAndLayers(List<PublicSpaceFeature> features) async {
+    await _addStyleImages();
+
+    await mapboxMap.style.addSource(GeoJsonSource(
+      id: 'public-spaces',
+      data: jsonEncode(_buildFeatureCollection(features)),
+    ));
+
+    const iconImageExpr = [
+      'match', ['get', 'type'],
+      'park', 'park', 'wpaa', 'wpaa', 'pops', 'pops',
+      'plaza', 'plaza', 'stp', 'stp', 'misc',
+    ];
+
+    await mapboxMap.style.addStyleLayer(jsonEncode({
+      'id': 'spaces-layer',
+      'type': 'circle',
+      'source': 'public-spaces',
+      'paint': {
+        'circle-emissive-strength': 1,
+        'circle-color': ['match', ['get', 'type'],
+          'park',  '#77bb3f',
+          'wpaa',  '#0ad6f5',
+          'pops',  '#6b82d6',
+          'plaza', '#ffbf47',
+          'stp',   '#F55353',
+          '#CCCCCC',
+        ],
+        'circle-radius': ['interpolate', ['linear'], ['zoom'], 12, 3, 14, 8],
+        'circle-stroke-width': ['interpolate', ['linear'], ['zoom'], 10, 1, 13, 2],
+        'circle-stroke-color': '#ffffff',
+        'circle-opacity': ['interpolate', ['linear'], ['zoom'], 13, 1, 13.1, 0],
+        'circle-stroke-opacity': ['interpolate', ['linear'], ['zoom'], 13, 1, 13.1, 0],
+      },
+    }), null);
+
+    await mapboxMap.style.addStyleLayer(jsonEncode({
+      'id': 'spaces-marker',
+      'type': 'symbol',
+      'source': 'public-spaces',
+      'layout': {
+        'icon-image': iconImageExpr,
+        'icon-size': 0.3,
+        'icon-anchor': 'bottom',
+        'icon-allow-overlap': true,
+        'text-allow-overlap': true,
+        'text-size': 12,
+        'text-offset': [0, -3],
+        'text-anchor': 'bottom',
+        'text-letter-spacing': 0.2,
+      },
+      'paint': {
+        'icon-opacity': ['interpolate', ['linear'], ['zoom'], 13, 0, 13.1, 1],
+        'text-halo-color': '#ffffff',
+        'text-halo-width': 1.4,
+        'text-opacity': ['interpolate', ['linear'], ['zoom'], 15, 0, 15.1, 1],
+        'text-color': '#2b2b2b',
+      },
+    }), null);
+
+    await mapboxMap.style.addStyleLayer(jsonEncode({
+      'id': 'spaces-label',
+      'type': 'symbol',
+      'source': 'public-spaces',
+      'layout': {
+        'icon-image': iconImageExpr,
+        'icon-size': 0.3,
+        'icon-anchor': 'bottom',
+        'icon-allow-overlap': true,
+        'text-field': ['to-string', ['get', 'name']],
+        'text-font': ['Poppins Regular', 'Arial Unicode MS Regular'],
+        'text-size': 12,
+        'text-offset': [0, -3],
+        'text-anchor': 'bottom',
+        'text-letter-spacing': 0.2,
+      },
+      'paint': {
+        'icon-opacity': ['interpolate', ['linear'], ['zoom'], 14, 0, 14.1, 1],
+        'text-halo-color': '#ffffff',
+        'text-halo-width': 1.4,
+        'text-opacity': ['interpolate', ['linear'], ['zoom'], 15, 0, 15.1, 1],
+        'text-color': '#2b2b2b',
+      },
+    }), null);
+
+    // Selected feature layer — filter updated dynamically on tap
+    await mapboxMap.style.addStyleLayer(jsonEncode({
+      'id': 'spaces-selected',
+      'type': 'symbol',
+      'source': 'public-spaces',
+      'filter': ['==', ['get', 'firestoreId'], ''],
+      'layout': {
+        'icon-image': iconImageExpr,
+        'icon-size': 0.45,
+        'icon-anchor': 'bottom',
+        'icon-allow-overlap': true,
+      },
+      'paint': {
+        'icon-opacity': 1.0,
+      },
+    }), null);
+
+    // Annotation managers created last so they render above all style layers
+    markerPointAnnotationManager =
+        await mapboxMap.annotations.createPointAnnotationManager();
+    heartAnnotationManager =
+        await mapboxMap.annotations.createPointAnnotationManager();
+    heartSelectedAnnotationManager =
+        await mapboxMap.annotations.createPointAnnotationManager();
+
+    _updateHeartAnnotations();
+    _updateSelectedHeartAnnotation();
+
+    _sourceAdded = true;
+  }
+
+  Future<void> _updateSpaceSourceData(List<PublicSpaceFeature> features) async {
+    await mapboxMap.style.setStyleSourceProperty(
+      'public-spaces',
+      'data',
+      jsonEncode(_buildFeatureCollection(features)),
+    );
   }
 
   _onMapCreated(MapboxMap mapboxMap) async {
@@ -236,12 +526,9 @@ class _MapHandlerState extends State<MapHandler> {
     // call onMapCreated callback to pass the map instance upward
     widget.onMapCreated(mapboxMap);
 
-    // Initialize PointAnnotationManager
-    pointAnnotationManager =
-        await mapboxMap.annotations.createPointAnnotationManager();
-
-    markerPointAnnotationManager = 
-        await mapboxMap.annotations.createPointAnnotationManager();
+    if (widget.features.isNotEmpty) {
+      await _addSpaceSourceAndLayers(widget.features);
+    }
   }
 
   _onMapTapListener(
@@ -255,20 +542,9 @@ class _MapHandlerState extends State<MapHandler> {
         .queryRenderedFeatures(
             RenderedQueryGeometry.fromScreenCoordinate(ScreenCoordinate(
                 x: context.touchPosition.x, y: context.touchPosition.y)),
-            RenderedQueryOptions(layerIds: [
-              'park-centroids',
-              'park-marker',
-              'wpaa-centroids',
-              'wpaa-marker',
-              'pops-centroids',
-              'pops-marker',
-              'plaza-centroids',
-              'plaza-marker',
-              'stp-centroids',
-              'stp-marker',
-              'misc-centroids',
-              'misc-marker'
-            ], filter: null))
+            RenderedQueryOptions(
+                layerIds: ['spaces-layer', 'spaces-marker', 'spaces-label'],
+                filter: null))
         .then((features) async {
       if (features.isNotEmpty) {
         // Parse the feature and call the parent callback
@@ -278,9 +554,6 @@ class _MapHandlerState extends State<MapHandler> {
 
         PublicSpaceFeature geojsonFeature =
             PublicSpaceFeature.fromJson(jsonDecode(geojsonFeatureString));
-
-        String firestoreId = geojsonFeature.properties.firestoreId;
-
 
         // Call parent callback to update the selectedFeature in parent state
         widget.onFeatureSelected(geojsonFeature);
@@ -306,13 +579,13 @@ class _MapHandlerState extends State<MapHandler> {
   @override
   Widget build(BuildContext context) {
     return MapWidget(
-      styleUri: 'mapbox://styles/chriswhongmapbox/clzu4xoh900oz01qsgnxq8sf1',
+      styleUri: 'mapbox://styles/chriswhongmapbox/cmpq8s9qs007401s76cfp5xmv',
       cameraOptions: CameraOptions(
         center: Point(coordinates: Position(-74.00299, 40.70966)),
         zoom: 12,
       ),
       onMapCreated: _onMapCreated,
-      onCameraChangeListener: widget.onCameraChangeListener,
+      onCameraChangeListener: _handleCameraChange,
       onTapListener: (MapContentGestureContext gestureContext) =>
           _onMapTapListener(context, gestureContext), // Pass context here,
     );

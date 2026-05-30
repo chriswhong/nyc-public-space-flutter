@@ -32,6 +32,9 @@ ACCESS_TOKEN=pk.your_mapbox_access_token_here
    - Add `GoogleService-Info.plist` to `ios/Runner/`
 
 
+## Run on simulator/emulator
+
+`source .env && flutter run --dart-define=ACCESS_TOKEN=$ACCESS_TOKEN`
 
 ## Run on simulator/emulator
 

@@ -19,7 +19,7 @@ class PanelActionButtons extends StatelessWidget {
   Widget build(BuildContext context) {
     return Column(
       children: [
-        SizedBox(height: 10),
+        const SizedBox(height: 10),
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
           children: [
@@ -43,9 +43,9 @@ class PanelActionButtons extends StatelessWidget {
             ),
           ],
         ),
-        
-        SizedBox(height: 10),
+        const SizedBox(height: 10),
       ],
     );
   }
 }
+

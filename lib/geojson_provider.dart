@@ -11,7 +11,7 @@ class GeoJsonProvider with ChangeNotifier {
   List<PublicSpaceFeature> get features => _features;
 
   Future<void> fetchGeoJson() async {
-    final url = Uri.parse('https://getdatasetasgeojson-vs6e5w5f2a-uc.a.run.app/');
+    final url = Uri.parse('https://getdatasetasgeojson-vs6e5w5f2a-uc.a.run.app/?slim=true');
     final response = await http.get(url);
     if (response.statusCode == 200) {
       final data = json.decode(response.body);

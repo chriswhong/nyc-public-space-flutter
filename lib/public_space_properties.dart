@@ -13,6 +13,7 @@ class PublicSpaceProperties {
   final List<String> details;
   final List<String> amenities;
   final List<String> equipment;
+  final Map<String, Map<String, int>> amenitySurvey;
 
   // constructor to initialize the properties
   PublicSpaceProperties({
@@ -26,7 +27,10 @@ class PublicSpaceProperties {
     required this.details,
     required this.amenities,
     required this.equipment,
+    this.amenitySurvey = const {},
   });
+
+  bool get isTemporarilyClosed => details.contains('temporarily_closed');
 
   // optional: Add a toString method for easier debugging
   @override
@@ -122,6 +126,7 @@ equipment: json['properties']['equipment'] != null
         ? List<String>.from(jsonDecode(json['properties']['equipment']))
         : List<String>.from(json['properties']['equipment']))
     : [],
+amenitySurvey: _parseAmenitySurvey(json['properties']['amenity_survey']),
       ),
     );
   }
@@ -131,4 +136,18 @@ equipment: json['properties']['equipment'] != null
   String toString() {
     return 'PublicSpaceFeature(type: $type, geometry: $geometry, properties: $properties)';
   }
+}
+
+Map<String, Map<String, int>> _parseAmenitySurvey(dynamic raw) {
+  if (raw == null) return {};
+  if (raw is String) {
+    try {
+      raw = jsonDecode(raw);
+    } catch (_) {
+      return {};
+    }
+  }
+  if (raw is! Map) return {};
+  return (raw as Map<dynamic, dynamic>).map((k, v) =>
+      MapEntry(k as String, Map<String, int>.from(v as Map)));
 }

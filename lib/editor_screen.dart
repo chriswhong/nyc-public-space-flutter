@@ -8,7 +8,6 @@ import 'package:nyc_public_space_map/public_space_properties.dart';
 import 'package:nyc_public_space_map/colors.dart';
 
 import './static_map_with_edit.dart';
-import './attribute_checkboxes.dart';
 import 'user_provider.dart';
 
 class HeadingText extends StatelessWidget {
@@ -46,11 +45,7 @@ class _EditorScreenState extends State<EditorScreen> {
   final TextEditingController _controller = TextEditingController();
   bool _isSubmitting = false;
   bool _isSubmitted = false;
-  bool _hasChanges = false; // ✅ NEW
-
-  final Set<String> _selectedDetails = {};
-  final Set<String> _selectedAmenities = {};
-  final Set<String> _selectedEquipment = {};
+  bool _hasChanges = false;
 
   final _formKey = GlobalKey<FormState>();
 
@@ -94,9 +89,6 @@ class _EditorScreenState extends State<EditorScreen> {
       ),
     );
 
-    _selectedDetails.addAll(props?.details ?? []);
-    _selectedAmenities.addAll(props?.amenities ?? []);
-    _selectedEquipment.addAll(props?.equipment ?? []);
   }
 
   void _checkForChanges() {
@@ -104,13 +96,6 @@ class _EditorScreenState extends State<EditorScreen> {
 
     bool isDifferent(String? a, String? b) =>
         (a ?? '').trim() != (b ?? '').trim();
-
-    bool listIsDifferent(List<String> a, List<String> b) {
-      final sortedA = [...a]..sort();
-      final sortedB = [...b]..sort();
-      return sortedA.length != sortedB.length ||
-          !sortedA.asMap().entries.every((e) => e.value == sortedB[e.key]);
-    }
 
     final hasChanged = isDifferent(_nameController.text, original?.name) ||
         isDifferent(_descriptionController.text, original?.description) ||
@@ -120,11 +105,7 @@ class _EditorScreenState extends State<EditorScreen> {
         _currentPoint.coordinates.lat !=
             widget.selectedFeature?.geometry.coordinates.lat ||
         _currentPoint.coordinates.lng !=
-            widget.selectedFeature?.geometry.coordinates.lng ||
-        listIsDifferent(_selectedDetails.toList(), original?.details ?? []) ||
-        listIsDifferent(
-            _selectedAmenities.toList(), original?.amenities ?? []) ||
-        listIsDifferent(_selectedEquipment.toList(), original?.equipment ?? []);
+            widget.selectedFeature?.geometry.coordinates.lng;
 
     if (_hasChanges != hasChanged) {
       setState(() {
@@ -250,26 +231,6 @@ class _EditorScreenState extends State<EditorScreen> {
                                       },
                                     ),
                                     const SizedBox(height: 32),
-                                    AttributeCheckboxes(
-                                      selectedDetails: _selectedDetails,
-                                      selectedAmenities: _selectedAmenities,
-                                      selectedEquipment: _selectedEquipment,
-                                      onChanged: (category, key, isChecked) {
-                                        setState(() {
-                                          final set = {
-                                            'details': _selectedDetails,
-                                            'amenities': _selectedAmenities,
-                                            'equipment': _selectedEquipment,
-                                          }[category];
-                                          if (set != null) {
-                                            isChecked
-                                                ? set.add(key)
-                                                : set.remove(key);
-                                          }
-                                        });
-                                        _checkForChanges(); // ✅
-                                      },
-                                    ),
                                     Center(
                                       child: ElevatedButton(
                                         onPressed: (!_hasChanges ||
@@ -392,23 +353,6 @@ class _EditorScreenState extends State<EditorScreen> {
                                                       originalUrl.isNotEmpty
                                                           ? originalUrl
                                                           : null);
-
-                                                  addIfChanged(
-                                                      'details',
-                                                      _selectedDetails.toList(),
-                                                      original?.details ?? []);
-                                                  addIfChanged(
-                                                      'amenities',
-                                                      _selectedAmenities
-                                                          .toList(),
-                                                      original?.amenities ??
-                                                          []);
-                                                  addIfChanged(
-                                                      'equipment',
-                                                      _selectedEquipment
-                                                          .toList(),
-                                                      original?.equipment ??
-                                                          []);
 
                                                   if (updatedFields.isEmpty) {
                                                     ScaffoldMessenger.of(

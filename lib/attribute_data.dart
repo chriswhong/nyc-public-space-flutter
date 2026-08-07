@@ -11,7 +11,6 @@ class AttributeOption {
 class AttributeData {
   static const List<AttributeOption> detailOptions = [
     AttributeOption('indoor', FontAwesomeIcons.house),
-    AttributeOption('accessible', FontAwesomeIcons.wheelchair),
     AttributeOption('trees', FontAwesomeIcons.tree),
     AttributeOption('grass', FontAwesomeIcons.seedling),
     AttributeOption('planters', FontAwesomeIcons.seedling),
@@ -19,23 +18,19 @@ class AttributeData {
     AttributeOption('temporarily_closed', FontAwesomeIcons.lock),
   ];
 
+  // Trimmed to 8 key amenities for the micro-survey and display
   static const List<AttributeOption> amenityOptions = [
     AttributeOption('restrooms', FontAwesomeIcons.toilet),
-    AttributeOption('playground', FontAwesomeIcons.child),
     AttributeOption('drinking_fountain', FontAwesomeIcons.water),
-    AttributeOption('dog_park', FontAwesomeIcons.dog),
     AttributeOption('seating', FontAwesomeIcons.chair),
     AttributeOption('tables', FontAwesomeIcons.table),
-    AttributeOption('wifi', FontAwesomeIcons.wifi),
-    AttributeOption('art', FontAwesomeIcons.palette),
-    AttributeOption('monument', FontAwesomeIcons.monument),
-    AttributeOption('parking', FontAwesomeIcons.squareParking),
-    AttributeOption('fountain', FontAwesomeIcons.water),
+    AttributeOption('dog_park', FontAwesomeIcons.dog),
+    AttributeOption('bike_rack', FontAwesomeIcons.bicycle),
     AttributeOption('food_vendor', FontAwesomeIcons.hotdog),
-    AttributeOption('splash_pad', FontAwesomeIcons.water),
-    AttributeOption('bike_rack', FontAwesomeIcons.bicycle)
+    AttributeOption('accessible', FontAwesomeIcons.wheelchair),
   ];
 
+  // Kept for backward compatibility — not shown in new UI
   static const List<AttributeOption> equipmentOptions = [
     AttributeOption('basketball', FontAwesomeIcons.basketball),
     AttributeOption('exercise', FontAwesomeIcons.dumbbell),

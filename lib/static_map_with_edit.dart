@@ -2,11 +2,11 @@ import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:mapbox_maps_flutter/mapbox_maps_flutter.dart';
+import 'main.dart' show mapboxAccessToken;
 
 import './draggable_mapbox_marker.dart';
 import './positioned_map_marker.dart';
 
-final GlobalKey _mapContainerKey = GlobalKey();
 const double mapHeight = 230;
 
 class StaticMapWithEdit extends StatefulWidget {
@@ -29,45 +29,31 @@ class _StaticMapWithEditState extends State<StaticMapWithEdit> {
   late Point _currentPoint;
   Uint8List? _staticImage;
 
-  final String mapboxAccessToken = const String.fromEnvironment("ACCESS_TOKEN");
-
   @override
   void initState() {
     super.initState();
     _currentPoint = widget.initialPoint;
-
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      _fetchStaticImage(); // once layout is complete
-    });
+    WidgetsBinding.instance.addPostFrameCallback((_) => _fetchStaticImage());
   }
 
   Future<void> _fetchStaticImage() async {
-    final context = _mapContainerKey.currentContext;
-    if (context == null) return;
+    if (!mounted) return;
+    final token = mapboxAccessToken;
+    if (!mounted) return;
 
-    final RenderBox box = context.findRenderObject() as RenderBox;
-    final size = box.size;
-    final width =
-        (size.width * MediaQuery.of(context).devicePixelRatio).round();
-    final height =
-        (size.height * MediaQuery.of(context).devicePixelRatio).round();
-
-    final imageWidth = (width / 4).round();
-    final imageHeight = (height / 4).round();
+    final mq = MediaQuery.of(context);
+    final imageWidth = ((mq.size.width - 32).clamp(0, 1280)).round();
+    final imageHeight = mapHeight.round();
     final lon = _currentPoint.coordinates.lng;
     final lat = _currentPoint.coordinates.lat;
 
     final url =
-        'https://api.mapbox.com/styles/v1/mapbox/streets-v12/static/$lon,$lat,16/${imageWidth}x$imageHeight@2x?access_token=$mapboxAccessToken';
+        'https://api.mapbox.com/styles/v1/mapbox/streets-v12/static/$lon,$lat,16/${imageWidth}x${imageHeight}@2x?access_token=$token';
 
-    print(url);
+    debugPrint('Static map URL: $url');
     final response = await http.get(Uri.parse(url));
-    if (response.statusCode == 200) {
-      setState(() {
-        _staticImage = response.bodyBytes;
-      });
-    } else {
-      print('Failed to load static map image');
+    if (mounted && response.statusCode == 200) {
+      setState(() => _staticImage = response.bodyBytes);
     }
   }
 
@@ -75,28 +61,27 @@ class _StaticMapWithEditState extends State<StaticMapWithEdit> {
     final newPoint = await Navigator.of(context).push<Point>(
       MaterialPageRoute(
         builder: (_) => Scaffold(
-            appBar: AppBar(
-              title: const Text("Set Pin Location"),
-              automaticallyImplyLeading: false, // 👈 hides the default chevron
-            ),
-            body: DraggableMapboxMarker(
-              initialPoint: _currentPoint,
-              type: widget.type,
-              onCancel: () =>
-                  Navigator.of(context).pop(), // your custom handler
-              onLocationChanged: (point) {
-                Navigator.of(context).pop(point);
-              },
-            )),
+          appBar: AppBar(
+            title: const Text("Set Pin Location"),
+            automaticallyImplyLeading: false,
+          ),
+          body: DraggableMapboxMarker(
+            initialPoint: _currentPoint,
+            type: widget.type,
+            onCancel: () => Navigator.of(context).pop(),
+            onLocationChanged: (point) => Navigator.of(context).pop(point),
+          ),
+        ),
       ),
     );
 
     if (newPoint != null) {
       setState(() {
         _currentPoint = newPoint;
+        _staticImage = null;
       });
       widget.onLocationChanged(newPoint);
-      _fetchStaticImage(); // reload with new coordinates
+      _fetchStaticImage();
     }
   }
 
@@ -105,9 +90,7 @@ class _StaticMapWithEditState extends State<StaticMapWithEdit> {
     return Stack(
       alignment: Alignment.center,
       children: [
-        // Rounded border container for the map image
         Container(
-          key: _mapContainerKey,
           height: mapHeight,
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(8),
@@ -122,8 +105,6 @@ class _StaticMapWithEditState extends State<StaticMapWithEdit> {
                 )
               : const Center(child: CircularProgressIndicator()),
         ),
-
-        // Positioned "Edit Pin" button
         Positioned(
           top: 8,
           left: 8,

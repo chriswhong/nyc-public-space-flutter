@@ -9,12 +9,15 @@ import 'package:provider/provider.dart';
 import 'package:fuzzy/fuzzy.dart';
 import 'package:nyc_public_space_map/public_space_properties.dart';
 import 'package:nyc_public_space_map/geojson_provider.dart' as geo;
+import 'package:nyc_public_space_map/filters_provider.dart';
+import 'package:nyc_public_space_map/colors.dart';
 
 class SearchWidget extends StatefulWidget {
   final Function(Feature?) onRetrieve;
   final Function(PublicSpaceFeature?) onLocalResultSelected;
+  final VoidCallback onFilterTap;
 
-  const SearchWidget({super.key, required this.onRetrieve, required this.onLocalResultSelected});
+  const SearchWidget({super.key, required this.onRetrieve, required this.onLocalResultSelected, required this.onFilterTap});
 
   @override
   _SearchWidgetState createState() => _SearchWidgetState();
@@ -72,7 +75,8 @@ class _SearchWidgetState extends State<SearchWidget> {
 
   void _localFuzzySearch(String query) {
     final geoJsonProvider = Provider.of<geo.GeoJsonProvider>(context, listen: false);
-    final features = geoJsonProvider.features;
+    final filtersProvider = Provider.of<FiltersProvider>(context, listen: false);
+    final features = filtersProvider.apply(geoJsonProvider.features);
 
 
     // Convert features to List<Map<String, dynamic>> for Fuzzy
@@ -511,24 +515,63 @@ class _SearchWidgetState extends State<SearchWidget> {
                         onTap: () {
                           if (_controller.value.text.isNotEmpty) {
                             _controller.clear();
-                            _lastSearchResult = null; // Clear saved search result
-                            _lastMarkerFeature = null; // Clear saved marker feature
+                            _lastSearchResult = null;
+                            _lastMarkerFeature = null;
                             setState(() {
                               _searchResults.clear();
-                              _localSearchResults.clear(); // <-- Clear local results too
+                              _localSearchResults.clear();
                               _selectedIndex = null;
                             });
                             widget.onRetrieve(null);
                           }
                         },
                         child: _controller.value.text.isNotEmpty
-                            ? FaIcon(
+                            ? const FaIcon(
                                 FontAwesomeIcons.xmark,
                                 size: 18,
                                 color: Colors.black,
                               )
-                            : SizedBox.shrink(),
+                            : const SizedBox.shrink(),
                       ),
+                      if (!isExpanded) ...[
+                        Container(
+                          width: 1,
+                          height: 24,
+                          color: Colors.grey.shade300,
+                          margin: const EdgeInsets.symmetric(horizontal: 8),
+                        ),
+                        Consumer<FiltersProvider>(
+                          builder: (context, filters, _) => GestureDetector(
+                            onTap: widget.onFilterTap,
+                            child: Stack(
+                              clipBehavior: Clip.none,
+                              alignment: Alignment.center,
+                              children: [
+                                Icon(
+                                  Icons.tune,
+                                  size: 22,
+                                  color: filters.hasActiveFilters
+                                      ? AppColors.dark
+                                      : AppColors.gray,
+                                ),
+                                if (filters.hasActiveFilters)
+                                  Positioned(
+                                    top: -2,
+                                    right: -4,
+                                    child: Container(
+                                      width: 8,
+                                      height: 8,
+                                      decoration: const BoxDecoration(
+                                        color: Colors.red,
+                                        shape: BoxShape.circle,
+                                      ),
+                                    ),
+                                  ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ],
                     ],
                   ),
                 ),

@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:nyc_public_space_map/colors.dart';
-
 import './feedback_screen.dart';
 
 class TypeDescription extends StatelessWidget {
@@ -141,20 +140,28 @@ class AboutScreen extends StatelessWidget {
                 ),
               ),
             ),
-            // Feedback Button
+            // Add a space hint
+            const Padding(
+              padding: EdgeInsets.fromLTRB(16.0, 0, 16.0, 8.0),
+              child: Text(
+                'To add a missing space, long-press anywhere on the map.',
+                textAlign: TextAlign.center,
+                style: TextStyle(fontSize: 12, color: AppColors.gray),
+              ),
+            ),
             Padding(
-              padding: const EdgeInsets.all(16.0),
+              padding: const EdgeInsets.fromLTRB(16.0, 0, 16.0, 16.0),
               child: SizedBox(
                 width: double.infinity,
                 child: ElevatedButton(
                   onPressed: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => const FeedbackScreen(),
-                    ),
-                  );
-                },
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const FeedbackScreen(),
+                      ),
+                    );
+                  },
                   style: AppStyles.buttonStyle,
                   child: const Text('Share your Feedback'),
                 ),

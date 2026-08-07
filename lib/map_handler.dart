@@ -62,6 +62,7 @@ class MapHandler extends StatefulWidget {
   final void Function(CameraChangedEventData)? onCameraChangeListener;
   final List<FavoriteItem> favorites;
   final List<PublicSpaceFeature> features;
+  final void Function(Point)? onLongTap;
 
   const MapHandler(
       {super.key,
@@ -77,7 +78,8 @@ class MapHandler extends StatefulWidget {
       required this.markerFeature,
       this.onCameraChangeListener,
       this.favorites = const [],
-      this.features = const []});
+      this.features = const [],
+      this.onLongTap});
 
   @override
   _MapHandlerState createState() => _MapHandlerState();
@@ -95,6 +97,7 @@ class _MapHandlerState extends State<MapHandler> {
   double _heartOpacity = 0.0; // hidden until zoom >= 13
   Timer? _zoomDebounceTimer;
   bool _sourceAdded = false;
+  bool _styleLoaded = false;
 
   @override
   void initState() {
@@ -241,19 +244,20 @@ class _MapHandlerState extends State<MapHandler> {
       _updateSelectedHeartAnnotation();
     }
 
-    final oldFeatureCount = oldWidget.features.length;
-    final newFeatureCount = widget.features.length;
-    if (oldFeatureCount != newFeatureCount && widget.features.isNotEmpty) {
-      if (!_sourceAdded) {
+    final oldIds = oldWidget.features.map((f) => f.properties.firestoreId).toSet();
+    final newIds = widget.features.map((f) => f.properties.firestoreId).toSet();
+    final featureSetChanged = oldIds.length != newIds.length || !oldIds.containsAll(newIds);
+    if (featureSetChanged && widget.features.isNotEmpty) {
+      if (_styleLoaded && !_sourceAdded) {
         _addSpaceSourceAndLayers(widget.features);
-      } else {
+      } else if (_sourceAdded) {
         _updateSpaceSourceData(widget.features);
       }
     }
 
-    final oldIds = oldWidget.favorites.map((f) => f.firestoreId).toSet();
-    final newIds = widget.favorites.map((f) => f.firestoreId).toSet();
-    if (!oldIds.containsAll(newIds) || !newIds.containsAll(oldIds)) {
+    final oldFavIds = oldWidget.favorites.map((f) => f.firestoreId).toSet();
+    final newFavIds = widget.favorites.map((f) => f.firestoreId).toSet();
+    if (!oldFavIds.containsAll(newFavIds) || !newFavIds.containsAll(oldFavIds)) {
       _updateHeartAnnotations();
       _updateSelectedHeartAnnotation();
     }
@@ -324,21 +328,21 @@ class _MapHandlerState extends State<MapHandler> {
         final frame = await codec.getNextFrame();
         final image = frame.image;
         final byteData = await image.toByteData(format: ui.ImageByteFormat.rawRgba);
-        if (byteData == null) {
-          print('addStyleImage: null byteData for ${entry.key}');
-          continue;
-        }
-        print('addStyleImage ${entry.key}: ${image.width}x${image.height}, ${byteData.lengthInBytes} bytes');
-        await mapboxMap.style.addStyleImage(
-          entry.key,
-          1.0,
-          MbxImage(
-            width: image.width,
-            height: image.height,
-            data: byteData.buffer.asUint8List(),
-          ),
-          false, [], [], null,
+        if (byteData == null) continue;
+        final mbxImage = MbxImage(
+          width: image.width,
+          height: image.height,
+          data: byteData.buffer.asUint8List(),
         );
+        // Retry once — style may not accept images immediately after load event
+        for (int attempt = 0; attempt < 2; attempt++) {
+          try {
+            await mapboxMap.style.addStyleImage(entry.key, 1.0, mbxImage, false, [], [], null);
+            break;
+          } catch (_) {
+            if (attempt == 0) await Future.delayed(const Duration(milliseconds: 200));
+          }
+        }
       } catch (e) {
         print('addStyleImage error for ${entry.key}: $e');
       }
@@ -351,6 +355,7 @@ class _MapHandlerState extends State<MapHandler> {
       'features': features.map((f) {
         final json = f.toJson();
         json['id'] = f.properties.firestoreId; // required for feature state
+        json['properties']['is_closed'] = f.properties.isTemporarilyClosed;
         return json;
       }).toList(),
     };
@@ -376,19 +381,28 @@ class _MapHandlerState extends State<MapHandler> {
       'source': 'public-spaces',
       'paint': {
         'circle-emissive-strength': 1,
-        'circle-color': ['match', ['get', 'type'],
-          'park',  '#77bb3f',
-          'wpaa',  '#0ad6f5',
-          'pops',  '#6b82d6',
-          'plaza', '#ffbf47',
-          'stp',   '#F55353',
-          '#CCCCCC',
+        'circle-color': ['case', ['==', ['get', 'is_closed'], true],
+          '#999999',
+          ['match', ['get', 'type'],
+            'park',  '#77bb3f',
+            'wpaa',  '#0ad6f5',
+            'pops',  '#6b82d6',
+            'plaza', '#ffbf47',
+            'stp',   '#F55353',
+            '#CCCCCC',
+          ],
         ],
         'circle-radius': ['interpolate', ['linear'], ['zoom'], 12, 3, 14, 8],
         'circle-stroke-width': ['interpolate', ['linear'], ['zoom'], 10, 1, 13, 2],
         'circle-stroke-color': '#ffffff',
-        'circle-opacity': ['interpolate', ['linear'], ['zoom'], 13, 1, 13.1, 0],
-        'circle-stroke-opacity': ['interpolate', ['linear'], ['zoom'], 13, 1, 13.1, 0],
+        'circle-opacity': ['interpolate', ['linear'], ['zoom'],
+          13, ['case', ['==', ['get', 'is_closed'], true], 0.35, 1],
+          13.1, 0,
+        ],
+        'circle-stroke-opacity': ['interpolate', ['linear'], ['zoom'],
+          13, ['case', ['==', ['get', 'is_closed'], true], 0.35, 1],
+          13.1, 0,
+        ],
       },
     }), null);
 
@@ -408,10 +422,16 @@ class _MapHandlerState extends State<MapHandler> {
         'text-letter-spacing': 0.2,
       },
       'paint': {
-        'icon-opacity': ['interpolate', ['linear'], ['zoom'], 13, 0, 13.1, 1],
+        'icon-opacity': ['interpolate', ['linear'], ['zoom'],
+          13, 0,
+          13.1, ['case', ['==', ['get', 'is_closed'], true], 0.35, 1],
+        ],
         'text-halo-color': '#ffffff',
         'text-halo-width': 1.4,
-        'text-opacity': ['interpolate', ['linear'], ['zoom'], 15, 0, 15.1, 1],
+        'text-opacity': ['interpolate', ['linear'], ['zoom'],
+          15, 0,
+          15.1, ['case', ['==', ['get', 'is_closed'], true], 0.35, 1],
+        ],
         'text-color': '#2b2b2b',
       },
     }), null);
@@ -433,10 +453,16 @@ class _MapHandlerState extends State<MapHandler> {
         'text-letter-spacing': 0.2,
       },
       'paint': {
-        'icon-opacity': ['interpolate', ['linear'], ['zoom'], 14, 0, 14.1, 1],
+        'icon-opacity': ['interpolate', ['linear'], ['zoom'],
+          14, 0,
+          14.1, ['case', ['==', ['get', 'is_closed'], true], 0.35, 1],
+        ],
         'text-halo-color': '#ffffff',
         'text-halo-width': 1.4,
-        'text-opacity': ['interpolate', ['linear'], ['zoom'], 15, 0, 15.1, 1],
+        'text-opacity': ['interpolate', ['linear'], ['zoom'],
+          15, 0,
+          15.1, ['case', ['==', ['get', 'is_closed'], true], 0.35, 1],
+        ],
         'text-color': '#2b2b2b',
       },
     }), null);
@@ -526,7 +552,11 @@ class _MapHandlerState extends State<MapHandler> {
     // call onMapCreated callback to pass the map instance upward
     widget.onMapCreated(mapboxMap);
 
-    if (widget.features.isNotEmpty) {
+  }
+
+  Future<void> _onStyleLoaded() async {
+    _styleLoaded = true;
+    if (widget.features.isNotEmpty && !_sourceAdded) {
       await _addSpaceSourceAndLayers(widget.features);
     }
   }
@@ -585,9 +615,13 @@ class _MapHandlerState extends State<MapHandler> {
         zoom: 12,
       ),
       onMapCreated: _onMapCreated,
+      onStyleLoadedListener: (_) => _onStyleLoaded(),
       onCameraChangeListener: _handleCameraChange,
       onTapListener: (MapContentGestureContext gestureContext) =>
-          _onMapTapListener(context, gestureContext), // Pass context here,
+          _onMapTapListener(context, gestureContext),
+      onLongTapListener: (MapContentGestureContext gestureContext) {
+        widget.onLongTap?.call(gestureContext.point);
+      },
     );
   }
 }

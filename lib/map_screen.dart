@@ -16,6 +16,10 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'widgets/map_controls.dart';
 import 'favorites_provider.dart';
 import 'geojson_provider.dart';
+import 'filters_provider.dart';
+import 'filter_sheet.dart';
+import 'add_space_screen.dart';
+import 'sign_in_screen.dart';
 
 class MapScreen extends StatefulWidget {
   final Function(PublicSpaceFeature?) onReportAnIssue;
@@ -281,6 +285,30 @@ class MapScreenState extends State<MapScreen> {
     });
   }
 
+  void _handleLongTap(Point point) {
+    final user = FirebaseAuth.instance.currentUser;
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => user != null
+            ? AddSpaceScreen(initialPoint: point)
+            : const SignInScreen(),
+      ),
+    );
+  }
+
+  void _showFilterSheet() {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (_) => const FilterSheet(),
+    );
+  }
+
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -297,7 +325,35 @@ class MapScreenState extends State<MapScreen> {
         } else if (snapshot.hasError) {
           return const Center(child: Text('Error loading images'));
         } else {
-          return buildMapContent();
+          return Stack(
+            children: [
+              buildMapContent(),
+              Consumer<GeoJsonProvider>(
+                builder: (context, geo, _) {
+                  if (!geo.loadFailed) return const SizedBox.shrink();
+                  return Positioned(
+                    top: 0,
+                    left: 0,
+                    right: 0,
+                    child: SafeArea(
+                      child: Container(
+                        margin: const EdgeInsets.all(12),
+                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                        decoration: BoxDecoration(
+                          color: Colors.red.shade700,
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: const Text(
+                          'Could not load spaces. Check your connection and try again.',
+                          style: TextStyle(color: Colors.white, fontSize: 13),
+                        ),
+                      ),
+                    ),
+                  );
+                },
+              ),
+            ],
+          );
         }
       },
     );
@@ -335,8 +391,11 @@ class MapScreenState extends State<MapScreen> {
           miscImage: ImageLoader.instance.miscImage,
           markerFeature: markerFeature,
           onCameraChangeListener: _onCameraChanged,
+          onLongTap: _handleLongTap,
           favorites: Provider.of<FavoritesProvider>(context).favorites,
-          features: Provider.of<GeoJsonProvider>(context).features,
+          features: Provider.of<FiltersProvider>(context).apply(
+            Provider.of<GeoJsonProvider>(context).features,
+          ),
         ),
         _buildBottomInfoPanel(),
         // Scrim — fades in when panel is fully expanded
@@ -391,6 +450,7 @@ class MapScreenState extends State<MapScreen> {
           SearchWidget(
             onRetrieve: (feature) => _setMarkerFeature(feature),
             onLocalResultSelected: (feature) => _onLocalResultSelected(feature),
+            onFilterTap: _showFilterSheet,
           ),
       ],
     );
@@ -413,30 +473,23 @@ class MapScreenState extends State<MapScreen> {
           ],
         ),
         padding: const EdgeInsets.all(16.0),
-        child: const Row(
+        child: const Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: <Widget>[
-            Expanded(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: <Widget>[
-                  Text(
-                    'NYC Public Space',
-                    style: TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  SizedBox(height: 3),
-                  Text(
-                    'Tap a marker to learn more or get directions',
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: AppColors.gray,
-                    ),
-                  ),
-                  // SizedBox(height: 16),
-                ],
+            Text(
+              'NYC Public Space',
+              style: TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            SizedBox(height: 3),
+            Text(
+              'Tap a marker to explore. Long-press anywhere to add a space.',
+              style: TextStyle(
+                fontSize: 12,
+                color: AppColors.gray,
               ),
             ),
           ],

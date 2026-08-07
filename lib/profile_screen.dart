@@ -5,10 +5,12 @@ import 'package:url_launcher/url_launcher.dart'; // Import the url_launcher pack
 import 'dart:io';
 
 import 'user_provider.dart';
+import 'visited_provider.dart';
 import 'sign_in_screen.dart';
 import 'colors.dart';
 import 'feedback_screen.dart';
 import 'admin_moderation_screen.dart';
+import 'admin_pending_submissions_screen.dart';
 
 class ProfileScreen extends StatelessWidget {
   const ProfileScreen({super.key});
@@ -128,13 +130,13 @@ class ProfileScreen extends StatelessWidget {
                       TextButton(
                         style: AppStyles.buttonStyle,
                         onPressed: () =>
-                            Navigator.of(context).pop(false), // Cancel
+                            Navigator.of(context).pop(false),
                         child: const Text('Cancel'),
                       ),
                       TextButton(
                         style: AppStyles.buttonStyle,
                         onPressed: () =>
-                            Navigator.of(context).pop(true), // Confirm
+                            Navigator.of(context).pop(true),
                         child: const Text('Sign Out'),
                       ),
                     ],
@@ -146,58 +148,7 @@ class ProfileScreen extends StatelessWidget {
                 await userProvider.signOut();
               }
             },
-            showChevron: false, // No chevron for this button
-          ),
-          ProfileButton(
-            text: 'Delete Account',
-            icon: FontAwesomeIcons.trash,
-            color: Colors.red,
             showChevron: false,
-            onTap: () async {
-              final confirmed = await showDialog<bool>(
-                context: context,
-                builder: (BuildContext context) {
-                  return AlertDialog(
-                    title: const Text('Delete Account'),
-                    content: const Text(
-                      'This will permanently delete your account and all associated data. This action cannot be undone.',
-                    ),
-                    backgroundColor: AppColors.pageBackground,
-                    actions: [
-                      TextButton(
-                        style: AppStyles.buttonStyle,
-                        onPressed: () => Navigator.of(context).pop(false),
-                        child: const Text('Cancel'),
-                      ),
-                      TextButton(
-                        onPressed: () => Navigator.of(context).pop(true),
-                        child: const Text(
-                          'Delete Account',
-                          style: TextStyle(color: Colors.red),
-                        ),
-                      ),
-                    ],
-                  );
-                },
-              );
-
-              if (confirmed == true) {
-                try {
-                  await userProvider.deleteAccount();
-                } catch (e) {
-                  debugPrint('deleteAccount error: $e');
-                  if (context.mounted) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text(
-                          'Unable to delete account. Please sign out, sign in again, and retry.',
-                        ),
-                      ),
-                    );
-                  }
-                }
-              }
-            },
           ),
         ])
       ],
@@ -237,6 +188,21 @@ class ProfileScreen extends StatelessWidget {
           //   ),
           // ),
           _buildUserButtonGroup(context, userProvider),
+          // Visited count
+          Consumer<VisitedProvider>(
+            builder: (context, visitedProvider, _) {
+              final count = visitedProvider.visited.length;
+              if (count == 0) return const SizedBox.shrink();
+              return Padding(
+                padding: const EdgeInsets.only(top: 12),
+                child: Text(
+                  "You've visited $count space${count == 1 ? '' : 's'}",
+                  style: const TextStyle(fontSize: 14, color: AppColors.gray),
+                  textAlign: TextAlign.center,
+                ),
+              );
+            },
+          ),
           if (userProvider.isEditor) ...[
             const SizedBox(height: 20),
             ProfileButtonGroup(buttons: [
@@ -248,6 +214,19 @@ class ProfileScreen extends StatelessWidget {
                     context,
                     MaterialPageRoute(
                       builder: (context) => const AdminModerationScreen(),
+                    ),
+                  );
+                },
+              ),
+              ProfileButton(
+                text: 'Review New Submissions',
+                icon: FontAwesomeIcons.mapPin,
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) =>
+                          const AdminPendingSubmissionsScreen(),
                     ),
                   );
                 },
@@ -333,6 +312,60 @@ class ProfileScreen extends StatelessWidget {
                           'https://sites.google.com/view/nyc-public-space/tos'))
                     }),
           ]),
+          if (userProvider.isAuthenticated) ...[
+            const Spacer(),
+            TextButton(
+              onPressed: () async {
+                final confirmed = await showDialog<bool>(
+                  context: context,
+                  builder: (BuildContext context) {
+                    return AlertDialog(
+                      title: const Text('Delete Account'),
+                      content: const Text(
+                        'This will permanently delete your account and all associated data. This action cannot be undone.',
+                      ),
+                      backgroundColor: AppColors.pageBackground,
+                      actions: [
+                        TextButton(
+                          style: AppStyles.buttonStyle,
+                          onPressed: () => Navigator.of(context).pop(false),
+                          child: const Text('Cancel'),
+                        ),
+                        TextButton(
+                          onPressed: () => Navigator.of(context).pop(true),
+                          child: const Text(
+                            'Delete Account',
+                            style: TextStyle(color: Colors.red),
+                          ),
+                        ),
+                      ],
+                    );
+                  },
+                );
+
+                if (confirmed == true) {
+                  try {
+                    await userProvider.deleteAccount();
+                  } catch (e) {
+                    debugPrint('deleteAccount error: $e');
+                    if (context.mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text(
+                            'Unable to delete account. Please sign out, sign in again, and retry.',
+                          ),
+                        ),
+                      );
+                    }
+                  }
+                }
+              },
+              child: const Text(
+                'Delete Account',
+                style: TextStyle(color: Colors.red, fontSize: 13),
+              ),
+            ),
+          ],
 
           // // Button with margin
           // Expanded(

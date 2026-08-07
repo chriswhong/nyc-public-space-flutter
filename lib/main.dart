@@ -9,6 +9,7 @@ import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:cloud_firestore/cloud_firestore.dart' as firestore;
+import 'package:firebase_remote_config/firebase_remote_config.dart';
 
 import 'colors.dart';
 import 'map_screen.dart';
@@ -21,6 +22,8 @@ import 'username_input_screen.dart';
 import 'geojson_provider.dart';
 import 'favorites_provider.dart';
 import 'favorites_screen.dart';
+import 'visited_provider.dart';
+import 'filters_provider.dart';
 
 Future<void> initDynamicLinks(BuildContext context) async {
   print('Initializing dynamic links...');
@@ -94,11 +97,13 @@ Future<void> _handleDynamicLink(Uri deepLink, BuildContext context) async {
   }
 }
 
+String mapboxAccessToken = '';
+
 void main() {
   // ensure Flutter bindings are initialized
   WidgetsFlutterBinding.ensureInitialized();
-  // read the mapbox access token from environment variable
   String accessToken = const String.fromEnvironment("ACCESS_TOKEN");
+  mapboxAccessToken = accessToken;
   MapboxOptions.setAccessToken(accessToken);
 
   SystemChrome.setPreferredOrientations([
@@ -110,6 +115,27 @@ void main() {
     await Firebase.initializeApp();
     firestore.FirebaseFirestore.instance.settings =
         const firestore.Settings(persistenceEnabled: false);
+
+    // Fetch Mapbox token from Remote Config
+    final remoteConfig = FirebaseRemoteConfig.instance;
+    await remoteConfig.setConfigSettings(RemoteConfigSettings(
+      fetchTimeout: const Duration(seconds: 10),
+      minimumFetchInterval: Duration.zero,
+    ));
+    await remoteConfig.setDefaults({'mapbox_access_token': ''});
+    try {
+      final updated = await remoteConfig.fetchAndActivate();
+      debugPrint('Remote Config fetched, updated: $updated');
+      debugPrint('Remote Config all values: ${remoteConfig.getAll().map((k, v) => MapEntry(k, v.asString()))}');
+    } catch (e) {
+      debugPrint('Remote Config fetch error: $e');
+    }
+    final rcToken = remoteConfig.getString('mapbox_access_token');
+    debugPrint('Remote Config token length: ${rcToken.length}');
+    if (rcToken.isNotEmpty) {
+      mapboxAccessToken = rcToken;
+      MapboxOptions.setAccessToken(rcToken);
+    }
     runApp(
       MultiProvider(
         providers: [
@@ -133,6 +159,16 @@ void main() {
               favoritesProvider.initialize();
               return favoritesProvider;
             },
+          ),
+          ChangeNotifierProvider(
+            create: (_) {
+              final visitedProvider = VisitedProvider();
+              visitedProvider.initialize();
+              return visitedProvider;
+            },
+          ),
+          ChangeNotifierProvider(
+            create: (_) => FiltersProvider(),
           ),
         ],
         child: const MyApp(),
@@ -197,6 +233,7 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
   PublicSpaceFeature? _selectedFeature;
+  late final AppLifecycleListener _lifecycleListener;
 
   int _selectedIndex = 0;
 
@@ -206,6 +243,11 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   void initState() {
     super.initState();
+    _lifecycleListener = AppLifecycleListener(
+      onResume: () {
+        Provider.of<GeoJsonProvider>(context, listen: false).refreshIfStale();
+      },
+    );
     // Initialize dynamic links handling
     initDynamicLinks(context);
 
@@ -217,6 +259,12 @@ class _HomeScreenState extends State<HomeScreen> {
       ActivityFeedScreen(onSpaceSelected: _selectSpaceOnMap),
       const ProfileScreen(),
     ];
+  }
+
+  @override
+  void dispose() {
+    _lifecycleListener.dispose();
+    super.dispose();
   }
 
   void _onItemTapped(int index) {

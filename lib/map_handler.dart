@@ -200,8 +200,11 @@ class _MapHandlerState extends State<MapHandler> {
     await heartAnnotationManager!.deleteAll();
 
     final selectedId = widget.selectedFeature?.properties.firestoreId;
+    final visibleIds = widget.features.map((f) => f.properties.firestoreId).toSet();
+
     for (final item in widget.favorites) {
       if (item.firestoreId == selectedId) continue; // handled by selected manager
+      if (!visibleIds.contains(item.firestoreId)) continue; // filtered out
       await heartAnnotationManager!.create(PointAnnotationOptions(
         geometry: Point(coordinates: Position(item.lng, item.lat)),
         image: _heartBadgeBytes,
@@ -253,6 +256,7 @@ class _MapHandlerState extends State<MapHandler> {
       } else if (_sourceAdded) {
         _updateSpaceSourceData(widget.features);
       }
+      _updateHeartAnnotations();
     }
 
     final oldFavIds = oldWidget.favorites.map((f) => f.firestoreId).toSet();

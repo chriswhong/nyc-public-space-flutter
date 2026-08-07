@@ -167,7 +167,7 @@ class FilterSheet extends StatelessWidget {
                         }
                         filters.updateFilters(amenities: next);
                       },
-                      selectedColor: AppColors.dark,
+                      selectedColor: AppColors.accentDark,
                       checkmarkColor: Colors.white,
                       showCheckmark: false,
                       labelStyle: TextStyle(
@@ -177,11 +177,30 @@ class FilterSheet extends StatelessWidget {
                       ),
                       backgroundColor: Colors.grey[100],
                       side: BorderSide(
-                          color: isSelected ? AppColors.dark : Colors.grey[300]!),
+                          color: isSelected ? AppColors.accentDark : Colors.grey[300]!),
                     );
                   }).toList(),
                 ),
-                const SizedBox(height: 8),
+                const SizedBox(height: 16),
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    onPressed: () => Navigator.pop(context),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.accentDark,
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                    child: Text(
+                      'Show $matchCount spaces',
+                      style: const TextStyle(
+                          fontSize: 15, fontWeight: FontWeight.w600),
+                    ),
+                  ),
+                ),
               ],
             ),
           ),

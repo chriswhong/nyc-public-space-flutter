@@ -33,19 +33,16 @@ class _PhotoSubmissionScreenState extends State<PhotoSubmissionScreen> {
 
     if (source == ImageSource.gallery) {
       pickedFiles = await picker.pickMultiImage();
-    } else if (source == ImageSource.camera) {
+    } else {
       final pickedFile = await picker.pickImage(source: ImageSource.camera);
-      if (pickedFile != null) {
-        pickedFiles = [pickedFile];
-      }
+      if (pickedFile != null) pickedFiles = [pickedFile];
     }
 
     if (pickedFiles != null && pickedFiles.isNotEmpty) {
       setState(() {
-        _selectedImages.addAll(pickedFiles!.map((file) => File(file.path)));
+        _selectedImages.addAll(pickedFiles!.map((f) => File(f.path)));
       });
     } else {
-      // Optionally handle the case where no files were picked
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('No images were selected.')),
       );
@@ -54,24 +51,14 @@ class _PhotoSubmissionScreenState extends State<PhotoSubmissionScreen> {
 
   Future<void> _uploadPhotos() async {
     final userProvider = Provider.of<UserProvider>(context, listen: false);
-
     if (_selectedImages.isEmpty) return;
-
-    setState(() {
-      _isUploading = true;
-    });
+    setState(() => _isUploading = true);
 
     try {
       final user = FirebaseAuth.instance.currentUser;
-      if (user == null) {
-        throw Exception('No user is logged in');
-      }
+      if (user == null) throw Exception('No user is logged in');
 
-      for (var image in _selectedImages) {
-        // Check file size
-        final file = File(image.path);
-        final fileSize = await file.length(); // File size in bytes
-        print('File size: $fileSize bytes');
+      for (final image in _selectedImages) {
         final filename = '${DateTime.now().millisecondsSinceEpoch}.jpg';
         final storageRef = FirebaseStorage.instance
             .ref()
@@ -79,91 +66,140 @@ class _PhotoSubmissionScreenState extends State<PhotoSubmissionScreen> {
             .child(widget.spaceId)
             .child(filename);
         await storageRef.putFile(image);
-
-        // Save metadata to Firestore
         await FirebaseFirestore.instance.collection('images').add({
           'spaceId': widget.spaceId,
           'timestamp': FieldValue.serverTimestamp(),
           'userId': user.uid,
           'username': userProvider.username,
           'filename': filename,
-          'status': 'pending'
+          'status': 'pending',
         });
       }
 
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Photos submitted successfully!')),
       );
-
-      Navigator.of(context).pop(); // Close the screen after submission
-
-      if (widget.onSubmissionComplete != null) {
-        widget.onSubmissionComplete!();
-      }
+      Navigator.of(context).pop();
+      widget.onSubmissionComplete?.call();
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Error uploading photos: $e')),
       );
     } finally {
-      setState(() {
-        _isUploading = false;
-      });
+      if (mounted) setState(() => _isUploading = false);
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    final count = _selectedImages.length;
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Submit Photos'),
-      ),
-      body: Center(
-        child: _isUploading
-            ? const CircularProgressIndicator()
-            : Column(
-                mainAxisAlignment: MainAxisAlignment.center,
+      backgroundColor: AppColors.pageBackground,
+      appBar: AppBar(title: const Text('Submit Photos')),
+      body: _isUploading
+          ? const Center(child: CircularProgressIndicator())
+          : Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  _selectedImages.isNotEmpty
-                      ? SizedBox(
-                          height: 200,
-                          child: ListView.builder(
-                            scrollDirection: Axis.horizontal,
-                            itemCount: _selectedImages.length,
-                            itemBuilder: (context, index) {
-                              return Padding(
-                                padding: const EdgeInsets.all(8.0),
-                                child: Image.file(
-                                  _selectedImages[index],
-                                  width: 100,
-                                  fit: BoxFit.cover,
-                                ),
-                              );
-                            },
+                  if (count > 0) ...[
+                    SizedBox(
+                      height: 120,
+                      child: ListView.builder(
+                        scrollDirection: Axis.horizontal,
+                        itemCount: count,
+                        itemBuilder: (context, index) => Padding(
+                          padding: const EdgeInsets.only(right: 8),
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(10),
+                            child: Image.file(
+                              _selectedImages[index],
+                              width: 100,
+                              fit: BoxFit.cover,
+                            ),
                           ),
-                        )
-                      : const Text('No images selected.'),
-                  const SizedBox(height: 20),
-                  ElevatedButton.icon(
-                    icon: const Icon(Icons.photo_library),
-                    style: AppStyles.buttonStyle,
-                    label: const Text('Choose from Gallery'),
-                    onPressed: () => _pickImages(ImageSource.gallery),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                  ],
+                  _PickerRow(
+                    icon: Icons.photo_library_outlined,
+                    label: 'Choose from Gallery',
+                    onTap: () => _pickImages(ImageSource.gallery),
                   ),
-                  const SizedBox(height: 10),
-                  ElevatedButton.icon(
-                    icon: const Icon(Icons.camera_alt),
-                    style: AppStyles.buttonStyle,
-                    label: const Text('Take a Photo'),
-                    onPressed: () => _pickImages(ImageSource.camera),
+                  const SizedBox(height: 12),
+                  _PickerRow(
+                    icon: Icons.camera_alt_outlined,
+                    label: 'Take a Photo',
+                    onTap: () => _pickImages(ImageSource.camera),
                   ),
-                  const SizedBox(height: 20),
+                  const Spacer(),
                   ElevatedButton(
-                    onPressed:
-                        _selectedImages.isNotEmpty ? _uploadPhotos : null,
-                    child: const Text('Submit Photos'),
+                    onPressed: count > 0 ? _uploadPhotos : null,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.accentDark,
+                      disabledBackgroundColor: Colors.grey[300],
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                    child: Text(
+                      count > 0 ? 'Submit $count photo${count == 1 ? '' : 's'}' : 'Submit Photos',
+                      style: const TextStyle(
+                          fontSize: 15, fontWeight: FontWeight.w600),
+                    ),
                   ),
                 ],
               ),
+            ),
+    );
+  }
+}
+
+class _PickerRow extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final VoidCallback onTap;
+
+  const _PickerRow({
+    required this.icon,
+    required this.label,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(14),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.06),
+              blurRadius: 8,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+        child: Row(
+          children: [
+            Icon(icon, size: 22, color: AppColors.accentDark),
+            const SizedBox(width: 14),
+            Text(
+              label,
+              style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w500),
+            ),
+            const Spacer(),
+            const Icon(Icons.chevron_right, color: AppColors.gray),
+          ],
+        ),
       ),
     );
   }

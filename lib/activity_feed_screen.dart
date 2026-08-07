@@ -183,7 +183,7 @@ class _ActivityFeedScreenState extends State<ActivityFeedScreen> {
           bottom: const TabBar(
             labelColor: AppColors.dark,
             unselectedLabelColor: AppColors.gray,
-            indicatorColor: AppColors.green,
+            indicatorColor: AppColors.accentDark,
             tabs: [
               Tab(text: 'All Activity'),
               Tab(text: 'My Activity'),
@@ -292,13 +292,13 @@ class _ActivityFeedScreenState extends State<ActivityFeedScreen> {
               const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
           leading: CircleAvatar(
             backgroundColor: item.type == 'photo'
-                ? AppColors.green.withValues(alpha: 0.15)
+                ? AppColors.accentDark.withValues(alpha: 0.15)
                 : AppColors.dark.withValues(alpha: 0.08),
             child: FaIcon(
               item.type == 'photo'
                   ? FontAwesomeIcons.camera
                   : FontAwesomeIcons.penToSquare,
-              color: item.type == 'photo' ? AppColors.green : AppColors.dark,
+              color: item.type == 'photo' ? AppColors.accentDark : AppColors.dark,
               size: 16,
             ),
           ),

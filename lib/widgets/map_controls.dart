@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import '../colors.dart';
 
 class MapControls extends StatelessWidget {
   final bool tracking;
@@ -68,7 +69,7 @@ class _ControlButton extends StatelessWidget {
       child: ElevatedButton(
         onPressed: onPressed,
         style: ElevatedButton.styleFrom(
-          backgroundColor: active ? Colors.blue[600] : Colors.white,
+          backgroundColor: active ? AppColors.accentDark : Colors.white,
           foregroundColor: active ? Colors.white : Colors.grey[700],
           elevation: active ? 4 : 2,
           shadowColor: Colors.black38,

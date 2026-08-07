@@ -197,7 +197,7 @@ class MyApp extends StatelessWidget {
           labelStyle: TextStyle(color: AppColors.gray), // Label text color
           focusedBorder: OutlineInputBorder(
             borderSide: BorderSide(
-                color: AppColors.green, width: 2.0), // Focused border color
+                color: AppColors.accentDark, width: 1.5),
           ),
           enabledBorder: OutlineInputBorder(
             borderSide: BorderSide(
@@ -381,7 +381,7 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
             ],
             currentIndex: _selectedIndex,
-            selectedItemColor: AppColors.dark,
+            selectedItemColor: AppColors.accentDark,
             selectedLabelStyle:
                 const TextStyle(fontSize: 10), // Adjust font size
             unselectedItemColor: AppColors.gray,

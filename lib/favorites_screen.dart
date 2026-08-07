@@ -92,21 +92,36 @@ class FavoritesScreen extends StatelessWidget {
             );
           }
 
-          return ListView.separated(
-            padding: const EdgeInsets.symmetric(vertical: 8),
-            itemCount: favorites.length,
-            separatorBuilder: (_, __) =>
-                const Divider(height: 0, indent: 16, endIndent: 16),
-            itemBuilder: (context, index) {
-              final item = favorites[index];
-              return _FavoriteListItem(
-                item: item,
-                typeColor: _typeColor(item.type),
-                typeLabel: _typeLabel(item.type),
-                onTap: () => onFavoriteTap(item),
-                onDelete: () => provider.remove(item.firestoreId),
-              );
-            },
+          return Column(
+            children: [
+              Expanded(
+                child: ListView.builder(
+                  padding: const EdgeInsets.fromLTRB(12, 12, 12, 4),
+                  itemCount: favorites.length,
+                  itemBuilder: (context, index) {
+                    final item = favorites[index];
+                    return Padding(
+                      padding: const EdgeInsets.only(bottom: 12),
+                      child: _FavoriteListItem(
+                        item: item,
+                        typeColor: _typeColor(item.type),
+                        typeLabel: _typeLabel(item.type),
+                        onTap: () => onFavoriteTap(item),
+                        onDelete: () => provider.remove(item.firestoreId),
+                      ),
+                    );
+                  },
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+                child: Text(
+                  'Swipe left on a space to remove it',
+                  style: TextStyle(fontSize: 12, color: Colors.grey[400]),
+                  textAlign: TextAlign.center,
+                ),
+              ),
+            ],
           );
         },
       ),
@@ -158,47 +173,65 @@ class _FavoriteListItem extends StatelessWidget {
       confirmDismiss: (_) => _confirmDismiss(context),
       onDismissed: (_) => onDelete(),
       background: Container(
-        color: Colors.red.shade400,
+        decoration: BoxDecoration(
+          color: Colors.red.shade400,
+          borderRadius: BorderRadius.circular(14),
+        ),
         alignment: Alignment.centerLeft,
         padding: const EdgeInsets.only(left: 20),
         child: const FaIcon(FontAwesomeIcons.trash, color: Colors.white, size: 18),
       ),
       secondaryBackground: Container(
-        color: Colors.red.shade400,
+        decoration: BoxDecoration(
+          color: Colors.red.shade400,
+          borderRadius: BorderRadius.circular(14),
+        ),
         alignment: Alignment.centerRight,
         padding: const EdgeInsets.only(right: 20),
         child: const FaIcon(FontAwesomeIcons.trash, color: Colors.white, size: 18),
       ),
-      child: ListTile(
-        tileColor: Colors.white,
-        onTap: onTap,
-        leading: Container(
-          width: 40,
-          height: 40,
-          decoration: BoxDecoration(
-            color: typeColor.withValues(alpha: 0.15),
-            shape: BoxShape.circle,
-          ),
-          child: Center(
-            child: Container(
-              width: 12,
-              height: 12,
-              decoration: BoxDecoration(
-                color: typeColor,
-                shape: BoxShape.circle,
+      child: Container(
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(14),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.06),
+              blurRadius: 8,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+        child: ListTile(
+          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+          onTap: onTap,
+          leading: Container(
+            width: 40,
+            height: 40,
+            decoration: BoxDecoration(
+              color: typeColor.withValues(alpha: 0.15),
+              shape: BoxShape.circle,
+            ),
+            child: Center(
+              child: Container(
+                width: 12,
+                height: 12,
+                decoration: BoxDecoration(
+                  color: typeColor,
+                  shape: BoxShape.circle,
+                ),
               ),
             ),
           ),
+          title: Text(
+            item.name.isNotEmpty ? item.name : 'Unnamed space',
+            style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 15),
+          ),
+          subtitle: Text(
+            item.borough != null ? '$typeLabel · ${item.borough}' : typeLabel,
+            style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+          ),
         ),
-        title: Text(
-          item.name.isNotEmpty ? item.name : 'Unnamed space',
-          style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 15),
-        ),
-        subtitle: Text(
-          item.borough != null ? '$typeLabel · ${item.borough}' : typeLabel,
-          style: TextStyle(fontSize: 12, color: Colors.grey[600]),
-        ),
-        trailing: null,
       ),
     );
   }

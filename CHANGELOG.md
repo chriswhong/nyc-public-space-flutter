@@ -1,3 +1,11 @@
+## 1.9.0
+
+- Community features: filters, amenity survey, visited, temporarily closed, long-press to add space
+- Mapbox access token now read from Firebase Remote Config instead of a local `.env` file
+- Raise iOS minimum deployment target to 15.0
+- Update map style
+- Clean up build scripts
+
 ## 1.7.3
 
 - Pin mapbox_maps_flutter to 2.21.1 to fix iOS build

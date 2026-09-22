@@ -609,7 +609,7 @@ class _MapHandlerState extends State<MapHandler> {
   @override
   Widget build(BuildContext context) {
     return MapWidget(
-      styleUri: 'mapbox://styles/chriswhongmapbox/cmpq8s9qs007401s76cfp5xmv',
+      styleUri: 'mapbox://styles/cwhong/cmuc2eu3k003f01rzbggxdokd',
       cameraOptions: CameraOptions(
         center: Point(coordinates: Position(-74.00299, 40.70966)),
         zoom: 12,

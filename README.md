@@ -21,32 +21,30 @@ NYC Public Space App Links:
 flutter pub get
 ```
 
-**Set up environment variables**
-Create a `.env` file in the project root:
-```
-ACCESS_TOKEN=pk.your_mapbox_access_token_here
-```
-
-**Configure Firebase** (optional - for authentication features)
+**Configure Firebase**
    - Add `google-services.json` to `android/app/`
    - Add `GoogleService-Info.plist` to `ios/Runner/`
 
+**Mapbox access token**
+
+The app reads its Mapbox access token from Firebase Remote Config (parameter `mapbox_access_token`) on startup, in both development and production builds. Make sure that parameter is set and published in the Firebase console. No local setup is needed.
+
+*Optional local override:* if Remote Config is unavailable (e.g. offline development), you can pass a token at build time. It is only used when the Remote Config value is empty or the fetch fails:
+```bash
+flutter run --dart-define=ACCESS_TOKEN=pk.your_mapbox_access_token_here
+```
 
 ## Run on simulator/emulator
 
-`source .env && flutter run --dart-define=ACCESS_TOKEN=$ACCESS_TOKEN`
-
-## Run on simulator/emulator
-
-`source .env && flutter run --dart-define=ACCESS_TOKEN=$ACCESS_TOKEN`
+`flutter run`
 
 ## Production build to my device
 
-`source .env && flutter run --release --dart-define=ACCESS_TOKEN=$ACCESS_TOKEN`
+`flutter run --release`
 
 You may need to add `-d <device_id>` if you have multiple devices connected. You can find the device id by running `flutter devices`.
 
-`source .env && flutter run --release --dart-define=ACCESS_TOKEN=$ACCESS_TOKEN -d 00008140-00061DE80106801C`
+`flutter run --release -d 00008140-00061DE80106801C`
 
 ## Releasing
 
